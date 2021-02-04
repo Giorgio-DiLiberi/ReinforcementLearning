@@ -19,18 +19,18 @@ class QuadcoptEnvV1(gym.Env):
     # Definition of action space with 4 control actions representing 4 throttle positions in the order: 
     # M1[0,1], M2, M3, M4
     highActionSpace = np.array([1., 1., 1., 1.])
-    lowActionSpace = np.array([0., 0., 0., 0.])
+    lowActionSpace = np.array([-1., -1., -1., -1.])
     self.action_space = spaces.Box(lowActionSpace, highActionSpace, dtype=np.float32)
 
     # Creation of observation space: an array for maximum values is created using a classical Flight Dynamics states 
     # rapresentation with quaternions (state[min, max][DimensionalUnit]): 
     # u[-50,50][m/s], v[-50,50][m/s], w[-50,50][m/s], p[-20,20][rad/s], q[-20,20][rad/s], r[-20,20][rad/s],...
     #  q0[0,1], q1[0,1], q2[0,1], q3[0,1], X[-50,50][m], Y[-50,50][m], Z[-100,0][m].
-    highObsSpace = np.array([50. , 50. , 50. , 20. , 20. , 20. , 1. , 1. , 1. , 1. , 50. , 50. , 50.])
-    lowObsSpace = np.array([-50. , -50. , -50. , -20. , -20. , -20. , 0. , 0. , 0. , 0. , -50. , -50. , -100.])
+    highObsSpace = np.array([50. , 50. , 50. , 20. , 20. , 20. , 2. , 2. , 2. , 2. , 50. , 50. , 50.])
+    lowObsSpace = np.array([-50. , -50. , -50. , -20. , -20. , -20. , -2. , -2. , -2. , -2. , -50. , -50. , -100.])
     self.observation_space = spaces.Box(lowObsSpace, highObsSpace, dtype=np.float32)
                                         
-    self.state = None # this variable is used as a memory for the specific instance created
+    self.state = [0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.] # this variable is used as a memory for the specific instance created
     self.Lx = 0.2   # X body Length (squared configuration)
     self.Ly = 0.2   # Y body Length
     
@@ -56,7 +56,7 @@ class QuadcoptEnvV1(gym.Env):
     self.g0 = 9.815  # m/s^2 gravity acceleration
 
     # integration parameters: constant step of 0.001 s
-    self.timeStep = 0.001 
+    self.timeStep = 0.1 
 
     # Constants to normalize state and reward
     self.VmaxSquared = 7500 # Squared by deafult to save some computation
@@ -66,7 +66,12 @@ class QuadcoptEnvV1(gym.Env):
 
       # State-action variables assignment
       u, v, w, p, q, r, q0, q1, q2, q3, X, Y, Z = self.state 
-      dT1, dT2, dT3, dT4 = action # Throttle of the 4 motors (position of the motor is given in the drawings)
+      a1, a2, a3, a4 = action # Throttle of the 4 motors (position of the motor is given in the drawings)
+
+      dT1 = 0.5*(a1+1)
+      dT2 = 0.5*(a2+1)
+      dT3 = 0.5*(a3+1)
+      dT4 = 0.5*(a4+1)
 
       ## The state derivatives funcion xVec_dot = f(x,u) is implemented in a separate function
       State_dot = self.eqnsOfMotion(u, v, w, p, q, r, q0, q1, q2, q3, X, Y, Z, dT1, dT2, dT3, dT4)
@@ -167,18 +172,23 @@ class QuadcoptEnvV1(gym.Env):
 
       # self.state variable assignment with next step values (step n+1 is indicated with _1)
       self.state = [u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1]
+      obs = np.array(self.state)
 
       # REWARD evaluation and done condition definition (to be completed)
-      reward = (q0_1 - (u_1**2 + v_1**2 + w_1**2)) / self.VmaxSquared
+      reward = (q0_1 - (u_1**2)/ self.VmaxSquared + (v_1**2)/ self.VmaxSquared + (w_1**2)/ self.VmaxSquared) 
       done = bool(Z>=0)
       info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1}
 
-      return np.array(self.state), reward, done, info
+      print(obs)
+
+      return obs, reward, done, info
 
   def reset(self):
       
       self.state = [0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,-50.] # to initialize the state the object is put in x0=20 and v0=0
-      return np.array(self.state)  # produce an observation of the first state (xPosition) 
+      obs = np.array(self.state)
+
+      return obs  # produce an observation of the first state (xPosition) 
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 

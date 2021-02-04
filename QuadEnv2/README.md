@@ -5,3 +5,5 @@ Le modifiche rispetto alla prima versione sono riportate anche sul quaderno:
 -implementazione del metodo di runge kutta tamite vettori
 -trasformazione del self.state in np.array
 
+-nel file di simulazione è stata aggiunta una sezione per il plot con mathplotlib
+

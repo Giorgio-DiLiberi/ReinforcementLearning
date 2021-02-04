@@ -26,13 +26,19 @@ class QuadcoptEnvV2(gym.Env):
     # Creation of observation space: an array for maximum values is created using a classical Flight Dynamics states 
     # rapresentation with quaternions (state[min, max][DimensionalUnit]): 
     # u[-50,50][m/s], v[-50,50][m/s], w[-50,50][m/s], p[-20,20][rad/s], q[-20,20][rad/s], r[-20,20][rad/s],...
-    #  q0[0,1], q1[0,1], q2[0,1], q3[0,1], X[-50,50][m], Y[-50,50][m], Z[-100,0][m].
+    #  q0[-1,1], q1[-1,1], q2[-1,1], q3[-1,1], X[-50,50][m], Y[-50,50][m], Z[-100,0][m].
     # To give normalized observations boundaries are fom -1 to 1, the problem scale 
     # is adapted to the physical world in step function.
     # The normalization is performed using limits reported above
     highObsSpace = np.array([1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
-    lowObsSpace = np.array([-1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1])
+    lowObsSpace = -highObsSpace
+    # lowObsSpace = np.array([-1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1])
     self.observation_space = spaces.Box(lowObsSpace, highObsSpace, dtype=np.float32) # boundary is set 0.1 over to avoid AssertionError
+
+    # A vector with max value for each state is defined to perform normalization of obs
+    # so to have obs vector components between -1,1. The max values are taken acording to 
+    # previous comment
+    self.Obs_normalization_vector = np.array([50. , 50. , 50. , 20. , 20. , 20. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
                                         
     self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
     self.Lx = 0.2   # X body Length (squared configuration)
@@ -54,16 +60,14 @@ class QuadcoptEnvV2(gym.Env):
     self.InTen = np.array([[self.Ix, 0., 0.],[0., self.Iy, 0.],[0., 0., self.Iz]])
 
 
-    self.maxThrust = 30.   # single engine maximum possible thrust taken as almost 3kg (30 N)
+    self.maxThrust = 9.815 # single engine maximum possible thrust taken as 1kg (9.81 N) (empirical)
     self.Kt = 0.1 ## ATTENTION, proportional constant for assumption about the torque of the motor
     self.CdX = 0.2 # drag coefficent of front section (assumed): orthogonal to Xbody axis
     self.CdY = 0.2 # drag coefficent of lateral section (assumed): orthogonal to Ybody axis
     self.CdZ = 0.2 # drag coefficent of horizontal section (assumed): orthogonal to Zbody axis
     self.SnX = 0.02 # cross sections in m^2 referred to the Cd
     self.SnY = 0.02
-    self.SnZ = 0.05 # Z normal surface is bigger than other ones
-
-    
+    self.SnZ = 0.05 # Z normal surface is bigger than other ones    
 
     # atmosphere definition (assumed constant but a standard atmosphere model can be included)
     self.rho = 1.225 # kg/m^3 Standard day at 0 m ASL
@@ -91,24 +95,24 @@ class QuadcoptEnvV2(gym.Env):
 
       # Integration of the equation of motion with Runge-Kutta 4 order method
       ## The state derivatives funcion xVec_dot = fvec(x,u) is implemented in a separate function
-      State_dot = self.eqnsOfMotion(State_curr_step, dT1, dT2, dT3, dT4)
+      # State_dot = self.eqnsOfMotion(State_curr_step, dT1, dT2, dT3, dT4)
       
-      k1vec = h * State_dot
+      k1vec = h * self.eqnsOfMotion(State_curr_step, dT1, dT2, dT3, dT4)
 
       # Evaluation of constant K2 from equations of state evaluated in state+K1/2
-      State_dot2 = self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), dT1, dT2, dT3, dT4)
+      # State_dot2 = self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), dT1, dT2, dT3, dT4)
       
-      k2vec = h * State_dot2
+      k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), dT1, dT2, dT3, dT4)
 
       # Evaluation of constants K3 from state +k2/2
-      State_dot3 = self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), dT1, dT2, dT3, dT4)
+      # State_dot3 = self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), dT1, dT2, dT3, dT4)
 
-      k3vec = h * State_dot3
+      k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), dT1, dT2, dT3, dT4)
       
       #Evaluation of K4 from state+K3
-      State_dot4 = self.eqnsOfMotion(np.add(State_curr_step, k3vec), dT1, dT2, dT3, dT4)
+      # State_dot4 = self.eqnsOfMotion(np.add(State_curr_step, k3vec), dT1, dT2, dT3, dT4)
 
-      k4vec = h * State_dot4
+      k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), dT1, dT2, dT3, dT4)
 
       # Final step of integration: each update for the state is evaluated from the Ks 
       State_next_step = State_curr_step + (k1vec/6) + (k2vec/3) + (k3vec/3) + (k4vec/6)
@@ -116,12 +120,15 @@ class QuadcoptEnvV2(gym.Env):
 
       # self.state variable assignment with next step values (step n+1 is indicated with _1)
       self.state = State_next_step
-      obs = State_next_step
+
+      # obs normalization is performed dividing state_next_step array by normalization vector
+      # with elementwise division
+      obs = self.state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = State_next_step
 
-      reward = (q0_1 - (u_1**2 + v_1**2 + w_1**2)) / self.VmaxSquared
+      reward = q0_1 - ((u_1**2)/ self.VmaxSquared) - ((v_1**2)/ self.VmaxSquared) - ((w_1**2)/ self.VmaxSquared)
       done = bool(Z_1>=0)
       info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1}
 
@@ -130,8 +137,8 @@ class QuadcoptEnvV2(gym.Env):
   def reset(self):
       
       self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,-50.]) # to initialize the state the object is put in x0=20 and v0=0
-      obs = self.state
-
+      
+      obs = self.state / self.Obs_normalization_vector
       return obs  # produce an observation of the first state (xPosition) 
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
@@ -154,7 +161,8 @@ class QuadcoptEnvV2(gym.Env):
       """
       # This function is implemented separately to make the code more easily readable
 
-      u, v, w, p, q, r, q0, q1, q2, q3, X, Y, Z = State 
+      u, v, w, p, q, r, q0, q1, q2, q3 = State[0:10] 
+      
 
       #THRUST Evaluation
       T1 = - dT1 * self.maxThrust
