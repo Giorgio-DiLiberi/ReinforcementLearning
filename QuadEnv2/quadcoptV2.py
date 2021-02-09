@@ -59,9 +59,16 @@ class QuadcoptEnvV2(gym.Env):
     # Inertia tensor composition
     self.InTen = np.array([[self.Ix, 0., 0.],[0., self.Iy, 0.],[0., 0., self.Iz]])
 
+    # Throttle constants
+    self.dTt = .25 # trim throttle fol hovering
+    self.d2 = 0.65 # Assumed value for first constant in action to throttle mapping
+    self.d1 = 1 - self.d2 - self.dTt # second constant for maping (see notebook)
+    self.s2 = self.d2 - 1 + 2*self.dTt # first constant for left part
+    self.s1 = self.dTt - self.s2
 
     self.maxThrust = 9.815 # single engine maximum possible thrust taken as 1kg (9.81 N) (empirical)
     self.Kt = 0.1 ## ATTENTION, proportional constant for assumption about the torque of the motor
+    
     self.CdX = 0.2 # drag coefficent of front section (assumed): orthogonal to Xbody axis
     self.CdY = 0.2 # drag coefficent of lateral section (assumed): orthogonal to Ybody axis
     self.CdZ = 0.2 # drag coefficent of horizontal section (assumed): orthogonal to Zbody axis
@@ -84,41 +91,29 @@ class QuadcoptEnvV2(gym.Env):
 
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
-      a1, a2, a3, a4 = action # Throttle of the 4 motors (position of the motor is given in the drawings)
-
-      dT1 = 0.5*(a1+1)
-      dT2 = 0.5*(a2+1)
-      dT3 = 0.5*(a3+1)
-      dT4 = 0.5*(a4+1)
+      
+      Throttle = self.act2ThrotMap(action) # composition of throttle vector basing on actions
 
       h = self.timeStep 
 
       # Integration of the equation of motion with Runge-Kutta 4 order method
       ## The state derivatives funcion xVec_dot = fvec(x,u) is implemented in a separate function
-      # State_dot = self.eqnsOfMotion(State_curr_step, dT1, dT2, dT3, dT4)
-      
-      k1vec = h * self.eqnsOfMotion(State_curr_step, dT1, dT2, dT3, dT4)
+      k1vec = h * self.eqnsOfMotion(State_curr_step, Throttle)
 
       # Evaluation of constant K2 from equations of state evaluated in state+K1/2
-      # State_dot2 = self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), dT1, dT2, dT3, dT4)
-      
-      k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), dT1, dT2, dT3, dT4)
+      k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), Throttle)
 
-      # Evaluation of constants K3 from state +k2/2
-      # State_dot3 = self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), dT1, dT2, dT3, dT4)
-
-      k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), dT1, dT2, dT3, dT4)
+      # Evaluation of constants K3 from state+k2/2
+      k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), Throttle)
       
       #Evaluation of K4 from state+K3
-      # State_dot4 = self.eqnsOfMotion(np.add(State_curr_step, k3vec), dT1, dT2, dT3, dT4)
+      k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), Throttle)
 
-      k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), dT1, dT2, dT3, dT4)
-
-      # Final step of integration: each update for the state is evaluated from the Ks 
+      # Final step of integration 
       State_next_step = State_curr_step + (k1vec/6) + (k2vec/3) + (k3vec/3) + (k4vec/6)
 
 
-      # self.state variable assignment with next step values (step n+1 is indicated with _1)
+      # self.state variable assignment with next step values (step n+1)
       self.state = State_next_step
 
       # obs normalization is performed dividing state_next_step array by normalization vector
@@ -130,6 +125,7 @@ class QuadcoptEnvV2(gym.Env):
 
       reward = q0_1 - ((u_1**2)/ self.VmaxSquared) - ((v_1**2)/ self.VmaxSquared) - ((w_1**2)/ self.VmaxSquared)
       done = bool(Z_1>=0)
+    
       info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1}
 
       return obs, reward, done, info
@@ -140,6 +136,25 @@ class QuadcoptEnvV2(gym.Env):
       
       obs = self.state / self.Obs_normalization_vector
       return obs  # produce an observation of the first state (xPosition) 
+
+  def act2ThrotMap(self, actions):
+
+      """ Function that maps actions into throttle values with constraint reported on the notebook"""
+      Thr = np.zeros(4)
+      i = 0
+
+      for a in actions:
+
+        if a<=0:
+          Thr[i]= self.dTt + (self.s1*a) + (self.s2*(a**3))
+
+        else:
+          Thr[i] = self.dTt + (self.d1*a) + (self.d2*(a**3))
+
+        i += 1
+      
+      return Thr
+
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 
@@ -155,13 +170,14 @@ class QuadcoptEnvV2(gym.Env):
       drag = - 0.5 * self.rho * V * abs(V) * Sn * Cd
       return drag
 
-  def eqnsOfMotion(self, State, dT1, dT2, dT3, dT4):
+  def eqnsOfMotion(self, State, Throttle):
       """
       This function evaluates the xVec_dot=fVec(x,u) given the states and controls in current step
       """
       # This function is implemented separately to make the code more easily readable
 
       u, v, w, p, q, r, q0, q1, q2, q3 = State[0:10] 
+      dT1, dT2, dT3, dT4 = Throttle
       
 
       #THRUST Evaluation

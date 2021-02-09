@@ -27,14 +27,13 @@ time=0.
 info_time=[time] # elased time vector
 
 # SIMULATION
-trimTh = -0.5 # Throttle in trim condition given with action boundaries between -1,1
 
 for i in range(1000):
 
     # uncomment the correct statement to test trim or a policy
     
     # action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
-    action = np.array([trimTh, trimTh, trimTh, trimTh]) # Trim thrust test
+    action = np.array([0, 0, 0, 0]) # Trim thrust test now actions are varations on trim value yet implemented in the environment
 
     obs, reward, done, info = env.step(action) 
 

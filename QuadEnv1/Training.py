@@ -8,7 +8,7 @@ from quadcoptV1 import QuadcoptEnvV1
 env = QuadcoptEnvV1()
 
 model = PPO(MlpPolicy, env, verbose=1)
-model.learn(total_timesteps=10)
+model.learn(total_timesteps=1)
 model.save("ppo_Quad_1Attempt")
 
 del model, env
