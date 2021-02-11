@@ -224,10 +224,14 @@ class QuadcoptEnvV3(gym.Env):
         done = True
         print("Y outbound---> ", Y_1)
 
-      elif abs(q0_1)>=1. or abs(q1_1)>=1. or abs(q2_1)>=1. or abs(q3_1)>=1. :
+      elif abs(q0_1)>=1.0000000001 or abs(q1_1)>=1.0000000001 or abs(q2_1)>=1.0000000001 or abs(q3_1)>=1.0000000001 :
 
         done = True
         print("Quaternion outbound...") 
+        print("q0 = ", q0_1)
+        print("q1 = ", q1_1)
+        print("q2 = ", q2_1)
+        print("q3 = ", q3_1)
 
       else :
 
@@ -287,8 +291,8 @@ class QuadcoptEnvV3(gym.Env):
       # as first assumption only the thrust components of the motors combined are considered
       # as torque generator; gyroscopical effects of the props are neglected in this model. 
       # those components are NOT divided by the respective moment of Inertia
-      Mtot = np.cross(T1, self.rM1) + np.cross(T2, self.rM2)\
-         + np.cross(T3, self.rM3) + np.cross(T4, self.rM4)\
+      Mtot = np.cross(self.rM1, T1) + np.cross(self.rM2, T2)\
+         + np.cross(self.rM3, T3) + np.cross(self.rM4, T4)\
             + np.array([0., 0., (dT1 + dT3 - dT2 - dT4) * self.Kt])
 
       # WEIGHT [N] in body axes
@@ -310,17 +314,17 @@ class QuadcoptEnvV3(gym.Env):
       # Evaluation of the cynematic linear velocities in NED axes [m/s]
       # The matrix LEB is written in the equivalent from quaternions components
       # (P_dot stands for Position_dot)
-      X_dot = (q0**2 + q1**2 - q2**2 - q3**2) * u + 2.*(q1*q2 - q0*q3) * v + 2.*(q0*q2 + q1*q3) * w
-      Y_dot = 2.*(q1*q2 + q0*q3) * u + (q0**2 - q1**2 + q2**2 - q3**2) * v + 2.*(q2*q3 - q0*q1) * w
-      Z_dot = 2.*(q1*q3 - q0*q2) * u + 2.*(q0*q1 + q2*q3) * v + (q0**2 - q1**2 - q2**2 + q3**2) * w
-
+      P_dot = np.dot(LEB, Vb)
 
 
       # Evaluation of QUATERNION derivatives 
+      p, q, r = Omega
       q0_dot = 0.5 * (-p*q1 - q*q2 - r*q3)
       q1_dot = 0.5 * (p*q0 + r*q2 - q*q3)
       q2_dot = 0.5 * (q*q0 - r*q1 + p*q3)
       q3_dot = 0.5 * (r*q0 + q*q1 - p*q2)
 
-      stateTime_derivatives= np.array([u_dot, v_dot, w_dot, p_dot, q_dot, r_dot, q0_dot, q1_dot, q2_dot, q3_dot, X_dot, Y_dot, Z_dot])
+      Q_dot = np.array([q0_dot, q1_dot, q2_dot, q3_dot])
+
+      stateTime_derivatives= np.concatenate((Vb_dot, Omega_dot, Q_dot, P_dot))
       return stateTime_derivatives

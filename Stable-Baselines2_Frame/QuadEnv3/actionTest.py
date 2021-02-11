@@ -3,9 +3,9 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 
-from quadcoptV2 import QuadcoptEnvV2
+from quadcoptV3 import QuadcoptEnvV3
 
-env = QuadcoptEnvV2()
+env = QuadcoptEnvV3()
 
 obs = env.reset()
 
@@ -16,6 +16,10 @@ info_w=[env.state[2]]
 info_p=[env.state[3]]
 info_q=[env.state[4]]
 info_r=[env.state[5]]
+info_q0=[env.state[6]]
+info_q1=[env.state[7]]
+info_q2=[env.state[8]]
+info_q3=[env.state[9]]
 info_X=[env.state[10]]
 info_Y=[env.state[11]]
 info_Z=[env.state[12]]
@@ -27,7 +31,10 @@ info_time=[time] # elased time vector
 
 for i in range(1000):
 
-    action = np.array([0.1, -0.1, 0.1, -0.1]) # Trim thrust test now actions are varations on trim value yet implemented in the environment
+    # Uncomment the action to test
+    #action = np.array([0., 0., 0., 0.]) # Trim
+    #action = np.array([-1, -1, -1, -1]) # Free-Fall
+    action = np.array([0.1, 0., 0.1, 0.]) # variable
 
     obs, reward, done, info = env.step(action) 
 
@@ -37,6 +44,10 @@ for i in range(1000):
     info_p.append(info["p"])
     info_q.append(info["q"])
     info_r.append(info["r"])
+    info_q0.append(info["q0"])
+    info_q1.append(info["q1"])
+    info_q2.append(info["q2"])
+    info_q3.append(info["q3"])
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
@@ -76,5 +87,15 @@ plt.xlabel('time')
 plt.ylabel('data')
 plt.title('X,Y and Z')
 plt.legend(['X', 'Y', 'Z'])
+
+plt.figure(4)
+plt.plot(info_time, info_q0)
+plt.plot(info_time, info_q1)
+plt.plot(info_time, info_q2)
+plt.plot(info_time, info_q3)
+plt.xlabel('time')
+plt.ylabel('data')
+plt.title('q0, q1, q2, q3')
+plt.legend(['q0', 'q1', 'q2', 'q3'])
 
 plt.show()

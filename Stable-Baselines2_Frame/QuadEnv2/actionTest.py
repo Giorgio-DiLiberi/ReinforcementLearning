@@ -27,7 +27,8 @@ info_time=[time] # elased time vector
 
 for i in range(1000):
 
-    action = np.array([0.1, -0.1, 0.1, -0.1]) # Trim thrust test now actions are varations on trim value yet implemented in the environment
+    #action = np.array([0.1, -0.1, 0.1, -0.1]) # Trim thrust test now actions are varations on trim value yet implemented in the environment
+    action = np.array([-1., -1., -1., -1.]) # Free-Fall
 
     obs, reward, done, info = env.step(action) 
 

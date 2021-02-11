@@ -223,7 +223,7 @@ class QuadcoptEnvV2(gym.Env):
         done = True
         print("Y outbound---> ", Y_1)
 
-      elif abs(q0_1)>=1. or abs(q1_1)>=1. or abs(q2_1)>=1. or abs(q3_1)>=1. :
+      elif abs(q0_1)>=1.0000000001 or abs(q1_1)>=1.0000000001 or abs(q2_1)>=1.0000000001 or abs(q3_1)>=1.0000000001 :
 
         done = True
         print("Quaternion outbound...") 
