@@ -36,6 +36,8 @@ for i in range(1000):
     #action = np.array([-1, -1, -1, -1]) # Free-Fall
     action = np.array([0.1, 0., 0.1, 0.]) # variable
 
+    ## ACTIONS tested 11/02/2021 with success generating torques and forces
+
     obs, reward, done, info = env.step(action) 
 
     info_u.append(info["u"])

@@ -6,7 +6,7 @@ Le modifiche rispetto alla prima versione sono riportate anche sul quaderno:
 -nel file di simulazione è stata migliorata la sezione per il plot 
 
 -La cartella chiamata log contiene i file generati con tensorboard da leggere tramite comando
->>>>> tensorboard --logdir ./<nome cartella logs>/
+>>>>> $ tensorboard --logdir ./tensorboardLogs/ (Se la cartella con i logs si chiama tensorboardLogs)
 
 -il file .zip contiene la policy allenata da caricare con il file simulator.py
 
