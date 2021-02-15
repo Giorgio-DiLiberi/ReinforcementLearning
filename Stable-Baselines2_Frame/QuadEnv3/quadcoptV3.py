@@ -82,7 +82,7 @@ class QuadcoptEnvV3(gym.Env):
     self.g0 = 9.815  #[m/s^2] gravity acceleration
 
     # integration parameters: constant step of 0.1 [s]
-    self.timeStep = 0.1
+    self.timeStep = 0.01
 
     # Constants to normalize state and reward
     self.VmaxSquared = 2500 #[(m/s)^2] Squared by deafult to save some computation

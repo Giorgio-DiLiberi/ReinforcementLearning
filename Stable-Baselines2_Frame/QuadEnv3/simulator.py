@@ -1,4 +1,5 @@
 # Code to simulate the environment when trained
+import os
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,7 +11,28 @@ from quadcoptV3 import QuadcoptEnvV3
 
 env = QuadcoptEnvV3()
 
-model = PPO2.load("PPO_Quad_1Attempt")
+tieme_steps_to_simulate = 1000 ## define the number of timesteps to simulate
+
+## Function for policy loading
+# use of os.path.exists() to check and load the last policy evaluated by training
+# function.
+print("Policy loading...")
+
+for i in range(100, 1, -1): ## function look for the last policy evaluated.
+  fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv3/Policies/PPO_Quad_" + str(i) + ".zip"
+
+  if os.path.exists(fileName_toFind):
+    print("last policy found is PPO_Quad_", i)
+
+    file_toLoad = "Policies/PPO_Quad_" + str(i)
+    model = PPO2.load(file_toLoad)
+
+    print("Last trained policy loaded correctly!")
+    break
+
+del i
+
+#model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
 obs = env.reset()
 
@@ -34,7 +56,7 @@ info_time=[time] # elased time vector
 
 # SIMULATION
 
-for i in range(1000):
+for i in range(tieme_steps_to_simulate):
 
     # uncomment the correct statement to test trim or a policy
     
