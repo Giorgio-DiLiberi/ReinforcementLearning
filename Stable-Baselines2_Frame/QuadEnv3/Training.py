@@ -1,4 +1,6 @@
 import os
+import warnings
+warnings.filterwarnings("ignore")
 
 import gym
 import numpy as np
@@ -13,7 +15,7 @@ from quadcoptV3 import QuadcoptEnvV3
 
 # Definition of Hyperparameters
 LearningRate = 1.0e-4
-LearningTimeSteps = 10**5
+LearningTimeSteps = 10**6
 
 if __name__ == '__main__':
     #log_dir = "Tensorflow_logs/"

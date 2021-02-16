@@ -6,7 +6,6 @@ import numpy as np
 import gym
 from gym import spaces
 
-
 class QuadcoptEnvV3(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
