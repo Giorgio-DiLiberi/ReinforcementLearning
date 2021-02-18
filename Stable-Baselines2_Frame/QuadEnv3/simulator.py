@@ -1,5 +1,6 @@
 # Code to simulate the environment when trained
 import os
+#ignore tensorflow warnings
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -12,8 +13,8 @@ from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 from quadcoptV3 import QuadcoptEnvV3
 
-#ignore tensorflow warnings
-warnings.simplefilter("ignore")
+
+
 
 env = QuadcoptEnvV3()
 
@@ -24,7 +25,7 @@ tieme_steps_to_simulate = 1000 ## define the number of timesteps to simulate
 # function.
 print("Policy loading...")
 
-for i in range(100, 1, -1): ## function look for the last policy evaluated.
+for i in range(100, 0, -1): ## function look for the last policy evaluated.
   fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv3/Policies/PPO_Quad_" + str(i) + ".zip"
 
   if os.path.exists(fileName_toFind):
@@ -78,7 +79,7 @@ for i in range(1, tieme_steps_to_simulate):
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
 
-    time=time+0.1 # elapsed time since simulation start
+    time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
 
     #env.render()
@@ -93,7 +94,7 @@ plt.plot(info_time, info_p)
 plt.plot(info_time, info_q)
 plt.plot(info_time, info_r)
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Angular velocity [rad/s]')
 plt.title('p,q and r')
 plt.legend(['p', 'q', 'r'])
 
@@ -102,7 +103,7 @@ plt.plot(info_time, info_u)
 plt.plot(info_time, info_v)
 plt.plot(info_time, info_w)
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Velocity [m/s]')
 plt.title('u,v and w')
 plt.legend(['u', 'v', 'w'])
 
@@ -111,7 +112,7 @@ plt.plot(info_time, info_X)
 plt.plot(info_time, info_Y)
 plt.plot(info_time, info_Z)
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Position NED [m]')
 plt.title('X,Y and Z')
 plt.legend(['X', 'Y', 'Z'])
 
@@ -136,7 +137,7 @@ plt.plot(info_time, Euler_angles[:, 0])
 plt.plot(info_time, Euler_angles[:, 1])
 plt.plot(info_time, Euler_angles[:, 2])
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
 

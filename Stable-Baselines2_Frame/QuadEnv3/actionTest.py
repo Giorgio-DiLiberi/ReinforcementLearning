@@ -31,7 +31,7 @@ for i in range(1000):
     # Uncomment the action to test
     #action = np.array([0., 0., 0., 0.]) # Trim
     #action = np.array([-1, -1, -1, -1]) # Free-Fall
-    action = np.array([0.0, 0.01, 0.01, 0.0]) # variable
+    action = np.array([0.0, 0.0, 0.1, 0.0]) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 
@@ -48,7 +48,7 @@ for i in range(1000):
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
 
-    time=time+0.1 # elapsed time since simulation start
+    time=time+env.timeStep # elapsed time since simulation start
     info_time.append(time)
 
     #env.render()
@@ -62,7 +62,7 @@ plt.plot(info_time, info_p)
 plt.plot(info_time, info_q)
 plt.plot(info_time, info_r)
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Angular velocity [rad/s]')
 plt.title('p,q and r')
 plt.legend(['p', 'q', 'r'])
 
@@ -71,7 +71,7 @@ plt.plot(info_time, info_u)
 plt.plot(info_time, info_v)
 plt.plot(info_time, info_w)
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Linear velocity [m/s]')
 plt.title('u,v and w')
 plt.legend(['u', 'v', 'w'])
 
@@ -80,7 +80,7 @@ plt.plot(info_time, info_X)
 plt.plot(info_time, info_Y)
 plt.plot(info_time, info_Z)
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Position NED [m]')
 plt.title('X,Y and Z')
 plt.legend(['X', 'Y', 'Z'])
 
@@ -105,7 +105,7 @@ plt.plot(info_time, Euler_angles[:, 0])
 plt.plot(info_time, Euler_angles[:, 1])
 plt.plot(info_time, Euler_angles[:, 2])
 plt.xlabel('time')
-plt.ylabel('data')
+plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
 

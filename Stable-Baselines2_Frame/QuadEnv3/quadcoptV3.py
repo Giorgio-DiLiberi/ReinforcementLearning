@@ -47,21 +47,32 @@ class QuadcoptEnvV3(gym.Env):
     self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
     self.rM2=np.array([-self.Lx/2, self.Ly/2, 0.])
     self.rM3=np.array([-self.Lx/2, -self.Ly/2, 0.])
-    self.rM4=np.array([self.Lx/2, -self.Ly/2, 0.])    
+    self.rM4=np.array([self.Lx/2, -self.Ly/2, 0.]) 
 
+    # atmosphere definition (assumed constant but a standard atmosphere model can be included)
+    self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
+    self.g0 = 9.815  #[m/s^2] gravity acceleration
+
+    # mass of components
     self.mass = 1.   #[kg] mass is 600 grams can be changed
-
+    self.motor_mass = 0.04 #[kg] mass of one motor+prop
+    self.body_mass= 0.54 #[kg] mass of body frame + electronics (for inertia it is considered as 
+    # uniformly distributed in a sphere centered in CG with radius 0.06m)
+    self.battery_mass = 0.3 #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+    
+    self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
+   
     ## Inertia tensor is considered dyagonal, null the other components
-    self.Ix = 0.06    #[kg m^2] rotational Inertia referred to X axis
-    self.Iy = 0.06    #[kg m^2] rotational Inertia referred to Y axis
-    self.Iz = 0.06    #[kg m^2] rotational Inertia referred to Z axis
+    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass + (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
+    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass + (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
+    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
     # Inertia tensor composition
     self.InTen = np.array([[self.Ix, 0., 0.],[0., self.Iy, 0.],[0., 0., self.Iz]])
 
     # Inertia vector: vector with 3 principal inertia useful in evaluating the Omega_dot
     self.InVec = np.diag(self.InTen)
 
-    # Throttle constants
+    # Throttle constants for mapping
     self.dTt = .25 # trim throttle to hover
     self.d2 = 0.65 # Assumed value for first constant in action to throttle mapping
     self.d1 = 1 - self.d2 - self.dTt # second constant for maping (see notebook)
@@ -76,9 +87,8 @@ class QuadcoptEnvV3(gym.Env):
     self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    # atmosphere definition (assumed constant but a standard atmosphere model can be included)
-    self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
-    self.g0 = 9.815  #[m/s^2] gravity acceleration
+    self.C_DR = 0.01 # [kg m^2/s] constant to evaluate the aerodynaic torque which model a drag
+    # for angular motion, coefficient is assumed
 
     # integration parameters: constant step of 0.1 [s]
     self.timeStep = 0.01
@@ -256,6 +266,20 @@ class QuadcoptEnvV3(gym.Env):
 
       return drag
 
+  def dragTorque(self, Omega):
+      """
+      Function which generates the resistive aerodynamic torque as reported on the notes.
+      This torque is assumed to be linear to the angular velocity components and the coefficient
+      is the same for each axis. This model is decoupled.
+      Input is angular velocity vector and output is Torque vector.
+      """
+
+      DragTorque = - self.C_DR * Omega
+
+      return DragTorque
+
+
+
   def eqnsOfMotion(self, State, Throttle):
 
       """
@@ -289,14 +313,15 @@ class QuadcoptEnvV3(gym.Env):
       # TORQUES [N m]:
       # as first assumption only the thrust components of the motors combined are considered
       # as torque generator; gyroscopical effects of the props are neglected in this model. 
-      # those components are NOT divided by the respective moment of Inertia
+      # those components are NOT divided by the respective moment of Inertia.
+      # Also the aerodynamic drag torque effect is added
       Mtot = np.cross(self.rM1, T1) + np.cross(self.rM2, T2)\
          + np.cross(self.rM3, T3) + np.cross(self.rM4, T4)\
-            + np.array([0., 0., (dT1 + dT3 - dT2 - dT4) * self.Kt])
+            + np.array([0., 0., (dT1 + dT3 - dT2 - dT4) * self.Kt])\
+              + self.dragTorque(Omega)
 
       # WEIGHT [N] in body axes
-      Wned = np.array([0, 0, self.mass * self.g0]) # weight vector in NED axes
-      WB = np.dot(LBE, Wned) # weight in body axes
+      WB = np.dot(LBE, self.Wned) # weight in body axes
 
       # DRAG [N] in body axes
       DB = self.Drag(Vb)
