@@ -63,9 +63,14 @@ class QuadcoptEnvV3(gym.Env):
     self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
    
     ## Inertia tensor is considered dyagonal, null the other components
-    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass + (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
-    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass + (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
-    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
+    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass +\
+      (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
+    
+    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass +\
+      (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
+    
+    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass +\
+      0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
     # Inertia tensor composition
     self.InTen = np.array([[self.Ix, 0., 0.],[0., self.Iy, 0.],[0., 0., self.Iz]])
 
@@ -80,7 +85,7 @@ class QuadcoptEnvV3(gym.Env):
     self.s1 = self.dTt - self.s2
 
     self.maxThrust = 9.815 #[N] single engine maximum possible thrust taken as 1kg (9.81 N) (empirical)
-    self.Kt = 0.9815 ##[N m] ATTENTION, proportional constant for assumption about the torque of the motors
+    self.Kt = 0.0133*self.maxThrust ##[N m] ATTENTION, proportional constant for assumption about the torque of the motors
     # this constant is multiplied by the throttle of the motor, this model of torque has to be validated.
     
     self.Cd = np.array([0.2, 0.2, 0.2]) # Vector of drag constants for three main body axes normal surfaces
@@ -90,7 +95,7 @@ class QuadcoptEnvV3(gym.Env):
     self.C_DR = 0.01 # [kg m^2/s] constant to evaluate the aerodynaic torque which model a drag
     # for angular motion, coefficient is assumed
 
-    # integration parameters: constant step of 0.1 [s]
+    # integration parameters: constant step of 0.01 [s]
     self.timeStep = 0.01
 
     # Constants to normalize state and reward
