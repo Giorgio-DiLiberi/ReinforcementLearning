@@ -84,8 +84,8 @@ class QuadcoptEnvV4(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 2500 # [RPM/V] known for te specific motor
-    self.V_batt_nom = 14.8 # [V] nominal battery voltage 
+    self.Motor_Kv = 1425. # [RPM/V] known for te specific motor to obtain 1kg max thrust
+    self.V_batt_nom = 11.1 # [V] nominal battery voltage 
     self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
 
     # Props Values
@@ -101,7 +101,7 @@ class QuadcoptEnvV4(gym.Env):
 
     # Throttle constants for mapping (mapping is linear-cubic, see the act2Thr() method)
     self.dTt = np.sqrt(self.mass * self.g0 / (4*self.Prop_Kf)) / self.nMax_motor # trim throttle to hover
-    self.d2 = 0.65 # Assumed value for first constant in action to throttle mapping
+    self.d2 = 0.72 # Assumed value for first constant in action to throttle mapping
     self.d1 = 1 - self.d2 - self.dTt # second constant for maping (see notebook)
     self.s2 = self.d2 - 1 + 2*self.dTt # first constant for left part
     self.s1 = self.dTt - self.s2
@@ -122,7 +122,7 @@ class QuadcoptEnvV4(gym.Env):
     # useful Constants to normalize state and evaluate reward
     self.VmaxSquared = 2500 #[(m/s)^2] Squared by deafult to save some computation
 
-    self.Goal_Altitude = -10 #[m] altitude to achieve is 10 m
+    self.Goal_Altitude = -25 #[m] altitude to achieve is 10 m
 
 
     # PID constants
@@ -188,7 +188,7 @@ class QuadcoptEnvV4(gym.Env):
       Reset state 
       """
       
-      self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,-50.]) # to initialize the state the object is put in x0=20 and v0=0
+      self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,-25.]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
@@ -230,10 +230,13 @@ class QuadcoptEnvV4(gym.Env):
       u, v, w = self.state[0:3]
       q0 = self.state[6]
       X, Y, Z = self.state[10:13] 
+
+      posXY_onReward_weight = 0.001 + 0. * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
       
       reward = q0 - ((u**2)/ self.VmaxSquared) - ((v**2)/ self.VmaxSquared) - \
-        ((w**2)/ self.VmaxSquared) - (((Z - self.Goal_Altitude)**2)/ self.Obs_normalization_vector[12])\
-          - ((X**2)/ self.Obs_normalization_vector[11]) - ((Y**2)/ self.Obs_normalization_vector[11])
+        ((w**2)/ self.VmaxSquared) - (((Z - self.Goal_Altitude)**2)/ (self.Obs_normalization_vector[12]**2))\
+          - posXY_onReward_weight * (((X**2)/ (self.Obs_normalization_vector[11]**2)) +\
+             ((Y**2)/ (self.Obs_normalization_vector[11]**2)))
 
           ## Added to the reward the goals on space and height to look for zero drift on position      
 

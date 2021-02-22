@@ -44,16 +44,17 @@ del i
 obs = env.reset()
 
 # info vectors initialization for simulation history
-info_u=[env.state[0]]
-info_v=[env.state[1]]
-info_w=[env.state[2]]
-info_p=[env.state[3]]
-info_q=[env.state[4]]
-info_r=[env.state[5]]
-info_quaternion=np.array([env.state[6:10]]) # quaternion stored in a np.array matrix
-info_X=[env.state[10]]
-info_Y=[env.state[11]]
-info_Z=[env.state[12]]
+info_u = [env.state[0]]
+info_v = [env.state[1]]
+info_w = [env.state[2]]
+info_p = [env.state[3]]
+info_q = [env.state[4]]
+info_r = [env.state[5]]
+info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array matrix
+info_X = [env.state[10]]
+info_Y = [env.state[11]]
+info_Z = [env.state[12]]
+episode_reward = [0.]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -78,6 +79,7 @@ for i in range(1, tieme_steps_to_simulate):
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
+    episode_reward.append(reward) # save the reward for all the episode
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -140,5 +142,11 @@ plt.xlabel('time')
 plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
+
+plt.figure(5)
+plt.plot(info_time, Euler_angles[:, 0])
+plt.xlabel('time')
+plt.ylabel('Reward')
+plt.title('Episode Reward')
 
 plt.show()

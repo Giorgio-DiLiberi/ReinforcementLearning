@@ -22,3 +22,5 @@ print("action[0]= ", dT1, dT2, dT3, dT4)
 dT1, dT2, dT3, dT4 = env.act2ThrotMap([1., 1., 1., 1.])
 
 print("action[1]= ", dT1, dT2, dT3, dT4)
+
+print("max thrust= ", env.Prop_Kf * (env.nMax_motor**2))
