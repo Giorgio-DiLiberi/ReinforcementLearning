@@ -24,3 +24,7 @@ dT1, dT2, dT3, dT4 = env.act2ThrotMap([1., 1., 1., 1.])
 print("action[1]= ", dT1, dT2, dT3, dT4)
 
 print("max thrust= ", env.Prop_Kf * (env.nMax_motor**2))
+
+env.reset()
+print("test output for q0= ", env.state[6])
+print("test output for POS= ", env.state[10:13])

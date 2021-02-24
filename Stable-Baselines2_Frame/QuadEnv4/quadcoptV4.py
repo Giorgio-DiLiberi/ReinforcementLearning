@@ -43,8 +43,10 @@ class QuadcoptEnvV4(gym.Env):
     self.Obs_normalization_vector = np.array([50. , 50. , 50. , 20. , 20. , 20. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
                                         
     self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
-    self.Lx = 0.2   #[m] X body Length (squared x configuration)
-    self.Ly = 0.2   #[m] Y body Length
+
+    # Quadcopter construction params
+    self.Lx = 0.241   #[m] X body Length (squared x configuration)
+    self.Ly = 0.241   #[m] Y body Length
     
     # Motors position vectors from CG
     self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
@@ -89,9 +91,9 @@ class QuadcoptEnvV4(gym.Env):
     self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
 
     # Props Values
-    self.D_prop = 0.1778 #[m] diameter for 7 inch prop
-    self.Ct = 0.1164 # Constant of traction tabulated for V=0
-    self.Cp = 0.064  # Constant of power tabulated for v=0
+    self.D_prop = 0.2032 #[m] diameter for 8 inch prop
+    self.Ct = 0.1087 # Constant of traction tabulated for V=0 (Average value for 10000RPM)
+    self.Cp = 0.0477  # Constant of power tabulated for v=0 (Average value for 10000RPM)
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
     # now force and torque are evaluated as:
@@ -189,7 +191,7 @@ class QuadcoptEnvV4(gym.Env):
       """
       
       self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,-25.]) # to initialize the state the object is put in x0=20 and v0=0
-      
+      #self.state = np.array([0.,1.,2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,-25.]) # to test the output
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
       obs = self.state / self.Obs_normalization_vector
@@ -231,12 +233,12 @@ class QuadcoptEnvV4(gym.Env):
       q0 = self.state[6]
       X, Y, Z = self.state[10:13] 
 
-      posXY_onReward_weight = 0.001 + 0. * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
+      posXY_onReward_weight = 0.1 + 0. * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
       
       reward = q0 - ((u**2)/ self.VmaxSquared) - ((v**2)/ self.VmaxSquared) - \
-        ((w**2)/ self.VmaxSquared) - (((Z - self.Goal_Altitude)**2)/ (self.Obs_normalization_vector[12]**2))\
-          - posXY_onReward_weight * (((X**2)/ (self.Obs_normalization_vector[11]**2)) +\
-             ((Y**2)/ (self.Obs_normalization_vector[11]**2)))
+        ((w**2)/ self.VmaxSquared) - (((Z - self.Goal_Altitude)**2)/ 10000)\
+          - posXY_onReward_weight * (((X**2)/ 2500) +\
+             ((Y**2)/ 2500))
 
           ## Added to the reward the goals on space and height to look for zero drift on position      
 
@@ -259,47 +261,47 @@ class QuadcoptEnvV4(gym.Env):
       if Z_1>=0. or Z_1<=-100. : 
 
         done = True
-        print("Z outbound---> ", Z_1)
+        print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(u_1)>=50. :
 
         done = True
-        print("u outbound---> ", u_1)
+        print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(v_1)>=50. :
 
         done = True
-        print("v outbound---> ", v_1)
+        print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(w_1)>=50. :
 
         done = True
-        print("w outbound---> ", w_1)
+        print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(p_1)>=20. :
 
         done = True
-        print("p outbound---> ", p_1)
+        print("p outbound---> ", p_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(q_1)>=20. :
 
         done = True
-        print("q outbound---> ", q_1)
+        print("q outbound---> ", q_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(r_1)>=20. :
 
         done = True
-        print("r outbound---> ", r_1)
+        print("r outbound---> ", r_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(X_1)>=50. :
 
         done = True
-        print("X outbound---> ", X_1)
+        print("X outbound---> ", X_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(Y_1)>=50. :
 
         done = True
-        print("Y outbound---> ", Y_1)
+        print("Y outbound---> ", Y_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(q0_1)>=1.0000000001 or abs(q1_1)>=1.0000000001 or abs(q2_1)>=1.0000000001 or abs(q3_1)>=1.0000000001 :
 
@@ -309,10 +311,13 @@ class QuadcoptEnvV4(gym.Env):
         print("q1 = ", q1_1)
         print("q2 = ", q2_1)
         print("q3 = ", q3_1)
+        print("in ", self.elapsed_time_steps, " steps")
 
       elif self.elapsed_time_steps >= self.max_Episode_time_steps:
 
         done = True
+
+        print("Episode finished: ", self.elapsed_time_steps, " steps")
         
       else :
 

@@ -20,25 +20,46 @@ env = QuadcoptEnvV4()
 
 tieme_steps_to_simulate = 1000 ## define the number of timesteps to simulate
 
-## Function for policy loading
+######################################
+##      POLICY LOADING SECTION      ##
+######################################
+
 # use of os.path.exists() to check and load the last policy evaluated by training
 # function.
 print("Policy loading...")
 
-for i in range(100, 0, -1): ## function look for the last policy evaluated.
-  fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv4/Policies/PPO_Quad_" + str(i) + ".zip"
+Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\nbest: loads best policy saved\nsel: loads a specified policy\n-----> ")
 
-  if os.path.exists(fileName_toFind):
-    print("last policy found is PPO_Quad_", i)
+if Policy_loading_mode == "last":
+  for i in range(100, 0, -1): ## function look for the last policy evaluated.
+    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv4/Policies/PPO_Quad_" + str(i) + ".zip"
 
-    file_toLoad = "Policies/PPO_Quad_" + str(i)
-    model = PPO2.load(file_toLoad)
+    if os.path.exists(fileName_toFind):
+      print("last policy found is PPO_Quad_", i)
 
-    print("Last trained policy loaded correctly!")
-    break
+      Policy2Load = "Policies/PPO_Quad_" + str(i)
+      
+      break
 
-del i
+  del i
 
+elif Policy_loading_mode == "best":
+
+  Policy2Load = "EvalClbkLogs/best_model.zip" # best policy name
+
+else:
+
+  Policy_number = input("enter the number of policy to load (check before if exists): ")
+  Policy2Load = "Policies/PPO_Quad_" + str(Policy_number)
+  
+
+model = PPO2.load(Policy2Load)
+print("Policy ", Policy2Load, " loaded!")
+
+######################################
+##     SIMULATION SECTION           ##
+######################################
+ 
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
 obs = env.reset()
@@ -54,7 +75,7 @@ info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array 
 info_X = [env.state[10]]
 info_Y = [env.state[11]]
 info_Z = [env.state[12]]
-episode_reward = [0.]
+episode_reward = [env.getReward()]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -144,7 +165,7 @@ plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
 
 plt.figure(5)
-plt.plot(info_time, Euler_angles[:, 0])
+plt.plot(info_time, episode_reward)
 plt.xlabel('time')
 plt.ylabel('Reward')
 plt.title('Episode Reward')

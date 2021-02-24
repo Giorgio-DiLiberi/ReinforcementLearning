@@ -16,4 +16,4 @@ Le modifiche rispetto alla precedente versione sono riportate anche sul quaderno
     
 -La cartella Simulation results contiene i risultati di simulazioni fatte con actionTest o con il simulatore di policy allenate.
     
-
+-la cartella "EvalClbkLogs" contiene la best policy salvata con call backs di valutazione fatta durante l'allenamento
