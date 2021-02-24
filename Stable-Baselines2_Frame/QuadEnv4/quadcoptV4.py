@@ -32,7 +32,7 @@ class QuadcoptEnvV4(gym.Env):
     # To give normalized observations boundaries are fom -1 to 1, the problem scale 
     # is adapted to the physical world in step function.
     # The normalization is performed using limits reported above
-    highObsSpace = np.array([1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
+    highObsSpace = np.array([1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3 , 1.3])
     lowObsSpace = -highObsSpace
     # lowObsSpace = np.array([-1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1 , -1.1])
     self.observation_space = spaces.Box(lowObsSpace, highObsSpace, dtype=np.float32) # boundary is set 0.1 over to avoid AssertionError
@@ -103,7 +103,7 @@ class QuadcoptEnvV4(gym.Env):
 
     # Throttle constants for mapping (mapping is linear-cubic, see the act2Thr() method)
     self.dTt = np.sqrt(self.mass * self.g0 / (4*self.Prop_Kf)) / self.nMax_motor # trim throttle to hover
-    self.d2 = 0.72 # Assumed value for first constant in action to throttle mapping
+    self.d2 = 1 - self.dTt - 0.1 # Assumed value for first constant in action to throttle mapping (to test use plotEX.py)
     self.d1 = 1 - self.d2 - self.dTt # second constant for maping (see notebook)
     self.s2 = self.d2 - 1 + 2*self.dTt # first constant for left part
     self.s1 = self.dTt - self.s2
@@ -115,9 +115,13 @@ class QuadcoptEnvV4(gym.Env):
     self.C_DR = 0.01 # [kg m^2/s] constant to evaluate the aerodynamic torque which model a drag
     # for angular motion, coefficient is assumed
 
-    # integration parameters: constant step of 0.01 [s]
-    self.timeStep = 0.01
-    self.max_Episode_time_steps = 2000 # maximum number of timesteps in an episode (=20s)
+    # integration parameters: The dynamics simulation time is different from the time step size
+    # for policy deployment and evaluation: 
+    # For the dynamics a dynamics_timeStep is used as 0.01 s 
+    # The policy time steps is 0.1 (this step is also the one taken outside)
+    self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
+    self.timeStep = 0.1 #[s] time step for policy
+    self.max_Episode_time_steps = 200 # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -141,40 +145,37 @@ class QuadcoptEnvV4(gym.Env):
   def step(self, action):
 
       # State-action variables assignment
-      State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
       
       Throttle = self.act2ThrotMap(action) # composition of throttle vector basing on actions
 
-      h = self.timeStep 
-
-      # Integration of the equation of motion with Runge-Kutta 4 order method
-      ## The state derivatives funcion xVec_dot = fvec(x,u) is implemented in a separate function
-      k1vec = h * self.eqnsOfMotion(State_curr_step, Throttle)
-
-      # Evaluation of K2 from state+K1/2
-      k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), Throttle)
-
-      # Evaluation of K3 from state+k2/2
-      k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5 * k2vec), Throttle)
+      State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation
+      h = self.dynamics_timeStep # Used only for RK
       
-      #E valuation of K4 from state+K3
-      k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), Throttle)
+      ###### INTEGRATION OF DYNAMICS EQUATIONS ###
+      for RK_Counter in range(10): 
+        # to separate the time steps the integration is performed in a for loop which runs
+        # into the step function for nTimes = policy_timeStep / dynamics_timeStep
 
-      # Final step of integration 
-      State_next_step = State_curr_step + (k1vec/6) + (k2vec/3) + (k3vec/3) + (k4vec/6)
-
+        # Integration of the equation of motion with Runge-Kutta 4 order method
+        ## The state derivatives funcion xVec_dot = fvec(x,u) is implemented in a separate function
+        k1vec = h * self.eqnsOfMotion(State_curr_step, Throttle) # Action stays unchanged for this loop
+        k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), Throttle) # K2 from state+K1/2
+        k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k2vec), Throttle) # K3 from state+k2/2
+        k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), Throttle) # K4 from state+K3
+        # Final step of integration 
+        State_curr_step = State_curr_step + (k1vec/6) + (k2vec/3) + (k3vec/3) + (k4vec/6)
 
       # self.state variable assignment with next step values (step n+1)
-      self.state = State_next_step
+      self.state = State_curr_step ## State_curr_step is now updated with RK4
 
-      self.elapsed_time_steps += 1 # update for time steps
+      self.elapsed_time_steps += 1 # update for policy time steps
 
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
       obs = self.state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
-      u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = State_next_step
+      u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
       reward = self.getReward()
 
@@ -195,6 +196,7 @@ class QuadcoptEnvV4(gym.Env):
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
       obs = self.state / self.Obs_normalization_vector
+
       return obs  # produce an observation of the first state (xPosition) 
 
   def act2ThrotMap(self, actions):

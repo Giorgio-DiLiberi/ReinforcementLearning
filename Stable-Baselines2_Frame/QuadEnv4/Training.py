@@ -16,7 +16,7 @@ from quadcoptV4 import QuadcoptEnvV4
 
 # Definition of Hyperparameters
 LearningRate = 1.0e-4
-LearningTimeSteps = 10**6
+LearningTimeSteps = 10**6 ## Time step size for policy evaluation and deployment is 0.1 s
 
 if __name__ == '__main__':
     #log_dir = "Tensorflow_logs/"

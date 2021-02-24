@@ -82,9 +82,7 @@ info_time=[time] # elapsed time vector
 
 # SIMULATION
 
-for i in range(1, tieme_steps_to_simulate):
-
-    # uncomment the correct statement to test trim or a policy
+for i in range(tieme_steps_to_simulate): #last number is excluded
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
