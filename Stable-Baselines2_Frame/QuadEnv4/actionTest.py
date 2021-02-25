@@ -31,7 +31,7 @@ for i in range(1000):
     # Uncomment the action to test
     #action = np.array([0., 0., 0., 0.]) # Trim
     #action = np.array([-1, -1, -1, -1]) # Free-Fall
-    action = np.array([0.1, 0., 0., 0.1]) # variable
+    action = np.array([0., 0., 0., 0.]) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 

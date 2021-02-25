@@ -349,7 +349,6 @@ class QuadcoptEnvV3(gym.Env):
 
       return DragTorque
 
-
   def Motor(self, Throttle):
 
       """
@@ -366,8 +365,6 @@ class QuadcoptEnvV3(gym.Env):
       Torque = self.K_Q * Thrust #[N m]
 
       return Thrust, Torque # return scalar thrust and torque
-
-
 
   def eqnsOfMotion(self, State, Throttle):
 

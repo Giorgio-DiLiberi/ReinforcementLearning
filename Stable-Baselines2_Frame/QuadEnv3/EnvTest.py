@@ -18,7 +18,7 @@ dT1, dT2, dT3, dT4 = env.act2ThrotMap([0., 0., 0., 0.])
 
 print("action[0]= ", dT1, dT2, dT3, dT4)
 
-dT1, dT2, dT3, dT4 = env.act2ThrotMap([0.1, 0.1, 0.1, 0.1])
+dT1, dT2, dT3, dT4 = env.act2ThrotMap([1., 1., 1., 1.])
 
 print("action[0.1]= ", dT1, dT2, dT3, dT4)
 

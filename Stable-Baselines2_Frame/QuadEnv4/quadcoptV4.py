@@ -409,7 +409,7 @@ class QuadcoptEnvV4(gym.Env):
       LBE = np.transpose(LEB) # Evaluate transpose of body to NED---> NED to body
       
 
-      #THRUST Evaluation [N] 
+      #THRUST Evaluation [N]
       # is evaluated negative because thrust is oriented in the negative verse of Zb
       # according to how props generate the thrust.
       T1 = np.array([0, 0, - M1_Thrust])
