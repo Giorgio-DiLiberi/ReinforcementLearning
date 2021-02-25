@@ -95,10 +95,10 @@ class QuadcoptEnvV4(gym.Env):
     self.Ct = 0.1087 # Constant of traction tabulated for V=0 (Average value for 10000RPM)
     self.Cp = 0.0477  # Constant of power tabulated for v=0 (Average value for 10000RPM)
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]
-    self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
+    self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5) / (2*np.pi) #[kg m^2]
     # now force and torque are evaluated as:
     # F=Kf * N_prop^2 
-    # F=Kq * N_prop^2 in an appropriate method   
+    # Q=Kq * N_prop^2 in an appropriate method   
     # N are rounds per sec (not rad/s) 
 
     # Throttle constants for mapping (mapping is linear-cubic, see the act2Thr() method)
@@ -152,7 +152,7 @@ class QuadcoptEnvV4(gym.Env):
       h = self.dynamics_timeStep # Used only for RK
       
       ###### INTEGRATION OF DYNAMICS EQUATIONS ###
-      for RK_Counter in range(10): 
+      for _RK_Counter in range(10): 
         # to separate the time steps the integration is performed in a for loop which runs
         # into the step function for nTimes = policy_timeStep / dynamics_timeStep
 
@@ -165,6 +165,7 @@ class QuadcoptEnvV4(gym.Env):
         # Final step of integration 
         State_curr_step = State_curr_step + (k1vec/6) + (k2vec/3) + (k3vec/3) + (k4vec/6)
 
+      ######### COMPOSITION OF STEP OUTPUT
       # self.state variable assignment with next step values (step n+1)
       self.state = State_curr_step ## State_curr_step is now updated with RK4
 
@@ -365,7 +366,7 @@ class QuadcoptEnvV4(gym.Env):
       """
       Function which models the motors and props:
       input: Motor throttle [0,1]
-      output: Motor thrust and torque.
+      output: Motor thrust[N] and torque[N m].
       The model is assumed to be at V=0 so it is good for hovering but inaccurate when moving forward.
       Pay attention that output are absolute values so vector form and signs have to be adjusted
       where the method is called according to construction choises (For this reason this method 

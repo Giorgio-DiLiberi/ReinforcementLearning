@@ -1,9 +1,6 @@
 # "QuadEnv2" 
-Questa cartella contiene la terza versione dell'environment quadricottero. 
-Le modifiche rispetto alla prima versione sono riportate anche sul quaderno:
--implementazione delle eqauazioni del moto tramite vettori e matrici
-
--nel file di simulazione è stata migliorata la sezione per il plot 
+Questa cartella contiene la quarta versione dell'environment quadricottero. 
+Le modifiche rispetto alla precedente versione sono riportate anche sul quaderno e consistono nel fatto che in questo environment Il modello del motore è piu accurato come riportato sul notebook
 
 -La cartella chiamata log contiene i file generati con tensorboard da leggere tramite comando
 >>>>> $ tensorboard --logdir ./tensorboardLogs/ (Se la cartella con i logs si chiama tensorboardLogs)
@@ -19,5 +16,4 @@ Le modifiche rispetto alla prima versione sono riportate anche sul quaderno:
     
 -La cartella Simulation results contiene i risultati di simulazioni fatte con actionTest o con il simulatore di policy allenate.
     
-EDIT 16/02 
-Dopo il primo training da 1M di passi è stato tenuto sia il log che la policy con numero 1
+-la cartella "EvalClbkLogs" contiene la best policy salvata con call backs di valutazione fatta durante l'allenamento
