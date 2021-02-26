@@ -27,7 +27,7 @@ class QuadcoptEnvV4(gym.Env):
 
     # Creation of observation space: an array for maximum values is created using a classical Flight Dynamics states 
     # rapresentation with quaternions (state[min, max][DimensionalUnit]): 
-    # u[-50,50][m/s], v[-50,50][m/s], w[-50,50][m/s], p[-20,20][rad/s], q[-20,20][rad/s], r[-20,20][rad/s],...
+    # u[-50,50][m/s], v[-50,50][m/s], w[-50,50][m/s], p[-50,50][rad/s], q[-50,50][rad/s], r[-50,50][rad/s],...
     #  q0[-1,1], q1[-1,1], q2[-1,1], q3[-1,1], X[-50,50][m], Y[-50,50][m], Z[-100,0][m].
     # To give normalized observations boundaries are fom -1 to 1, the problem scale 
     # is adapted to the physical world in step function.
@@ -40,7 +40,7 @@ class QuadcoptEnvV4(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([50. , 50. , 50. , 20. , 20. , 20. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
+    self.Obs_normalization_vector = np.array([50. , 50. , 50. , 50. , 50. , 50. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
                                         
     self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
 
@@ -86,7 +86,7 @@ class QuadcoptEnvV4(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1425. # [RPM/V] known for te specific motor to obtain 1kg max thrust
+    self.Motor_Kv = 1000. # [RPM/V] known for te specific motor to obtain 1kg max thrust
     self.V_batt_nom = 11.1 # [V] nominal battery voltage 
     self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
 
@@ -118,18 +118,22 @@ class QuadcoptEnvV4(gym.Env):
     # integration parameters: The dynamics simulation time is different from the time step size
     # for policy deployment and evaluation: 
     # For the dynamics a dynamics_timeStep is used as 0.01 s 
-    # The policy time steps is 0.1 (this step is also the one taken outside)
+    # The policy time steps is 0.04 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
-    self.timeStep = 0.1 #[s] time step for policy
-    self.max_Episode_time_steps = 200 # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.timeStep = 0.04 #[s] time step for policy action update
+    self.max_Episode_time_steps = 500 # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
     # useful Constants to normalize state and evaluate reward
     self.VmaxSquared = 2500 #[(m/s)^2] Squared by deafult to save some computation
 
-    self.Goal_Altitude = -25 #[m] altitude to achieve is 10 m
-
+    # Setting up a goal to reach affecting reward (it seems to work better with humans 
+    # rather than forcing them to stay in their original position, and humans are
+    # biological neural networks)
+    self.X_Pos_Goal = 0. #[m] goal x position
+    self.Y_Pos_Goal = 0. #[m] goal y position
+    self.Goal_Altitude = -25 #[m] altitude to achieve is 25 m
 
     # PID constants
     self.p_P = 0.1 # proportional gain p
@@ -152,7 +156,7 @@ class QuadcoptEnvV4(gym.Env):
       h = self.dynamics_timeStep # Used only for RK
       
       ###### INTEGRATION OF DYNAMICS EQUATIONS ###
-      for _RK_Counter in range(10): 
+      for _RK_Counter in range(4): 
         # to separate the time steps the integration is performed in a for loop which runs
         # into the step function for nTimes = policy_timeStep / dynamics_timeStep
 
@@ -232,14 +236,13 @@ class QuadcoptEnvV4(gym.Env):
       output: reward, scalar value.
       """
 
-      u, v, w = self.state[0:3]
-      q0 = self.state[6]
-      X, Y, Z = self.state[10:13] 
+      q0, q1, q2, q3, X, Y, Z = self.state[6:13]
 
-      posXY_onReward_weight = 0.1 + 0. * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
+      posXY_onReward_weight = 0.01 + 0. * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
+      altitude_onReward_weight = 0.1
       
-      reward = q0 - ((u**2)/ self.VmaxSquared) - ((v**2)/ self.VmaxSquared) - \
-        ((w**2)/ self.VmaxSquared) - (((Z - self.Goal_Altitude)**2)/ 10000)\
+      reward = - (((q1**2) + (q2**2) + (q3**2))/q0**2)\
+         - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/ 10000)\
           - posXY_onReward_weight * (((X**2)/ 2500) +\
              ((Y**2)/ 2500))
 
@@ -281,17 +284,17 @@ class QuadcoptEnvV4(gym.Env):
         done = True
         print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(p_1)>=20. :
+      elif abs(p_1)>=50. :
 
         done = True
         print("p outbound---> ", p_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(q_1)>=20. :
+      elif abs(q_1)>=50. :
 
         done = True
         print("q outbound---> ", q_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(r_1)>=20. :
+      elif abs(r_1)>=50. :
 
         done = True
         print("r outbound---> ", r_1, "   in ", self.elapsed_time_steps, " steps")

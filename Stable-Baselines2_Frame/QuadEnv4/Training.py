@@ -19,7 +19,7 @@ from quadcoptV4 import QuadcoptEnvV4
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 10**5 ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = 10**6 ## Time step size for policy evaluation and deployment is 0.1 s
 
 LearningRate_ini = 1.0e-4 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
@@ -44,12 +44,12 @@ if __name__ == '__main__':
 
     eval_env = DummyVecEnv([lambda : QuadcoptEnvV4()]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
-                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 2000,
+                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 6000,
                              deterministic=True, render=False)
 
     model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate,
             cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=2,
-            noptepochs=2, n_steps=200)
+            noptepochs=2, n_steps=500)
     
 
     ################################################

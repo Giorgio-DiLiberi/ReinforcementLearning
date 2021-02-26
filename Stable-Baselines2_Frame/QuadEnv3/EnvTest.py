@@ -22,7 +22,10 @@ dT1, dT2, dT3, dT4 = env.act2ThrotMap([1., 1., 1., 1.])
 
 print("action[0.1]= ", dT1, dT2, dT3, dT4)
 
+print("Max possible motor thrust = ", env.Max_motor_Thrust)
+
 
 env.reset()
 print("test output for q0= ", env.state[6])
 print("test output for POS= ", env.state[10:13])
+print("reset Reward is: ", env.getReward())

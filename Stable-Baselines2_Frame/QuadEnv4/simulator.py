@@ -18,7 +18,7 @@ from quadcoptV4 import QuadcoptEnvV4
 
 env = QuadcoptEnvV4()
 
-tieme_steps_to_simulate = 1000 ## define the number of timesteps to simulate
+tieme_steps_to_simulate = env.max_Episode_time_steps ## define the number of timesteps to simulate
 
 ######################################
 ##      POLICY LOADING SECTION      ##
