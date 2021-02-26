@@ -52,7 +52,9 @@ The directory can be used for:
 
 * train a policy launching the code Training.py, the code save the best policy from EvalCallback() in the directory /EvalClbkLogs, the last policy obtained in /Policies and the tensorboard logs in /tensorboardLogs, to show the logs execute the command:
 
-    $   tensorboard --logdir ./tensorboardLogs/
+    ```bash
+    tensorboard --logdir ./tensorboardLogs/
+    ```
 
 * simulate a saved policy using the code simulator.py which ask for simulating the best policy, the last policy or to select a specific policy
 
@@ -60,4 +62,4 @@ The directory can be used for:
 
 * make some debugging on the environment constants and methods with the code EnvTest.py.
 
-The directory /SimulationResults can be used to store some graphs and useful data resulting from simulation of trained Policies.
+The directory /SimulationResults can be used to store some graphs and useful data resulting from simulation of trained Policies; the directory /custom_modules contains some useful functions.

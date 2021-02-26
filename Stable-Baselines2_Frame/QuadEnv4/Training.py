@@ -12,11 +12,22 @@ from stable_baselines import PPO2
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines.common.callbacks import EvalCallback
 
+## Importing linear function to define a variable cliprange and learning rate
+from custom_modules.learning_schedules import linear_schedule
 from quadcoptV4 import QuadcoptEnvV4
 
 # Definition of Hyperparameters
-LearningRate = 1.0e-4
-LearningTimeSteps = 10**6 ## Time step size for policy evaluation and deployment is 0.1 s
+## clip_range and learning rates are now variable, linear with learning progress:
+# see custom_modules or common  
+LearningTimeSteps = 10**5 ## Time step size for policy evaluation and deployment is 0.1 s
+
+LearningRate_ini = 1.0e-4 # LR initial value for linear interpolation
+#LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
+LearningRate = linear_schedule(LearningRate_ini)
+
+clipRange_ini = 0.2 # Clip initial value for linear interpolation
+#clipRange_fin = 1.e-4 # LR final value for linear interpolation
+cliprange = linear_schedule(clipRange_ini)
 
 if __name__ == '__main__':
     #log_dir = "Tensorflow_logs/"
@@ -36,7 +47,9 @@ if __name__ == '__main__':
                              log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 2000,
                              deterministic=True, render=False)
 
-    model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate, tensorboard_log="./tensorboardLogs/")
+    model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate,
+            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=2,
+            noptepochs=2, n_steps=200)
     
 
     ################################################
