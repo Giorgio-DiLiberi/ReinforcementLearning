@@ -6,14 +6,13 @@ warnings.filterwarnings("ignore")
 
 import gym
 import numpy as np
+import matplotlib
+matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
 import matplotlib.pyplot as plt
-
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 from quadcoptV3 import QuadcoptEnvV3
-
-
 
 
 env = QuadcoptEnvV3()
@@ -118,6 +117,7 @@ plt.xlabel('time')
 plt.ylabel('Angular velocity [rad/s]')
 plt.title('p,q and r')
 plt.legend(['p', 'q', 'r'])
+plt.savefig('SimulationResults/Angular_velocity.jpg')
 
 plt.figure(2)
 plt.plot(info_time, info_u)
@@ -127,6 +127,7 @@ plt.xlabel('time')
 plt.ylabel('Velocity [m/s]')
 plt.title('u,v and w')
 plt.legend(['u', 'v', 'w'])
+plt.savefig('SimulationResults/Velocity.jpg')
 
 plt.figure(3)
 plt.plot(info_time, info_X)
@@ -136,6 +137,7 @@ plt.xlabel('time')
 plt.ylabel('Position NED [m]')
 plt.title('X,Y and Z')
 plt.legend(['X', 'Y', 'Z'])
+plt.savefig('SimulationResults/Position.jpg')
 
 ## CONVERSION OF THE QUATERNION INTO EULER ANGLES
 Euler_angles = np.zeros([np.size(info_quaternion, 0), 3])
@@ -161,11 +163,11 @@ plt.xlabel('time')
 plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
+plt.savefig('SimulationResults/Euler.jpg')
 
 plt.figure(5)
 plt.plot(info_time, episode_reward)
 plt.xlabel('time')
 plt.ylabel('Reward')
 plt.title('Episode Reward')
-
-plt.show()
+plt.savefig('SimulationResults/reward.jpg')

@@ -56,7 +56,7 @@ The directory can be used for:
     tensorboard --logdir ./tensorboardLogs/
     ```
 
-* simulate a saved policy using the code simulator.py which ask for simulating the best policy, the last policy or to select a specific policy
+* simulate a saved policy using the code simulator.py which ask for simulating the best policy, the last policy or to select a specific policy, the simulators in SBs2 use pdf to save plots due to matplolib issues in virtualenvironments
 
 * test some user defined actions with the code actionTest.py
 
