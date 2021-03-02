@@ -63,3 +63,27 @@ The directory can be used for:
 * make some debugging on the environment constants and methods with the code EnvTest.py.
 
 The directory /SimulationResults can be used to store some graphs and useful data resulting from simulation of trained Policies; the directory /custom_modules contains some useful functions.
+
+## Create a virtualenv to use old packages
+
+Here is a how-to create a virtualenv on pc and run it, after run is it possible to install packages on the environment and run them without affecting the main pc packages.
+
+* To create a virtualenv (from home/user dir):
+
+    ```bash
+    python3.7 -m venv virtualEnvsFolder/virtualEnvsName
+    ```
+  
+  If the python version required for the environment is 3.7
+    
+* To activate the environment (from home/user dir):
+
+    ```bash
+    source virtualEnvsFolder/virtualEnvsName/bin/activate
+    ```
+    
+* To deactivate the environment while it is still active:
+
+    ```bash
+    deactivate
+    ```

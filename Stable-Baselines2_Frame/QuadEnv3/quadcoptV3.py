@@ -5,6 +5,7 @@
 # value for each motor wich remains the input for the equations of motion.
 # This model is the third version in which all the scalar operations is substitued by vector
 # ones with numpy
+#from numba import jit
 import numpy as np
 import gym
 from gym import spaces
@@ -87,7 +88,7 @@ class QuadcoptEnvV3(gym.Env):
     # F = Max_thrust * dT
     # Torque is assumed linear with thrust so
     # Q = F * K_Q where K_Q is a constant derived by calcs on props performance data
-    self.Max_motor_Thrust = 9.815 #[N] for simplicity the maximum possible thrust of one motor is 1kgf 
+    self.Max_motor_Thrust = 9.815  #[N] for simplicity the maximum possible thrust of one motor is 1kgf 
     self.K_Q = 0.01419 #[m] evaluated as Cp*D/(Ct*2*pi)
 
     # Throttle constants for mapping (mapping is linear-cubic, see the act2Thr() method)
@@ -109,8 +110,8 @@ class QuadcoptEnvV3(gym.Env):
     # For the dynamics a dynamics_timeStep is used as 0.01 s 
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
-    self.timeStep = 0.05 #[s] time step for policy
-    self.max_Episode_time_steps = 400 # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.timeStep = 0.04 #[s] time step for policy
+    self.max_Episode_time_steps = int(20/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -134,7 +135,6 @@ class QuadcoptEnvV3(gym.Env):
     self.r_p = 0.1 # proportional gain q
     self.r_I = 0.1 # integral gain q
 
-
   def step(self, action):
 
       # State-action variables assignment
@@ -145,7 +145,7 @@ class QuadcoptEnvV3(gym.Env):
       h = self.dynamics_timeStep # Used only for RK
       
       ###### INTEGRATION OF DYNAMICS EQUATIONS ###
-      for _RK_Counter in range(5): 
+      for _RK_Counter in range(int(self.timeStep/self.dynamics_timeStep)): 
         # to separate the time steps the integration is performed in a for loop which runs
         # into the step function for nTimes = policy_timeStep / dynamics_timeStep
 
@@ -321,7 +321,7 @@ class QuadcoptEnvV3(gym.Env):
       return done
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
-
+  #@jit
   def Drag(self, V):
     
       """
@@ -340,6 +340,7 @@ class QuadcoptEnvV3(gym.Env):
 
       return drag
 
+  #@jit
   def dragTorque(self, Omega):
       """
       Function which generates the resistive aerodynamic torque as reported on the notes.
@@ -351,7 +352,8 @@ class QuadcoptEnvV3(gym.Env):
       DragTorque = - self.C_DR * Omega
 
       return DragTorque
-
+  
+  #@jit
   def Motor(self, Throttle):
 
       """
@@ -369,6 +371,7 @@ class QuadcoptEnvV3(gym.Env):
 
       return Thrust, Torque # return scalar thrust and torque
 
+  #@jit
   def eqnsOfMotion(self, State, Throttle):
 
       """
