@@ -67,11 +67,14 @@ The directory /SimulationResults can be used to store some graphs and useful dat
 ## Create a virtualenv to use old packages
 
 Here is a how-to create a virtualenv on pc and run it, after run is it possible to install packages on the environment and run them without affecting the main pc packages.
+In this example I use python 3.7:
 
-* To create a virtualenv (from home/user dir):
+* Install the venv package for the python version:
+
+* To create a virtualenv:
 
     ```bash
-    python3.7 -m venv virtualEnvsFolder/virtualEnvsName
+    python3.7 -m venv /home/user/virtualEnvsFolder/virtualEnvsName
     ```
   
   If the python version required for the environment is 3.7
@@ -79,7 +82,7 @@ Here is a how-to create a virtualenv on pc and run it, after run is it possible 
 * To activate the environment (from home/user dir):
 
     ```bash
-    source virtualEnvsFolder/virtualEnvsName/bin/activate
+    source /home/user/virtualEnvsFolder/virtualEnvsName/bin/activate
     ```
     
 * To deactivate the environment while it is still active:
@@ -87,3 +90,5 @@ Here is a how-to create a virtualenv on pc and run it, after run is it possible 
     ```bash
     deactivate
     ```
+    
+See the [venv webpage](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment) for further information on virtualenvs.
