@@ -76,8 +76,6 @@ In this example I use python 3.7:
     ```bash
     python3.7 -m venv /home/user/virtualEnvsFolder/virtualEnvsName
     ```
-  
-  If the python version required for the environment is 3.7
     
 * To activate the environment (from home/user dir):
 
