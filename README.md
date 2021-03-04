@@ -44,7 +44,7 @@ In root/Stable_Baselines2_Frame is possible to find some sub directory such as .
 
     where Ct and Cp are thrust and power non dimensional constants, D is the prop diameter (in m if IS units are required) and rho is air density, considered constant as height is not supposed to be greater than 50 m ASL for this simulations. In tis Env the observations are the 13 states of the quadrotor and the actions are the 4 motors throttle values.
 
-* Directory QuadEnv5:
+* Directory QuadEnv5: in this model the actions represents the commands on external torques in order: Averge throttle, Aileron command, Elevator command, Rudder command, those commands are mixed in appropriate method.
 
 ## Usage of a QuadEnv directory
 

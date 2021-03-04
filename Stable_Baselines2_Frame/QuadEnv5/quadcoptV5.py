@@ -83,7 +83,7 @@ class QuadcoptEnvV5(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1000. # [RPM/V] known for te specific motor
+    self.Motor_Kv = 1425. # [RPM/V] known for te specific motor
     self.V_batt_nom = 11.1 # [V] nominal battery voltage 
     self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
 
