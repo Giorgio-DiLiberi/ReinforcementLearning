@@ -3,9 +3,9 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 
-from quadcoptV4 import QuadcoptEnvV4
+from quadcoptV5 import QuadcoptEnvV5
 
-env = QuadcoptEnvV4()
+env = QuadcoptEnvV5()
 
 obs = env.reset()
 
@@ -30,8 +30,8 @@ for i in range(1000):
 
     # Uncomment the action to test
     #action = np.array([0., 0., 0., 0.]) # Trim
-    #action = np.array([-1, -1, -1, -1]) # Free-Fall
-    action = np.array([0.01, 0.01, 0.01, 0.01]) # variable
+    #action = np.array([-1., 0., 0., 0.]) # Free-Fall
+    action = np.array([0., 0., 0., 0.]) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 

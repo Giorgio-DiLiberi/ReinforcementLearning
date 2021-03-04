@@ -5,11 +5,16 @@
 # value for each motor wich remains the input for the equations of motion.
 # This model is the third version in which all the scalar operations is substitued by vector
 # ones with numpy
-#from numba import jit
+#from numba import int32, float32
+#from numba.experimental import jitclass
 import numpy as np
 import gym
 from gym import spaces
 
+
+
+
+#@jitclass(variables)
 class QuadcoptEnvV3(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
@@ -116,24 +121,14 @@ class QuadcoptEnvV3(gym.Env):
     
 
     # useful Constants to normalize state and evaluate reward
-    self.VmaxSquared = 2500 #[(m/s)^2] Squared by deafult to save some computation
+    self.VmaxSquared = 2500. #[(m/s)^2] Squared by deafult to save some computation
 
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
     self.X_Pos_Goal = 0. #[m] goal x position
     self.Y_Pos_Goal = 0. #[m] goal y position
-    self.Goal_Altitude = -25 #[m] altitude to achieve is 30 m
-
-    # PID constants
-    self.p_P = 0.1 # proportional gain p
-    self.p_I = 0.1 # integral gain p
-
-    self.q_p = 0.1 # proportional gain q
-    self.q_I = 0.1 # integral gain q
-
-    self.r_p = 0.1 # proportional gain q
-    self.r_I = 0.1 # integral gain q
+    self.Goal_Altitude = -25. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 

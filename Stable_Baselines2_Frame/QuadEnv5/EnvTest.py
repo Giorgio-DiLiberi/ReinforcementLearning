@@ -4,21 +4,14 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 
-from quadcoptV4 import QuadcoptEnvV4
+from quadcoptV5 import QuadcoptEnvV5
 
-env = QuadcoptEnvV4()
+env = QuadcoptEnvV5()
 
-print("Nmax= ", env.nMax_motor)
 print("Trim_thr= ", env.dTt)
 
-dT1, dT2, dT3, dT4 = env.act2ThrotMap([-1., -1., -1., -1.])
+dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([0.1, 0., 1., 0.]))
 
-print("action[-1]= ", dT1, dT2, dT3, dT4)
+print("action[0.1, 0, 0, 0]= ", dT1, dT2, dT3, dT4)
 
-dT1, dT2, dT3, dT4 = env.act2ThrotMap([0., 0., 0., 0.])
-
-print("action[0]= ", dT1, dT2, dT3, dT4)
-
-dT1, dT2, dT3, dT4 = env.act2ThrotMap([1., 1., 1., 1.])
-
-print("action[1]= ", dT1, dT2, dT3, dT4)
+print("average throttle", 0.25 * (dT1+dT2+dT3+dT4))
