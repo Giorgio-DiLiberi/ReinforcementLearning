@@ -42,8 +42,8 @@ class QuadcoptEnvV5(gym.Env):
     self.Obs_normalization_vector = np.array([50. , 50. , 50. , 50. , 50. , 50. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
                                         
     self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
-    self.Lx = 0.2   #[m] X body Length (squared x configuration)
-    self.Ly = 0.2   #[m] Y body Length
+    self.Lx = 0.241   #[m] X body Length (squared x configuration)
+    self.Ly = 0.241   #[m] Y body Length
     
     # Motors position vectors from CG
     self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
@@ -88,9 +88,9 @@ class QuadcoptEnvV5(gym.Env):
     self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
 
     # Props Values
-    self.D_prop = 0.1778 #[m] diameter for 7 inch prop
-    self.Ct = 0.1164 # Constant of traction tabulated for V=0
-    self.Cp = 0.064  # Constant of power tabulated for v=0
+    self.D_prop = 0.2032 #[m] diameter for 7 inch prop
+    self.Ct = 0.1087 # Constant of traction tabulated for V=0
+    self.Cp = 0.0477  # Constant of power tabulated for v=0
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
     # now force and torque are evaluated as:
@@ -106,7 +106,7 @@ class QuadcoptEnvV5(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.2 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.1 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
     self.Cd = np.array([0.2, 0.2, 0.2]) # Vector of drag constants for three main body axes normal surfaces
@@ -122,7 +122,7 @@ class QuadcoptEnvV5(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(20/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -203,10 +203,10 @@ class QuadcoptEnvV5(gym.Env):
 
       q0, q1, q2, q3, X, Y, Z = self.state[6:13]
 
-      posXY_onReward_weight = 0.0 + (1/self.max_Episode_time_steps) * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
-      altitude_onReward_weight = 0.7
+      posXY_onReward_weight = 0.8 + 0*(1/self.max_Episode_time_steps) * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
+      altitude_onReward_weight = 0.8
       
-      reward = - (((q1**2) + (q2**2) + (q3**2))/q0**2)\
+      reward = 1 - (((q1**2) + (q2**2) + (q3**2))/q0**2)\
          - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/ 10000)\
           - posXY_onReward_weight * ((((X - self.X_Pos_Goal)**2)/ 2500) +\
              (((Y - self.Y_Pos_Goal)**2)/ 2500))
@@ -232,47 +232,47 @@ class QuadcoptEnvV5(gym.Env):
       if Z_1>=0. or Z_1<=-100. : 
 
         done = True
-        print("Z outbound---> ", Z_1)
+        print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(u_1)>=50. :
 
         done = True
-        print("u outbound---> ", u_1)
+        print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(v_1)>=50. :
 
         done = True
-        print("v outbound---> ", v_1)
+        print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(w_1)>=50. :
 
         done = True
-        print("w outbound---> ", w_1)
+        print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(p_1)>=50. :
 
         done = True
-        print("p outbound---> ", p_1)
+        print("p outbound---> ", p_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(q_1)>=50. :
 
         done = True
-        print("q outbound---> ", q_1)
+        print("q outbound---> ", q_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(r_1)>=50. :
 
         done = True
-        print("r outbound---> ", r_1)
+        print("r outbound---> ", r_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(X_1)>=50. :
 
         done = True
-        print("X outbound---> ", X_1)
+        print("X outbound---> ", X_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(Y_1)>=50. :
 
         done = True
-        print("Y outbound---> ", Y_1)
+        print("Y outbound---> ", Y_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(q0_1)>=1.0000000001 or abs(q1_1)>=1.0000000001 or abs(q2_1)>=1.0000000001 or abs(q3_1)>=1.0000000001 :
 
@@ -282,11 +282,14 @@ class QuadcoptEnvV5(gym.Env):
         print("q1 = ", q1_1)
         print("q2 = ", q2_1)
         print("q3 = ", q3_1)
+        print("in ", self.elapsed_time_steps, " steps")
 
       elif self.elapsed_time_steps >= self.max_Episode_time_steps:
 
         done = True
 
+        print("Episode finished: ", self.elapsed_time_steps, " steps")
+        
       else :
 
         done = False
@@ -335,10 +338,10 @@ class QuadcoptEnvV5(gym.Env):
       Elevator = actions[2]
       Rudder = actions[3]
 
-      Throttle_M1 = Av_Throttle * (1 + self.Command_scaling_factor * (Elevator - Aileron + Rudder))
-      Throttle_M2 = Av_Throttle * (1 + self.Command_scaling_factor * (- Elevator - Aileron - Rudder))
-      Throttle_M3 = Av_Throttle * (1 + self.Command_scaling_factor * (- Elevator + Aileron + Rudder))
-      Throttle_M4 = Av_Throttle * (1 + self.Command_scaling_factor * (Elevator + Aileron - Rudder))
+      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator - Aileron + Rudder)
+      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Elevator - Aileron - Rudder)
+      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Aileron + Rudder)
+      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Elevator + Aileron - Rudder)
 
       Throttle_array = np.array([Throttle_M1, Throttle_M2, Throttle_M3, Throttle_M4])
 

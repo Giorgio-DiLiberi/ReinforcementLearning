@@ -31,7 +31,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv5/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/QuadEnv5/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
@@ -40,7 +40,7 @@ if Policy_loading_mode == "last":
       
       break
 
-  del i
+  
 
 elif Policy_loading_mode == "best":
 

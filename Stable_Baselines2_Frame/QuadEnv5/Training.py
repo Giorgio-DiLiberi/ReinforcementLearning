@@ -19,9 +19,9 @@ from quadcoptV5 import QuadcoptEnvV5
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 10**6 ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = 2*(10**3) ## Time step size for policy evaluation and deployment is 0.1 s
 
-LearningRate_ini = 1.0e-4 # LR initial value for linear interpolation
+LearningRate_ini = 1.0e-5 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
 LearningRate = linear_schedule(LearningRate_ini)
 
@@ -44,12 +44,12 @@ if __name__ == '__main__':
 
     eval_env = DummyVecEnv([lambda : QuadcoptEnvV5()]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
-                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 1200,
+                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 1024,
                              deterministic=True, render=False)
 
     model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate,
-            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=2,
-            noptepochs=2, n_steps=100)
+            cliprange=cliprange, cliprange_vf=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=4,
+            noptepochs=4, n_steps=64)
 
     ################################################
     # Train the agent and take the time for learning
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     for i in range(1, 100): ## policies name format "PPO_Quad_<numberOfAttempt>.zip"
 
         # check for file existance
-        filename_check = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv5/Policies/PPO_Quad_" + str(i) + ".zip"
+        filename_check = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/QuadEnv5/Policies/PPO_Quad_" + str(i) + ".zip"
         print("file number ", i, " == ", os.path.exists(filename_check))
 
         if os.path.exists(filename_check) == False:

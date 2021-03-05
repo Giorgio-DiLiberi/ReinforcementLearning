@@ -9,7 +9,9 @@ env = QuadcoptEnvV5()
 ## Testing some environments values
 print("Trim_thr= ", env.dTt)
 
-dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([0., 0., 1., 0.]))
+value = 1
+
+dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([0., value, 0., 0.]))
 
 print("action[0., 1, 1, 0]= ", dT1, dT2, dT3, dT4)
 
@@ -40,7 +42,7 @@ for i in range(1000):
     # Uncomment the action to test
     #action = np.array([0., 0., 0., 0.]) # Trim
     #action = np.array([-1., 0., 0., 0.]) # Free-Fall
-    action = np.array([0., 1., 1., 0.]) # variable
+    action = np.array([0., value, 0., 0.]) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 

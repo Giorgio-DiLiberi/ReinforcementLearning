@@ -83,7 +83,7 @@ if __name__ == '__main__':
     for i in range(1, 100): ## policies name format "PPO_Quad_<numberOfAttempt>.zip"
 
         # check for file existance
-        filename_check = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable-Baselines2_Frame/QuadEnv4/Policies/PPO_Quad_" + str(i) + ".zip"
+        filename_check = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/QuadEnv4/Policies/PPO_Quad_" + str(i) + ".zip"
         print("file number ", i, " == ", os.path.exists(filename_check))
 
         if os.path.exists(filename_check) == False:

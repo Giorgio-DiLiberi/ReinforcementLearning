@@ -46,6 +46,8 @@ In root/Stable_Baselines2_Frame is possible to find some sub directory such as .
 
 * Directory QuadEnv5: in this model the actions represents the commands on external torques in order: Averge throttle, Aileron command, Elevator command, Rudder command, those commands are mixed in appropriate method.
 
+* Directory Trivial_problems contains some test models in which the commands are unpacked EG.: the policy can control only the average thrust or the pitching torque and other controls can be decided directly by the programmer; the models are equals to the others except for this change on action space.
+
 ## Usage of a QuadEnv directory
 
 The directory can be used for:
