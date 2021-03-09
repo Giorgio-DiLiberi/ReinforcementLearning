@@ -19,13 +19,13 @@ from quadcopt_TEST import QuadcoptEnv_TEST
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 2 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = (10**6) ## Time step size for policy evaluation and deployment is 0.1 s
 
-LearningRate_ini = 1.0e-5 # LR initial value for linear interpolation
+LearningRate_ini = 5.0e-4 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
 LearningRate = linear_schedule(LearningRate_ini)
 
-cliprange_ini = 0.2 # Clip initial value for linear interpolation
+cliprange_ini = 0.1 # Clip initial value for linear interpolation
 #clipRange_fin = 1.e-4 # LR final value for linear interpolation
 cliprange = linear_schedule(cliprange_ini)
 
@@ -38,18 +38,18 @@ if __name__ == '__main__':
     cpu = 4
 
     # Creating the environment parallelized to use all 4 threads
-    env = SubprocVecEnv([lambda : QuadcoptEnv_TEST() for num in range(cpu)], start_method='spawn')
+    env = SubprocVecEnv([lambda : QuadcoptEnv_TEST(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
 
     ### AGENT MODEL AND CALLBACK DEFINITION
 
-    eval_env = DummyVecEnv([lambda : QuadcoptEnv_TEST()]) # Definition of one evaluation environment
+    eval_env = DummyVecEnv([lambda : QuadcoptEnv_TEST(Random_reset=False, Process_perturbations=False)]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
-                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 512,
+                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 2048,
                              deterministic=True, render=False)
 
-    model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate_ini,
-            cliprange=cliprange_ini, tensorboard_log="./tensorboardLogs/", nminibatches=4,
-            noptepochs=4, n_steps=128)
+    model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate,
+            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=4,
+            noptepochs=16, n_steps=2048, n_cpu_tf_sess=4)
 
     ################################################
     # Train the agent and take the time for learning

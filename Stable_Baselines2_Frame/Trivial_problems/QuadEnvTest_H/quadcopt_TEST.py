@@ -3,6 +3,7 @@
 # trivialized to only one or two controls per attempt, this is done in the aim to simplify the
 # identification of problems and criticism 
 import numpy as np
+from numpy.random import normal as np_normal
 import gym
 from gym import spaces
 
@@ -10,7 +11,7 @@ class QuadcoptEnv_TEST(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self):
+  def __init__(self, Random_reset = False, Process_perturbations = False):
     super(QuadcoptEnv_TEST, self).__init__()
 
 
@@ -44,6 +45,12 @@ class QuadcoptEnv_TEST(gym.Env):
     self.Obs_normalization_vector = np.array([50. , 100.]) # uncomment for full state visibility , 50. , 50. , 50. , 50. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
                                         
     self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
+    
+    # Random funcs
+    self.Random_reset = Random_reset # true to have random reset
+    self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
+    
+
     self.Lx = 0.241   #[m] X body Length (squared x configuration)
     self.Ly = 0.241   #[m] Y body Length
     
@@ -85,7 +92,7 @@ class QuadcoptEnv_TEST(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1000. # [RPM/V] known for te specific motor
+    self.Motor_Kv = 1200. # [RPM/V] known for te specific motor
     self.V_batt_nom = 11.1 # [V] nominal battery voltage 
     self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
 
@@ -111,8 +118,8 @@ class QuadcoptEnv_TEST(gym.Env):
     self.Command_scaling_factor = 0.1 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.Cd = np.array([0.2, 0.2, 0.2]) # Vector of drag constants for three main body axes normal surfaces
-    self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
+    self.CdA = 0.1 #[kg/s] drag constant on linear aerodynamical drag model
+    # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
     self.C_DR = 0.01 # [kg m^2/s] constant to evaluate the aerodynamic torque which model a drag
@@ -123,8 +130,8 @@ class QuadcoptEnv_TEST(gym.Env):
     # For the dynamics a dynamics_timeStep is used as 0.01 s 
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
-    self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(20.48/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.timeStep = 0.02 #[s] time step for policy
+    self.max_Episode_time_steps = int(10*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -136,7 +143,7 @@ class QuadcoptEnv_TEST(gym.Env):
     # biological neural networks)
     self.X_Pos_Goal = 0. #[m] goal x position
     self.Y_Pos_Goal = 0. #[m] goal y position
-    self.Goal_Altitude = -31. #[m] altitude to achieve is 30 m
+    self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
@@ -190,8 +197,16 @@ class QuadcoptEnv_TEST(gym.Env):
       """
       Reset state 
       """
-      
-      self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,-25.]) # to initialize the state the object is put in x0=20 and v0=0
+
+      if self.Random_reset:
+        w_reset = np_normal(0, 0.025) #[m/s]
+        Z_reset = np_normal(-25, 4) #[m]
+
+      else:
+        w_reset = 0 #[m/s]
+        Z_reset = -75 #[m]
+
+      self.state = np.array([0.,0.,w_reset,0.,0.,0.,1.,0.,0.,0.,0.,0.,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
@@ -207,12 +222,25 @@ class QuadcoptEnv_TEST(gym.Env):
       output: reward, scalar value.
       """
 
+      w = self.state[2]
       Z = self.state[12]
 
       #posXY_onReward_weight = 0.8 + 0*(1/self.max_Episode_time_steps) * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
-      altitude_onReward_weight = 10000.
-      
-      reward = - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/ 10000)
+      altitude_onReward_weight = 1. #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
+      w_error_weight = 0.1
+
+      if Z>=-80. or Z<=-20.:
+        if (abs(Z - self.Goal_Altitude))>=0.5:
+          reward = - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/2500.)\
+            - w_error_weight * (((w-10.)/50.)**2)
+        
+        else:
+          reward = - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/2500.)\
+            - w_error_weight * ((w/50)**2)
+
+      else:
+
+        reward = -10.
 
       ## Added to the reward the goals on space and height to look for zero drift on position      
 
@@ -301,6 +329,21 @@ class QuadcoptEnv_TEST(gym.Env):
 
 ## Control section: this section contains all the methods used to get commands and throttles from 
 # actions
+  def linearAct2ThrMap(self, action):
+
+      """
+      Function to use alternatively to act2TrotMap(action). This function performs the mapping 
+      linearly from action to throtle, obviously some part of throttle space is cut out, so
+      even throttle 1 or zero is impossible to reach and the thr space is compressed to  
+      [0.5*dTt, 1.5dTt] 
+      input: action [-1, 1]
+      output: throttle value
+      """
+
+      Thr = self.dTt * (1 + 0.6 * action)
+
+      return Thr
+
   def act2ThrotMap(self, action):
 
       """ 
@@ -334,7 +377,7 @@ class QuadcoptEnv_TEST(gym.Env):
 
       ## the throttle mixer function takes the commands and convert them into throttles
 
-      Av_Throttle = self.act2ThrotMap(actions[0]) # first action is average throttle,
+      Av_Throttle = self.linearAct2ThrMap(actions[0]) # first action is average throttle,
       #mapped into [0, 1]  
 
       Aileron = actions[1]
@@ -367,7 +410,8 @@ class QuadcoptEnv_TEST(gym.Env):
   def Drag(self, V):
     
       """
-      This function return an Aerodynamical drag given velocity cd and normal Surface
+      This function return an Aerodynamical drag given velocity and cd.
+      Linear model is considered to take into account rotor effects on the longitudinal forces
       input: relative wind speed.
       output: drag force (vector if input is a vector)
       """
@@ -378,7 +422,7 @@ class QuadcoptEnv_TEST(gym.Env):
       # those referred to the front section.
       # Evaluation performed in vector form
 
-      drag = - 0.5 * self.rho * V * abs(V) * self.Sn * self.Cd  #[N]
+      drag = - V * self.CdA  #[N]
 
       return drag
 
@@ -421,6 +465,13 @@ class QuadcoptEnv_TEST(gym.Env):
       This function evaluates the xVec_dot=fVec(x,u) given the states and controls in current step
       """
       # This function is implemented separately to make the code more easily readable
+
+      # Random process noise on linear accelerations
+      if self.Process_perturbations:
+        Acc_disturbance = np_normal(0, 0.01, 3) #[m/s^2]
+
+      else:
+        Acc_disturbance = np.zeros(3) #[m/s^2]
 
       Vb = State[0:3] # Subvector CG velocity [m/s]
       Omega = State[3:6] # Subvector angular velocity [rad/s]
@@ -471,7 +522,7 @@ class QuadcoptEnv_TEST(gym.Env):
       Ftot_m = (DB + WB + T1 + T2 + T3 + T4) / self.mass 
 
       # Evaluation of LINEAR ACCELERATION components [m/s^2]
-      Vb_dot = - np.cross(Omega, Vb) + Ftot_m
+      Vb_dot = - np.cross(Omega, Vb) + Ftot_m + Acc_disturbance
 
       # Evaluation of ANGULAR ACCELERATION [rad/s^2] components in body axes
       Omega_dot = (Mtot - np.cross(Omega, np.dot(self.InTen, Omega))) / self.InVec

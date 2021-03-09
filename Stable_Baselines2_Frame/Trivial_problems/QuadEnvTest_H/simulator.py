@@ -15,7 +15,7 @@ from stable_baselines import PPO2
 from quadcopt_TEST import QuadcoptEnv_TEST
 
 
-env = QuadcoptEnv_TEST()
+env = QuadcoptEnv_TEST(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps ## define the number of timesteps to simulate
 

@@ -9,7 +9,7 @@ env = QuadcoptEnv_TEST()
 ## Testing some environments values
 print("Trim_thr= ", env.dTt)
 
-value = 1
+value = 0
 
 dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([value, 0., 0., 0.]))
 
@@ -37,7 +37,7 @@ info_time=[time] # elased time vector
 
 # SIMULATION
 
-for i in range(1000):
+for i in range(100000):
 
     # Uncomment the action to test
     #action = np.array([0., 0., 0., 0.]) # Trim
