@@ -130,8 +130,8 @@ class QuadcoptEnv_TEST(gym.Env):
     # For the dynamics a dynamics_timeStep is used as 0.01 s 
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
-    self.timeStep = 0.02 #[s] time step for policy
-    self.max_Episode_time_steps = int(10*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.timeStep = 0.04 #[s] time step for policy
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -143,7 +143,7 @@ class QuadcoptEnv_TEST(gym.Env):
     # biological neural networks)
     self.X_Pos_Goal = 0. #[m] goal x position
     self.Y_Pos_Goal = 0. #[m] goal y position
-    self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
+    self.Goal_Altitude = -40. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
@@ -204,7 +204,7 @@ class QuadcoptEnv_TEST(gym.Env):
 
       else:
         w_reset = 0 #[m/s]
-        Z_reset = -75 #[m]
+        Z_reset = -25 #[m]
 
       self.state = np.array([0.,0.,w_reset,0.,0.,0.,1.,0.,0.,0.,0.,0.,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
@@ -229,18 +229,14 @@ class QuadcoptEnv_TEST(gym.Env):
       altitude_onReward_weight = 1. #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
       w_error_weight = 0.1
 
-      if Z>=-80. or Z<=-20.:
-        if (abs(Z - self.Goal_Altitude))>=0.5:
-          reward = - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/2500.)\
-            - w_error_weight * (((w-10.)/50.)**2)
-        
-        else:
-          reward = - altitude_onReward_weight * (((Z - self.Goal_Altitude)**2)/2500.)\
-            - w_error_weight * ((w/50)**2)
+      R = 1 - altitude_onReward_weight * abs((Z - self.Goal_Altitude)/self.Obs_normalization_vector[1])\
+        - w_error_weight * (abs(w/self.Obs_normalization_vector[0]))
+
+      if R >= 0:
+        reward = R
 
       else:
-
-        reward = -10.
+        reward = 0
 
       ## Added to the reward the goals on space and height to look for zero drift on position      
 
