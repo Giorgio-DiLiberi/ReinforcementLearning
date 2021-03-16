@@ -7,12 +7,12 @@ from numpy.random import normal as np_normal
 import gym
 from gym import spaces
 
-class QuadcoptEnv_TEST(gym.Env):
+class QuadcoptEnv_2DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
   def __init__(self, Random_reset = False, Process_perturbations = False):
-    super(QuadcoptEnv_TEST, self).__init__()
+    super(QuadcoptEnv_2DOF, self).__init__()
 
 
     # Define action and observation space
@@ -20,8 +20,8 @@ class QuadcoptEnv_TEST(gym.Env):
     # Definition of action space with 1 control action representing average Throttle
     # the other control variables (wich are torques on xb, yb, zb) are given as constant zero
     # as input by the programmer 
-    highActionSpace = np.array([1.])
-    lowActionSpace = np.array([-1.])
+    highActionSpace = np.array([1., 1.])
+    lowActionSpace = np.array([-1., -1.])
     self.action_space = spaces.Box(lowActionSpace, highActionSpace, dtype=np.float32)
 
     # Creation of observation space: an array for maximum values is created using a classical Flight Dynamics states 
@@ -33,16 +33,18 @@ class QuadcoptEnv_TEST(gym.Env):
     # The normalization is performed using limits reported above
 
     ## TEST 5/3/2021 To test I suppressed all controls leaving only possibility
-    # to control AVG_throttle, so I give the policy a visibility only on the two variables w and Z 
-    highObsSpace = np.array([1.1 , 1.1]) # uncomment to bring back to full state visibility for the plicy  , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
+    # to control AVG_throttle, and elevator so I give the policy a visibility only on the two variables w and Z 
+    # u, X, q and all the quaternions
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1, 1.1 , 1.1, 1.1 , 1.1, 1.1]) # uncomment to bring back to full state visibility for the plicy  , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
     lowObsSpace = -highObsSpace
+    # the order is: [u, w, q, q0, q1, q2, q3, X_error, Z_error]
 
     self.observation_space = spaces.Box(lowObsSpace, highObsSpace, dtype=np.float32) # boundary is set 0.1 over to avoid AssertionError
 
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([50. , 100.]) # uncomment for full state visibility , 50. , 50. , 50. , 50. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
+    self.Obs_normalization_vector = np.array([50., 50., 50., 1., 1., 1., 1., 50., 100.]) # uncomment for full state visibility , 50. , 50. , 50. , 50. , 1. , 1. , 1. , 1. , 50. , 50. , 100.])
                                         
     self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
     
@@ -115,7 +117,7 @@ class QuadcoptEnv_TEST(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.1 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
     self.CdA = 0.1 #[kg/s] drag constant on linear aerodynamical drag model
@@ -141,16 +143,16 @@ class QuadcoptEnv_TEST(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 0. #[m] goal x position
+    self.X_Pos_Goal = 5. #[m] goal x position
     self.Y_Pos_Goal = 0. #[m] goal y position
-    self.Goal_Altitude = -40. #[m] altitude to achieve is 30 m
+    self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
       
-      controls = np.array([action[0], 0., 0., 0.]) ## This variable is used to take the action only on
+      controls = np.array([action[0], 0., action[1], 0.]) ## This variable is used to take the action only on
       # average throttle and add some other commands given from outside
 
       Throttles = self.getThrsFromControls(controls) # commands are the actions given by the policy
@@ -179,7 +181,14 @@ class QuadcoptEnv_TEST(gym.Env):
 
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
-      obs = np.array([self.state[2], self.state[12]]) / self.Obs_normalization_vector
+
+      # as obs on Z_position and X_position, error instead absolut position is given as 
+      # observation to the agent, purpose is to minimize (zero) this quantity.
+      # error is normalized dividing by the normalization vector stated yet, sign also is given.
+      X_error = self.state[10] - self.X_Pos_Goal
+      Z_error = self.state[12] - self.Goal_Altitude
+      obs_state = np.array([self.state[0], self.state[2], self.state[4], self.state[6], self.state[7], self.state[8], self.state[9], X_error, Z_error])
+      obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = State_curr_step
@@ -199,18 +208,23 @@ class QuadcoptEnv_TEST(gym.Env):
       """
 
       if self.Random_reset:
-        w_reset = np_normal(0, 0.025) #[m/s]
-        Z_reset = np_normal(-25, 4) #[m]
+        w_reset = np_normal(0., 0.025) #[m/s]
+        Z_reset = np_normal(-25., 2.) #[m]
+        X_reset = np_normal(0., 5.) #[m]
 
       else:
-        w_reset = 0 #[m/s]
-        Z_reset = -80 #[m]
+        w_reset = 0. #[m/s]
+        Z_reset = -70. #[m]
+        X_reset = 40. #[m]
 
-      self.state = np.array([0.,0.,w_reset,0.,0.,0.,1.,0.,0.,0.,0.,0.,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
+      self.state = np.array([0.,0.,w_reset,0.,0.,0.,1.,0.,0.,0.,X_reset,0.,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
-      obs = np.array([self.state[2], self.state[12]]) / self.Obs_normalization_vector
+      X_error = self.state[10] - self.X_Pos_Goal
+      Z_error = self.state[12] - self.Goal_Altitude
+      obs_state = np.array([self.state[0], self.state[2], self.state[4], self.state[6], self.state[7], self.state[8], self.state[9], X_error, Z_error])
+      obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
 
@@ -223,14 +237,30 @@ class QuadcoptEnv_TEST(gym.Env):
       """
 
       w = self.state[2]
-      Z = self.state[12]
+      Z_error = self.state[12] - self.Goal_Altitude
+      u = self.state[0]
+      X_error = self.state[10] - self.X_Pos_Goal
+      q = self.state[4]
+      q0 = self.state[6]
+      #q1 = self.state[7]
+      #q2 = self.state[8]
+      #q3 = self.state[9]
 
       #posXY_onReward_weight = 0.8 + 0*(1/self.max_Episode_time_steps) * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
-      altitude_onReward_weight = 1. #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
-      w_error_weight = 0.1
+      altitude_onReward_weight = 0.8 #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
+      w_error_weight = 0.08
 
-      R = 1 - altitude_onReward_weight * abs((Z - self.Goal_Altitude)/self.Obs_normalization_vector[1])\
-        - w_error_weight * (abs(w/self.Obs_normalization_vector[0]))
+      pos_X_weight = 0.8
+      u_weight = 0.08
+
+      q_weight = 0.1
+
+      #q_weight = 0.1
+
+      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/100.)\
+        - w_error_weight * (abs(w/50.))\
+          - pos_X_weight * (abs(X_error)/50) - u_weight * (abs(u)/50)\
+            - q_weight * (abs(q/50)) 
 
       if R >= 0:
         reward = R
@@ -254,9 +284,7 @@ class QuadcoptEnv_TEST(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      abs(X_1)>=50. or abs(X_1)>=50.
-
-      if Z_1>=0. or Z_1<=-100. : 
+      if Z_1>=5. or Z_1<=-200. : 
 
         done = True
         print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
@@ -301,7 +329,7 @@ class QuadcoptEnv_TEST(gym.Env):
         done = True
         print("Y outbound---> ", Y_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(q0_1)>=1.0000000001 or abs(q1_1)>=1.0000000001 or abs(q2_1)>=1.0000000001 or abs(q3_1)>=1.0000000001 :
+      elif abs(q0_1)>=1.001 or abs(q1_1)>=1.001 or abs(q2_1)>=1.001 or abs(q3_1)>=1.001 :
 
         done = True
         print("Quaternion outbound...") 
@@ -336,7 +364,7 @@ class QuadcoptEnv_TEST(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.6 * action)
+      Thr = self.dTt * (1 + 0.65 * action)
 
       return Thr
 
@@ -465,13 +493,24 @@ class QuadcoptEnv_TEST(gym.Env):
       # Random process noise on linear accelerations
       if self.Process_perturbations:
         Acc_disturbance = np_normal(0, 0.01, 3) #[m/s^2]
+        Omega_dot_dist = np_normal(0, 0.0001, 3) #[rad/s^2]
 
       else:
         Acc_disturbance = np.zeros(3) #[m/s^2]
+        Omega_dot_dist = np.zeros(3) #[rad/s^2]
 
       Vb = State[0:3] # Subvector CG velocity [m/s]
       Omega = State[3:6] # Subvector angular velocity [rad/s]
+
+      #Performing quaternion normalization
       q0, q1, q2, q3 = State[6:10] # Quaternion
+
+      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+
+      q0 = q0/abs_Q
+      q1 = q1/abs_Q
+      q2 = q2/abs_Q
+      q3 = q3/abs_Q
 
       # Motors section (vectors are evaluated later in this method)
       dT1, dT2, dT3, dT4 = Throttles
@@ -521,7 +560,7 @@ class QuadcoptEnv_TEST(gym.Env):
       Vb_dot = - np.cross(Omega, Vb) + Ftot_m + Acc_disturbance
 
       # Evaluation of ANGULAR ACCELERATION [rad/s^2] components in body axes
-      Omega_dot = (Mtot - np.cross(Omega, np.dot(self.InTen, Omega))) / self.InVec
+      Omega_dot = ((Mtot - np.cross(Omega, np.dot(self.InTen, Omega))) / self.InVec) + Omega_dot_dist
       
       # Evaluation of the cynematic linear velocities in NED axes [m/s]
       # The matrix LEB is written in the equivalent from quaternions components

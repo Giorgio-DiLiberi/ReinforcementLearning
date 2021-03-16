@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
-from quadcopt_TEST import QuadcoptEnv_TEST
+from quadcopt_2DOF import QuadcoptEnv_2DOF
 
 
-env = QuadcoptEnv_TEST(Random_reset=False, Process_perturbations=True)
+env = QuadcoptEnv_2DOF(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -31,7 +31,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/Trivial_problems/QuadEnvTest_H/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/Trivial_problems/QuadEnvTest_2DOF/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
@@ -74,8 +74,8 @@ info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array 
 info_X = [env.state[10]]
 info_Y = [env.state[11]]
 info_Z = [env.state[12]]
-action_memory = [0.] ## vector to store actions during the simulation
-Throttle_memory = [env.dTt]
+action_memory = np.array([0., 0.]) ## vector to store actions during the simulation
+#Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
 time=0.
@@ -99,8 +99,8 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
-    action_memory.append(action)
-    Throttle_memory.append(env.act2ThrotMap(action))
+    action_memory = np.vstack([action_memory, action])
+    #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
 
     time=time + env.timeStep # elapsed time since simulation start
@@ -178,24 +178,17 @@ plt.title('Episode Reward')
 plt.savefig('SimulationResults/reward.jpg')
 
 plt.figure(6)
-plt.plot(info_time, action_memory)
+plt.plot(info_time, action_memory[:, 0])
+plt.plot(info_time, action_memory[:, 1])
 plt.xlabel('time')
-plt.ylabel('Action')
-plt.title('Action in episode [-1, 1]')
+plt.ylabel('Actions')
+plt.title('Actions in episode [-1, 1]')
+plt.legend(['Avg_thr', 'Ele'])
 plt.savefig('SimulationResults/action.jpg')
 
-plt.figure(7)
-plt.plot(info_time, Throttle_memory)
-plt.xlabel('time')
-plt.ylabel('Average throttle [0, 1]')
-plt.title('Average throttle in episode')
-plt.savefig('SimulationResults/Avg_thr.jpg')
-
-plt.figure(8)
-plt.plot(info_time, info_w)
-plt.plot(info_time, info_Z)
-plt.xlabel('time')
-plt.ylabel('Velocity W_b and height Z_down')
-plt.title('W and Z')
-plt.legend(['W [m/s]', 'Z [m]'])
-plt.savefig('SimulationResults/Vvel_height.jpg')
+# plt.figure(7)
+# plt.plot(info_time, Throttle_memory)
+# plt.xlabel('time')
+# plt.ylabel('Average throttle [0, 1]')
+# plt.title('Average throttle in episode')
+# plt.savefig('SimulationResults/Avg_thr.jpg')
