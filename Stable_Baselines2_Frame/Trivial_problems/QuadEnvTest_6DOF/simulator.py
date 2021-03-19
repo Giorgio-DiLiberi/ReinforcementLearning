@@ -9,13 +9,15 @@ import numpy as np
 import matplotlib
 matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
 import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
+from mpl_toolkits.mplot3d import axes3d
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 from quadcopt_6DOF import QuadcoptEnv_6DOF
 
 
-env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True)
+env = QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -48,8 +50,8 @@ elif Policy_loading_mode == "best":
 
 else:
 
-  Policy_number = input("enter the number of policy to load (check before if exists): ")
-  Policy2Load = "Policies/PPO_Quad_" + str(Policy_number)
+  Policy2Load  = input("enter the relative path of policy to load (check before if exists): ")
+  
   
 
 model = PPO2.load(Policy2Load)
@@ -89,8 +91,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.X_Pos_Goal=15.
 
     elif i==1024:
-      env.X_Pos_Goal=20.
-      env.Y_Pos_Goal=15.
+      env.Y_Pos_Goal=20.
       env.Goal_Altitude=-50.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
@@ -119,8 +120,12 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       # obs = env.reset()
       break
 
+    if i==512:
+      print("mid sim posiion [X, Y, Z]= ", env.state[10:13])
+
+print("final posiion [X, Y, Z]= ", env.state[10:13])
+
 ## PLOT AND DISPLAY SECTION
-info_H = -1 * info_Z
 
 plt.figure(1)
 plt.plot(info_time, info_p)
@@ -196,9 +201,31 @@ plt.title('Actions in episode [-1, 1]')
 plt.legend(['Avg_thr', 'Ail', 'Ele', 'Rud'])
 plt.savefig('SimulationResults/action.jpg')
 
+info_H = -1 * np.array([info_Z])
+fig = plt.figure(7)
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
+#ax.xlabel('X')
+#ax.ylabel('Y')
+#ax.ylabel('H==-Z')
+#ax.title('Trajectory')
+plt.savefig('SimulationResults/trajectory.jpg')
+
+
 # plt.figure(7)
 # plt.plot(info_time, Throttle_memory)
 # plt.xlabel('time')
 # plt.ylabel('Average throttle [0, 1]')
 # plt.title('Average throttle in episode')
 # plt.savefig('SimulationResults/Avg_thr.jpg')
+
+Simulation_state_file = open("SimulationResults/Sim_out.txt", "w")
+
+Complete_state = np.array([info_time, info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z])
+
+Simulation_state_file.write(str(Complete_state))
+Simulation_state_file.write(str(action_memory))
+
+Simulation_state_file.close()
+
+

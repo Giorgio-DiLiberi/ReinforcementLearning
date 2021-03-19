@@ -4,6 +4,8 @@
 # identification of problems and criticism 
 import numpy as np
 from numpy.random import normal as np_normal
+from numpy import cos as cos
+from numpy import sin as sin
 import gym
 from gym import spaces
 
@@ -43,10 +45,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([50., 50., 50., 50., 50., 50., 1., 1., 1., 1., 50., 50., 100.]) # normalization constants
-                                        
-    self.state = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.]) # this variable is used as a memory for the specific instance created
-    
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 25., 25., 25.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -101,7 +100,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.D_prop = 0.2032 #[m] diameter for 7 inch prop
     self.Ct = 0.1087 # Constant of traction tabulated for V=0
     self.Cp = 0.0477  # Constant of power tabulated for v=0
-    self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]
+    self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
     # now force and torque are evaluated as:
     # F=Kf * N_prop^2 
@@ -119,12 +118,13 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.CdA = np.array([0.1, 0.1, 0.15]) #[kg/s] drag constant on linear aerodynamical drag model
+    self.CdA = np.array([0.1, 0.1, 0.3951]) #[kg/s] drag constant on linear aerodynamical drag model
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0.01, 0.01, 0.0078]) # [kg m^2/s] constant to evaluate the aerodynamic torque which model a drag
-    # for angular motion, coefficient is assumed
+    self.C_DR = np.array([0.02, 0.02, 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    # Arena and apoleoni thesis
+    
 
     # integration parameters: The dynamics simulation time is different from the time step size
     # for policy deployment and evaluation: 
@@ -142,8 +142,8 @@ class QuadcoptEnv_6DOF(gym.Env):
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
     self.X_Pos_Goal = 10. #[m] goal x position
-    self.Y_Pos_Goal = 25. #[m] goal y position
-    self.Goal_Altitude = -30. #[m] altitude to achieve is 30 m
+    self.Y_Pos_Goal = 15. #[m] goal y position
+    self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
@@ -208,22 +208,43 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       if self.Random_reset:
         w_reset = np_normal(0., 0.025) #[m/s]
-        Z_reset = np_normal(-25., 2.) #[m]
+        Z_reset = np_normal(-28., 2.) #[m]
         u_reset = np_normal(0., 0.025) #[m/s]
         X_reset = np_normal(0., 2.) #[m]
         v_reset = np_normal(0., 0.025) #[m/s]
         Y_reset = np_normal(0., 2.) #[m]
 
+        p_reset = np_normal(0., 0.0175)
+        q_reset = np_normal(0., 0.0175)
+        r_reset = np_normal(0., 0.0175)
+
+        phi = np_normal(0., 0.44) #[rad]
+        theta = np_normal(0., 0.44) #[rad]
+        psi = 0.
+
+        q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
+        q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
+        q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
+        q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
+
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -60. #[m]
+        Z_reset = -28. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
         Y_reset = 0. #[m]
-        
 
-      self.state = np.array([u_reset,v_reset,w_reset,0.,0.,0.,1.,0.,0.,0.,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
+        p_reset = 0.
+        q_reset = 0.
+        r_reset = 0.
+
+        q0_reset = 1.
+        q1_reset = 0.
+        q2_reset = 0.
+        q3_reset = 0.      
+
+      self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
@@ -257,7 +278,6 @@ class QuadcoptEnv_6DOF(gym.Env):
       #q2 = self.state[8]
       #q3 = self.state[9]
 
-      #posXY_onReward_weight = 0.8 + 0*(1/self.max_Episode_time_steps) * self.elapsed_time_steps # value to weight the distance from origin in the reward computation
       altitude_onReward_weight = 0.8 #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
       w_error_weight = 0.08
 
@@ -505,7 +525,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       # Random process noise on linear accelerations
       if self.Process_perturbations:
         Acc_disturbance = np_normal(0, 0.01, 3) #[m/s^2]
-        Omega_dot_dist = np_normal(0, 0.0009, 3) #[rad/s^2]
+        Omega_dot_dist = np_normal(0, 0.00175, 3) #[rad/s^2]
 
       else:
         Acc_disturbance = np.zeros(3) #[m/s^2]

@@ -1,0 +1,38 @@
+## Inizializzazione di PPO con Hyperparams
+LearningTimeSteps = 3 * (10**6) 
+
+LearningRate_ini = 2.5e-4 # LR initial value for linear interpolation
+LearningRate = linear_schedule(LearningRate_ini)
+
+cliprange_ini = 0.3 # Clip initial value for linear interpolation
+cliprange = linear_schedule(cliprange_ini)
+
+model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
+            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=4, gamma=0.9999,
+            noptepochs=16, n_steps=8156, n_cpu_tf_sess=4)
+
+####################################################################################
+## Funzione di Reward
+altitude_onReward_weight = 0.8 
+w_error_weight = 0.08
+
+pos_weight = 0.8
+uv_weight = 0.08
+
+pq_weight = 0.1
+
+#q_weight = 0.1
+
+R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/100.)\
+    - w_error_weight * (abs(w/50.))\
+        - pos_weight * (abs(X_error)/50) - uv_weight * (abs(u)/50)\
+            - pos_weight * (abs(Y_error)/50) -  4*uv_weight * (abs(v)/50)\
+                - pq_weight * (abs(q/50) + abs(p/50) + abs(r/50)) 
+
+if R >= 0:
+    reward = R
+
+else:
+    reward = 0
+
+
