@@ -141,8 +141,8 @@ class QuadcoptEnv_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 10. #[m] goal x position
-    self.Y_Pos_Goal = 15. #[m] goal y position
+    self.X_Pos_Goal = 0. #[m] goal x position
+    self.Y_Pos_Goal = 0. #[m] goal y position
     self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
@@ -506,9 +506,17 @@ class QuadcoptEnv_6DOF(gym.Env):
       does not make any assumption on how to construct vectors)
       """
       ## self.nMax_motor [RPS] number of rounds per second for BL motor
+
+      if self.Process_perturbations: ## adds some randomness to the motor performances
+        rand_thrust = np_normal(0., 0.1) 
+        rand_torque = np_normal(0., 0.1)
+
+      else:
+        rand_thrust = 0.
+        rand_torque = 0.
       
-      Thrust = self.Prop_Kf * Throttle * (self.nMax_motor**2) #[N]
-      Torque = self.Prop_Kq * Throttle * (self.nMax_motor**2) #[N m]
+      Thrust = (1 + rand_thrust) * self.Prop_Kf * Throttle * (self.nMax_motor**2) #[N]
+      Torque = (1 + rand_torque) * self.Prop_Kq * Throttle * (self.nMax_motor**2) #[N m]
       # The model in which throttle is linear in those formulas, the control is an alias 
       # of F = F_Max * dT so the difference is only on how to consider the command on the 
       # rounds per sec 

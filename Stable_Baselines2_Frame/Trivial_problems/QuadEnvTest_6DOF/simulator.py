@@ -87,10 +87,8 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==512:
+    if i==1024:
       env.X_Pos_Goal=15.
-
-    elif i==1024:
       env.Y_Pos_Goal=20.
       env.Goal_Altitude=-50.
     
