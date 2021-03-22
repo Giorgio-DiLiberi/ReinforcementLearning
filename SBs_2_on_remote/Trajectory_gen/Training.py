@@ -14,7 +14,11 @@ from stable_baselines.common.callbacks import EvalCallback
 
 ## Importing linear function to define a variable cliprange and learning rate
 from custom_modules.learning_schedules import linear_schedule
-from quadcopt_2DOF import QuadcoptEnv_2DOF
+from Trajectory_gen import Navigation
+
+# set those variables for the capabilities of the machine
+n_cpu = 8 # 8 for Sapienza computer or 4 for my machine
+n_epochs = 32 # 32 for Sapienza PC or 16 for my machine
 
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
@@ -35,21 +39,21 @@ if __name__ == '__main__':
 
     ### CREATION OF VECTORIZED ENVIRONMENT
 
-    cpu = 4
+    cpu = n_cpu
 
     # Creating the environment parallelized to use all 4 threads
-    env = SubprocVecEnv([lambda : QuadcoptEnv_2DOF(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
+    env = SubprocVecEnv([lambda : Navigation(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
 
     ### AGENT MODEL AND CALLBACK DEFINITION
 
-    eval_env = DummyVecEnv([lambda : QuadcoptEnv_2DOF(Random_reset=False, Process_perturbations=False)]) # Definition of one evaluation environment
+    eval_env = DummyVecEnv([lambda : Navigation(Random_reset=False, Process_perturbations=False)]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
                              log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156,
                              deterministic=True, render=False)
 
     model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
             cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=4, gamma=0.9999,
-            noptepochs=16, n_steps=8156, n_cpu_tf_sess=4)
+            noptepochs=n_epochs, n_steps=8156, n_cpu_tf_sess=4)
 
     ################################################
     # Train the agent and take the time for learning
@@ -82,7 +86,7 @@ if __name__ == '__main__':
     for i in range(1, 100): ## policies name format "PPO_Quad_<numberOfAttempt>.zip"
 
         # check for file existance
-        filename_check = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/Trivial_problems/QuadEnvTest_2DOF/Policies/PPO_Quad_" + str(i) + ".zip"
+        filename_check = "/home/ghost/giorgio_diliberi/ReinforcementLearning/SBs_2_on_remote/Trajectory_gen/Policies/PPO_Quad_" + str(i) + ".zip"
         print("file number ", i, " == ", os.path.exists(filename_check))
 
         if os.path.exists(filename_check) == False:

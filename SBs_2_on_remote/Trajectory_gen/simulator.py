@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
-from quadcopt_2DOF import QuadcoptEnv_2DOF
+from Trajectory_gen import Navigation
 
 
-env = QuadcoptEnv_2DOF(Random_reset=False, Process_perturbations=True)
+env = Navigation(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -31,10 +31,10 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/Trivial_problems/QuadEnvTest_2DOF/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/SBs_2_on_remote/Trajectory_gen/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
-      print("last policy found is PPO_Quad_", i)
+      print("last policy found is PPO_Quad_" + str(i))
 
       Policy2Load = "Policies/PPO_Quad_" + str(i)
       
@@ -48,9 +48,7 @@ elif Policy_loading_mode == "best":
 
 else:
 
-  Policy_number = input("enter the number of policy to load (check before if exists): ")
-  Policy2Load = "Policies/PPO_Quad_" + str(Policy_number)
-  
+  Policy2Load = input("enter the number of policy to load (check before if exists): ")
 
 model = PPO2.load(Policy2Load)
 print("Policy ", Policy2Load, " loaded!")
@@ -66,14 +64,8 @@ obs = env.reset()
 # info vectors initialization for simulation history
 info_u = [env.state[0]]
 info_v = [env.state[1]]
-info_w = [env.state[2]]
-info_p = [env.state[3]]
-info_q = [env.state[4]]
-info_r = [env.state[5]]
-info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array matrix
-info_X = [env.state[10]]
-info_Y = [env.state[11]]
-info_Z = [env.state[12]]
+info_X = [env.state[2]]
+info_Y = [env.state[3]]
 action_memory = np.array([0., 0.]) ## vector to store actions during the simulation
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
@@ -91,16 +83,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     info_u.append(info["u"])
     info_v.append(info["v"])
-    info_w.append(info["w"])
-    info_p.append(info["p"])
-    info_q.append(info["q"])
-    info_r.append(info["r"])
-    info_quaternion = np.vstack([info_quaternion, [info["q0"], info["q1"], info["q2"], info["q3"]]])
     info_X.append(info["X"])
     info_Y.append(info["Y"])
-    info_Z.append(info["Z"])
     action_memory = np.vstack([action_memory, action])
-    #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
 
     time=time + env.timeStep # elapsed time since simulation start
@@ -112,83 +97,44 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       break
 
 ## PLOT AND DISPLAY SECTION
-info_H = -1 * info_Z
 
 plt.figure(1)
-plt.plot(info_time, info_p)
-plt.plot(info_time, info_q)
-plt.plot(info_time, info_r)
-plt.xlabel('time')
-plt.ylabel('Angular velocity [rad/s]')
-plt.title('p,q and r')
-plt.legend(['p', 'q', 'r'])
-plt.savefig('SimulationResults/Angular_velocity.jpg')
-
-plt.figure(2)
 plt.plot(info_time, info_u)
 plt.plot(info_time, info_v)
-plt.plot(info_time, info_w)
 plt.xlabel('time')
 plt.ylabel('Velocity [m/s]')
-plt.title('u,v and w')
-plt.legend(['u', 'v', 'w'])
+plt.title('u,v')
+plt.legend(['u', 'v'])
 plt.savefig('SimulationResults/Velocity.jpg')
 
-plt.figure(3)
+plt.figure(2)
 plt.plot(info_time, info_X)
 plt.plot(info_time, info_Y)
-plt.plot(info_time, info_Z)
 plt.xlabel('time')
-plt.ylabel('Position NED [m]')
-plt.title('X,Y and Z')
-plt.legend(['X', 'Y', 'Z'])
+plt.ylabel('Position NE [m]')
+plt.title('X,Y')
+plt.legend(['X', 'Y'])
 plt.savefig('SimulationResults/Position.jpg')
 
-## CONVERSION OF THE QUATERNION INTO EULER ANGLES
-Euler_angles = np.zeros([np.size(info_quaternion, 0), 3])
-
-for row in range(np.size(Euler_angles, 0)):
-  q0 = info_quaternion[row, 0]
-  q1 = info_quaternion[row, 1]
-  q2 = info_quaternion[row, 2]
-  q3 = info_quaternion[row, 3]
-
-  Euler_angles[row, 0] = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
-  Euler_angles[row, 1] = np.arcsin(2*(q0*q2-q3*q1))
-  Euler_angles[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-
-#Conversion to degrees from radians
-Euler_angles = Euler_angles * (180 / np.pi)
-
-plt.figure(4)
-plt.plot(info_time, Euler_angles[:, 0])
-plt.plot(info_time, Euler_angles[:, 1])
-plt.plot(info_time, Euler_angles[:, 2])
-plt.xlabel('time')
-plt.ylabel('Angles [deg]')
-plt.title('Euler Angles')
-plt.legend(['Phi', 'Theta', 'Psi'])
-plt.savefig('SimulationResults/Euler.jpg')
-
-plt.figure(5)
+plt.figure(3)
 plt.plot(info_time, episode_reward)
 plt.xlabel('time')
 plt.ylabel('Reward')
 plt.title('Episode Reward')
 plt.savefig('SimulationResults/reward.jpg')
 
-plt.figure(6)
+plt.figure(4)
 plt.plot(info_time, action_memory[:, 0])
 plt.plot(info_time, action_memory[:, 1])
 plt.xlabel('time')
 plt.ylabel('Actions')
 plt.title('Actions in episode [-1, 1]')
-plt.legend(['Avg_thr', 'Ele'])
+plt.legend(['tg_theta', 'tg_phi'])
 plt.savefig('SimulationResults/action.jpg')
 
-# plt.figure(7)
-# plt.plot(info_time, Throttle_memory)
-# plt.xlabel('time')
-# plt.ylabel('Average throttle [0, 1]')
-# plt.title('Average throttle in episode')
-# plt.savefig('SimulationResults/Avg_thr.jpg')
+plt.figure(5)
+plt.plot(info_X, info_Y)
+plt.xlabel('X_Pos [m]')
+plt.ylabel('Y_Pos [m]')
+plt.title('Trajectory')
+plt.savefig('SimulationResults/Trajectory.jpg')
