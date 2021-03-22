@@ -7,10 +7,10 @@ import numpy as np
 import time
 
 #from stable_baselines.bench import Monitor
-from stable_baselines3.ppo import MlpPolicy
-from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines.common.policies import MlpPolicy
+from stable_baselines import PPO2
+from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
+from stable_baselines.common.callbacks import EvalCallback
 
 ## Importing linear function to define a variable cliprange and learning rate
 from custom_modules.learning_schedules import linear_schedule
@@ -19,7 +19,7 @@ from quadcopt_2DOF import QuadcoptEnv_2DOF
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 1 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = 30 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
 
 LearningRate_ini = 2.5e-4 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     ### CREATION OF VECTORIZED ENVIRONMENT
 
-    cpu = 8
+    cpu = 4
 
     # Creating the environment parallelized to use all 4 threads
     env = SubprocVecEnv([lambda : QuadcoptEnv_2DOF(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
@@ -47,9 +47,9 @@ if __name__ == '__main__':
                              log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156,
                              deterministic=True, render=False)
 
-    model = PPO(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, gae_lambda=0.99,
-            clip_range=cliprange, tensorboard_log="./tensorboardLogs/", batch_size=2048, gamma=0.9999,
-            n_epochs=32, n_steps=8156)
+    model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
+            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=4, gamma=0.9999,
+            noptepochs=16, n_steps=8156, n_cpu_tf_sess=4)
 
     ################################################
     # Train the agent and take the time for learning
