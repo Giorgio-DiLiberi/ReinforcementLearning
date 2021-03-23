@@ -62,16 +62,18 @@ class Navigation(gym.Env):
     self.timeStep = 0.4 #[s] time step for policy
     self.max_Episode_time_steps = int(12*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
-    
+    self.Tot_Traj_len = None # variable to store total trajectory len
+    self.max_tot_traj_len = 200. # maximum possible length of trajectory
+
     self.command_scale = 0.5 # scale factor for commands
 
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 20. #[m] goal x position
+    self.X_Pos_Goal = 15. #[m] goal x position
     self.Y_Pos_Goal = 0. #[m] goal y position
 
-    self.desired_min_obs_dist = 5. #minimum obs dist desired
+    self.desired_min_obs_dist = 7.5 #minimum obs dist desired
 
     # obstacle position
     self.Obs_X = 10.
@@ -100,6 +102,14 @@ class Navigation(gym.Env):
 
       ######### COMPOSITION OF STEP OUTPUT
       # self.state variable assignment with next step values (step n+1)
+
+      ## Update of total length percurred
+      X_dist = State_curr_step[2] - self.state[2] 
+      Y_dist = State_curr_step[3] - self.state[3] 
+      dist_curr_step = np.sqrt((X_dist**2) + (Y_dist**2))
+
+      self.Tot_Traj_len += dist_curr_step
+
       self.state = State_curr_step ## State_curr_step is now updated with RK4
 
       self.elapsed_time_steps += 1 # update for policy time steps
@@ -111,14 +121,15 @@ class Navigation(gym.Env):
       # observation to the agent, purpose is to minimize (zero) this quantity.
       # error is normalized dividing by the normalization vector stated yet, sign also is given.
       # the distance from obstacle is given as vector length
-      X_error = self.state[2] - self.X_Pos_Goal
-      Y_error = self.state[3] - self.Y_Pos_Goal
+      X_error = - self.state[2] + self.X_Pos_Goal
+      Y_error = - self.state[3] + self.Y_Pos_Goal
 
       X_obs_dist = self.state[2] - self.Obs_X
       Y_obs_dist = self.state[3] - self.Obs_Y
       obs_dist = np.sqrt((X_obs_dist**2) + (Y_obs_dist**2))
+      obsv_obs_dist = obs_dist - self.desired_min_obs_dist
 
-      obs_state = np.array([self.state[0], self.state[1], X_error, Y_error, obs_dist])
+      obs_state = np.array([self.state[0], self.state[1], X_error, Y_error, obsv_obs_dist])
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -153,15 +164,17 @@ class Navigation(gym.Env):
       self.state = np.array([u_reset, v_reset, X_reset, Y_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
+      self.Tot_Traj_len = 0.
 
-      X_error = self.state[2] - self.X_Pos_Goal
-      Y_error = self.state[3] - self.Y_Pos_Goal
+      X_error = - self.state[2] + self.X_Pos_Goal
+      Y_error = - self.state[3] + self.Y_Pos_Goal
 
       X_obs_dist = self.state[2] - self.Obs_X
       Y_obs_dist = self.state[3] - self.Obs_Y
       obs_dist = np.sqrt((X_obs_dist**2) + (Y_obs_dist**2))
+      obsv_obs_dist = obs_dist - self.desired_min_obs_dist
 
-      obs_state = np.array([self.state[0], self.state[1], X_error, Y_error, obs_dist])
+      obs_state = np.array([self.state[0], self.state[1], X_error, Y_error, obsv_obs_dist])
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -175,26 +188,31 @@ class Navigation(gym.Env):
       """
 
       u = self.state[0]
-      X_error = self.state[2] - self.X_Pos_Goal
+      X_error = - self.state[2] + self.X_Pos_Goal
       v = self.state[1]
-      Y_error = self.state[3] - self.Y_Pos_Goal
+      Y_error = - self.state[3] + self.Y_Pos_Goal
+
+      len_tot = self.Tot_Traj_len
       
       X_obs_dist = self.state[2] - self.Obs_X
       Y_obs_dist = self.state[3] - self.Obs_Y
       obs_dist = np.sqrt((X_obs_dist**2) + (Y_obs_dist**2))
+      obsv_obs_dist = obs_dist - self.desired_min_obs_dist
       
       vel_error_weight = 0.3
 
       pos_XY_weight = 1.
       
-      obs_dist_weight = 0.5
+      obs_dist_weight = 0.9
+
+      traj_len_weight = 0.001
 
       #q_weight = 0.1
 
       R = 1. - pos_XY_weight * abs((X_error)/50.)\
         - vel_error_weight * (abs(u/50.))\
           - pos_XY_weight * (abs(Y_error)/50.) - vel_error_weight * (abs(v)/50.)\
-            - obs_dist_weight * (1 - obs_dist/50.)
+            - obs_dist_weight * (obsv_obs_dist/50.) - traj_len_weight * len_tot/self.max_tot_traj_len
     
       if R >= 0:
         reward = R
@@ -237,6 +255,13 @@ class Navigation(gym.Env):
 
         done = True
         print("Y outbound---> ", Y_1, "   in ", self.elapsed_time_steps, " steps")
+
+      elif self.Tot_Traj_len >= self.max_tot_traj_len:
+
+        done = True
+
+        print("LENGTH outbound in ", self.elapsed_time_steps, " steps")
+      
 
       elif self.elapsed_time_steps >= self.max_Episode_time_steps:
 
