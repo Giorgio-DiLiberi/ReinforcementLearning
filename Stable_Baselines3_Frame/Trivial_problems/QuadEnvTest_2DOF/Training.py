@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     ### CREATION OF VECTORIZED ENVIRONMENT
 
-    cpu = 4
+    cpu = 8
 
     # Creating the environment parallelized to use all 4 threads
     env = SubprocVecEnv([lambda : QuadcoptEnv_2DOF(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     model = PPO(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, gae_lambda=0.99,
             clip_range=cliprange, tensorboard_log="./tensorboardLogs/", batch_size=2048, gamma=0.9999,
-            n_epochs=16, n_steps=8156)
+            n_epochs=32, n_steps=8156)
 
     ################################################
     # Train the agent and take the time for learning
