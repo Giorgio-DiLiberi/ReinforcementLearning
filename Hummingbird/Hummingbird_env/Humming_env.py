@@ -1,7 +1,8 @@
-# Code to generate a Quadcopter Environment to train an RL agent with stable baselines
-# this model include a mathematical rapresentation of the quadcopter in which the possible
-# trivialized to all controls or two controls per attempt, this is done in the aim to simplify the
-# identification of problems and criticism 
+# Code to implement an environment of a 8inch props quadcopter in "plus configuration"
+# like the hummigbird by Asc. Tech. This code tries to stay more generale as possible
+# so it will be good to simulate any quadcopter with 8 inches props in + config
+# because it tries to simulate only the physics of the model without any stack of 
+# control systems or stability augmentation systems. 
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos
@@ -9,19 +10,19 @@ from numpy import sin as sin
 import gym
 from gym import spaces
 
-class QuadcoptEnv_6DOF(gym.Env):
+class Hummingbird_6DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
   def __init__(self, Random_reset = False, Process_perturbations = False):
-    super(QuadcoptEnv_6DOF, self).__init__()
+    super(Hummingbird_6DOF, self).__init__()
 
 
     # Define action and observation space
     # They must be gym.spaces objects
-    # Definition of action space with 1 control action representing average Throttle
-    # the other control variables (wich are torques on xb, yb, zb) are given as constant zero
-    # as input by the programmer 
+    # the controls re given as pseudo commands for average throttle, aileron, elevator and rudder
+    # so torques and thrust are controlled.
+    # The motor model tries to be as accurate as possible 
     highActionSpace = np.array([1., 1., 1., 1.])
     lowActionSpace = np.array([-1., -1., -1., -1.])
     self.action_space = spaces.Box(lowActionSpace, highActionSpace, dtype=np.float32)
@@ -45,20 +46,25 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 25., 25., 25.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
     
 
-    self.Lx = 0.241   #[m] X body Length (squared x configuration)
-    self.Ly = 0.241   #[m] Y body Length
+    # plus configuration
+    self.Lx = 0.34   #[m] X body Length (squared x configuration)
+    self.Ly = 0.34   #[m] Y body Length
     
-    # Motors position vectors from CG
-    self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
-    self.rM2=np.array([-self.Lx/2, self.Ly/2, 0.])
-    self.rM3=np.array([-self.Lx/2, -self.Ly/2, 0.])
-    self.rM4=np.array([self.Lx/2, -self.Ly/2, 0.]) 
+    # Motors position vectors from CG in body frame coordinates
+    # motors are in plus config so M1 is front, M2 is right, M3 is back and M4 is left 
+    self.rM1=np.array([self.Lx/2, 0., 0.]) # M1 for front motor
+    self.rM2=np.array([0., self.Ly/2, 0.]) # M2 for left so y > 0
+    self.rM3=np.array([-self.Lx/2, 0., 0.]) # M3 is back
+    self.rM4=np.array([0., -self.Ly/2, 0.]) # M4 is left
+
+    # M1 is mounted for CounterClockwise rotation so the reaction torque applied on the frame 
+    # is positive in body axes. The other motors specs are consequent in terms of reaction torque
 
     # atmosphere and gravity definition (assumed constant but a standard atmosphere model can be included)
     self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
@@ -74,13 +80,13 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
    
     ## Inertia tensor is considered dyagonal, null the other components
-    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass +\
+    self.Ix = 2*((self.Ly/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
     
-    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass +\
+    self.Iy = 2*((self.Lx/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
     
-    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass +\
+    self.Iz = 4*((self.Lx/2)**2)*self.motor_mass +\
       0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
 
     # Inertia tensor composition
@@ -92,22 +98,28 @@ class QuadcoptEnv_6DOF(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1200. # [RPM/V] known for te specific motor
+    self.Motor_Kv = 900. # [RPM/V] known for te specific motor
     self.V_batt_nom = 11.1 # [V] nominal battery voltage 
-    self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
+    self.nMax_motor = 8500 / 60 #[RPS] set from the thesis
 
     # Props Values
     self.D_prop = 0.2032 #[m] diameter for 7 inch prop
+    self.prop_mean_chord = 0.015 #[m] 1.5 cm as mean chord for prop profile
     self.Ct = 0.1087 # Constant of traction tabulated for V=0
     self.Cp = 0.0477  # Constant of power tabulated for v=0
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
+    self.Prop_KqF = self.Prop_Kq / self.Prop_Kf #[m] proportional linear term to obtain effective torque from thrust
     # now force and torque are evaluated as:
     # F=Kf * N_prop^2 
     # F=Kq * N_prop^2 in an appropriate method   
     # N are rounds per sec (not rad/s) 
 
-    # Throttle constants for mapping (mapping is linear-cubic, see the act2Thr() method)
+    # induced velocity in hovering due to momentum theory (no profile drag accounted) is
+    # vh = sqrt(T hovering / (2rho Ad))
+    self.vh = np.sqrt(0.25 * self.g0 * self.mass / (0.25 * np.pi * (self.D_prop**2))) # [m/s] 
+
+    # Throttle constants for mapping (mapping is linear, see the linearact2Thr() method)
     self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover
     self.d2 = 1 - self.dTt - 0.3 # Assumed value for first constant in action to throttle mapping
     self.d1 = 1 - self.d2 - self.dTt # second constant for maping (see notebook)
@@ -115,14 +127,14 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.45 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.CdA = np.array([0.1, 0.1, 0.3951]) #[kg/s] drag constant on linear aerodynamical drag model
+    self.CdA = np.array([0.1, 0.1, 0.]) #[kg/s] drag constant on linear aerodynamical drag model
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0.02, 0.02, 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    self.C_DR = np.array([0., 0., 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
     # Arena and apoleoni thesis
     
 
@@ -132,7 +144,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -205,9 +217,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       """
       Reset state 
       """
-
       if self.Random_reset:
-        w_reset = np_normal(0., 0.025) #[m/s]
         Z_reset = np_normal(-28., 2.) #[m]
         u_reset = np_normal(0., 0.025) #[m/s]
         X_reset = np_normal(0., 2.) #[m]
@@ -229,7 +239,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -28. #[m]
+        Z_reset = -15. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
@@ -440,10 +450,10 @@ class QuadcoptEnv_6DOF(gym.Env):
       Elevator = actions[2]
       Rudder = actions[3]
 
-      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator - Aileron + Rudder)
-      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Elevator - Aileron - Rudder)
-      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Aileron + Rudder)
-      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Elevator + Aileron - Rudder)
+      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator + Rudder)
+      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Aileron - Rudder)
+      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Rudder)
+      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Aileron - Rudder)
 
       Throttle_array = np.array([Throttle_M1, Throttle_M2, Throttle_M3, Throttle_M4])
 
@@ -494,32 +504,54 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       return DragTorque
 
-  def Motor(self, Throttle):
+  def Motor(self, Throttle, Vm):
 
       """
       Function which models the motors and props:
-      input: Motor throttle [0,1]
-      output: Motor thrust and torque.
-      The model is assumed to be at V=0 so it is good for hovering but inaccurate when moving forward.
-      Pay attention that output are absolute values so vector form and signs have to be adjusted
-      where the method is called according to construction choises (For this reason this method 
-      does not make any assumption on how to construct vectors)
+      input: Motor throttle [0,1], velocity of the motor relative to the air,
+      is computed outside as Vm = Vb + Omega x Rm, Rm in body axes is constant.
+      output: Motor Force and reaction torque.
+      The model take into account hovering condition bu implements some analytical
+      formulas to evaluate the effects of low vertical and horizontal air speed;
+      this speed cause flapping motion of the rotor disk and variation in blade
+      ange of attack causing variations in vertical thrust and horizontal forces.
+      The only torque evaluated is the one caused by the reaction torque of the motor
+      while torques caused by horizontal forces and position of the rotor from the CG 
+      are computed outside this method to keep generality.
       """
-      ## self.nMax_motor [RPS] number of rounds per second for BL motor
+      ## throttle self.nMax_motor [RPS] number of rounds per second for BL motor
 
-      if self.Process_perturbations: ## adds some randomness to the motor performances
-        rand_thrust = np_normal(0., 0.1) 
-        rand_torque = np_normal(0., 0.1)
+      # if self.Process_perturbations: ## adds some randomness to the motor performances
+      #   rand_thrust = np_normal(0., 0.1) 
+      #   rand_torque = np_normal(0., 0.1)
 
-      else:
-        rand_thrust = 0.
-        rand_torque = 0.
+      # else:
+      #   rand_thrust = 0.
+      #   rand_torque = 0.
+
+      um, vm, wm = Vm # [m/s] velocity components
+      RPS_squared = Throttle * (self.nMax_motor**2) #[RPS**2] square of actual prop speed
+      RPS = np.sqrt(RPS_squared)
       
-      Thrust = (1 + rand_thrust) * self.Prop_Kf * Throttle * (self.nMax_motor**2) #[N]
-      Torque = (1 + rand_torque) * self.Prop_Kq * Throttle * (self.nMax_motor**2) #[N m]
+      Thrust_FP = self.Prop_Kf * RPS_squared #[N] thrust at fix point 
+      
+      # evaluation of total induced velocity to calculate the differential thrust due to 
+      # vertical velocity. the formula is the standard one for normal condition. 
+      # no distribution of induced velocity on disk is considered.
+      vi = wm/2 + np.sqrt(((0.5*wm)**2) + (self.vh**2))
+
+      # Evaluation of thrust as fix point thrust - delta which depends on effects due to vertical vel
+      # 2*pi is considered as dCl/dAlpha for prop profile dT=1/4*rho*a*b*c*
+      Delta_Thrust = self.rho * np.pi * self.prop_mean_chord * (2*np.pi*RPS) * ((self.D_prop**2)/4) * (- vi + wm + self.vh)
+      # positive w velocity means more thrust so positive contribution
+      Thrust = Thrust_FP + Delta_Thrust
+
       # The model in which throttle is linear in those formulas, the control is an alias 
       # of F = F_Max * dT so the difference is only on how to consider the command on the 
-      # rounds per sec 
+      # rounds per sec, this operation can be done in flight computer.
+
+
+      Torque = self.Prop_KqF * Thrust
 
       return Thrust, Torque # return scalar thrust and torque
 
@@ -555,10 +587,16 @@ class QuadcoptEnv_6DOF(gym.Env):
       # Motors section (vectors are evaluated later in this method)
       dT1, dT2, dT3, dT4 = Throttles
 
-      M1_Thrust, M1_Torque = self.Motor(dT1) # scalar values for M1
-      M2_Thrust, M2_Torque = self.Motor(dT2) # scalar values for M2
-      M3_Thrust, M3_Torque = self.Motor(dT3) # scalar values for M3
-      M4_Thrust, M4_Torque = self.Motor(dT4) # scalar values for M4
+      # Evaluation of body vel for the single motors
+      Vm1 = Vb + np.cross(Omega, self.rM1)
+      Vm2 = Vb + np.cross(Omega, self.rM2)
+      Vm3 = Vb + np.cross(Omega, self.rM3)
+      Vm4 = Vb + np.cross(Omega, self.rM4)
+
+      M1_Thrust, M1_Torque = self.Motor(dT1, Vm1) # scalar values for M1
+      M2_Thrust, M2_Torque = self.Motor(dT2, Vm2) # scalar values for M2
+      M3_Thrust, M3_Torque = self.Motor(dT3, Vm3) # scalar values for M3
+      M4_Thrust, M4_Torque = self.Motor(dT4, Vm4) # scalar values for M4
 
       # Evaluation of transformation matrix from Body to NED axes: LEB
 

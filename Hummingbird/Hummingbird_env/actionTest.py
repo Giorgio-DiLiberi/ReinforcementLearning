@@ -3,19 +3,11 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 
-from quadcopt_TEST import QuadcoptEnv_TEST
+from Humming_env import Hummingbird_6DOF
 
-env = QuadcoptEnv_TEST()
+env = Hummingbird_6DOF()
 ## Testing some environments values
 print("Trim_thr= ", env.dTt)
-
-value = 0
-
-dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([value, 0., 0., 0.]))
-
-print("action[0., 1, 1, 0]= ", dT1, dT2, dT3, dT4)
-
-print("average throttle", 0.25 * (dT1+dT2+dT3+dT4))
 
 ## RESET ENVIRONMENT
 obs = env.reset()
@@ -42,7 +34,7 @@ for i in range(100000):
     # Uncomment the action to test
     #action = np.array([0., 0., 0., 0.]) # Trim
     #action = np.array([-1., 0., 0., 0.]) # Free-Fall
-    action = np.array([value]) # variable
+    action = np.array([-0., 0.1, 0., 0.]) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 
