@@ -105,6 +105,7 @@ class Hummingbird_6DOF(gym.Env):
     # Props Values
     self.D_prop = 0.2032 #[m] diameter for 7 inch prop
     self.prop_mean_chord = 0.015 #[m] 1.5 cm as mean chord for prop profile
+    self.prop_Theta0 = 0.21 #[rad] = atan(pitch / (2*pi*0.75*Rprop))
     self.Ct = 0.1087 # Constant of traction tabulated for V=0
     self.Cp = 0.0477  # Constant of power tabulated for v=0
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
@@ -127,14 +128,14 @@ class Hummingbird_6DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.45 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.35 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.CdA = np.array([0.1, 0.1, 0.]) #[kg/s] drag constant on linear aerodynamical drag model
+    self.CdA = np.array([0., 0., 0.]) #[kg/s] drag constant on linear aerodynamical drag model
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0., 0., 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    self.C_DR = np.array([0., 0., 0.]) # [kg m^2/s] coefficients are evaluated with aid of the 
     # Arena and apoleoni thesis
     
 
@@ -144,7 +145,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -153,8 +154,8 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 0. #[m] goal x position
-    self.Y_Pos_Goal = 0. #[m] goal y position
+    self.X_Pos_Goal = 12.5 #[m] goal x position
+    self.Y_Pos_Goal = 10. #[m] goal y position
     self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
@@ -218,6 +219,7 @@ class Hummingbird_6DOF(gym.Env):
       Reset state 
       """
       if self.Random_reset:
+        w_reset = np_normal(0., 0.025) #[m/s]
         Z_reset = np_normal(-28., 2.) #[m]
         u_reset = np_normal(0., 0.025) #[m/s]
         X_reset = np_normal(0., 2.) #[m]
@@ -531,7 +533,8 @@ class Hummingbird_6DOF(gym.Env):
 
       um, vm, wm = Vm # [m/s] velocity components
       RPS_squared = Throttle * (self.nMax_motor**2) #[RPS**2] square of actual prop speed
-      RPS = np.sqrt(RPS_squared)
+      RPS = np.sqrt(RPS_squared) #[RPS]
+      Omega_prop = RPS * 2 * np.pi #[rad/s] 
       
       Thrust_FP = self.Prop_Kf * RPS_squared #[N] thrust at fix point 
       
@@ -550,10 +553,25 @@ class Hummingbird_6DOF(gym.Env):
       # of F = F_Max * dT so the difference is only on how to consider the command on the 
       # rounds per sec, this operation can be done in flight computer.
 
-
       Torque = self.Prop_KqF * Thrust
 
-      return Thrust, Torque # return scalar thrust and torque
+      # Evaluation of rotor disk flapping coefficients: a1 represents the x_relative coeff.
+      # while b1 is the y rel coeff.
+
+      mi_x = um / (Omega_prop * self.D_prop/2) # advance ratios relative to u and v velocities
+      mi_y = vm / (Omega_prop * self.D_prop/2)
+
+      lambda_i = (wm - vi) / (Omega_prop * self.D_prop/2) # induced velocity coefficient
+
+      a1 = 2 * mi_x * (((4/3)*self.prop_Theta0) + lambda_i)/(1 - ((mi_x**2)/2))
+      b1 = 2 * mi_y * (((4/3)*self.prop_Theta0) + lambda_i)/(1 - ((mi_y**2)/2))
+      # flap coefficients are evaluated without considering the flapping dynamics (which is 
+      # way faster than vehicle dynamics) and are decoupled the effects of u and v.
+      # remember that due to cross product and displacement between motors and CG, althought 
+      # the motor axis are parallel to the body axis, the rotors linear velocity is affected 
+      # also by the angular velocity of the multirotor in rigid rotation formula
+
+      return Thrust, Torque, a1, b1 # return scalar thrust and torque
 
   def eqnsOfMotion(self, State, Throttles):
 
@@ -593,10 +611,10 @@ class Hummingbird_6DOF(gym.Env):
       Vm3 = Vb + np.cross(Omega, self.rM3)
       Vm4 = Vb + np.cross(Omega, self.rM4)
 
-      M1_Thrust, M1_Torque = self.Motor(dT1, Vm1) # scalar values for M1
-      M2_Thrust, M2_Torque = self.Motor(dT2, Vm2) # scalar values for M2
-      M3_Thrust, M3_Torque = self.Motor(dT3, Vm3) # scalar values for M3
-      M4_Thrust, M4_Torque = self.Motor(dT4, Vm4) # scalar values for M4
+      M1_Thrust, M1_Torque, M1_a1, M1_b1 = self.Motor(dT1, Vm1) # scalar values for M1
+      M2_Thrust, M2_Torque, M2_a1, M2_b1 = self.Motor(dT2, Vm2) # scalar values for M2
+      M3_Thrust, M3_Torque, M3_a1, M3_b1 = self.Motor(dT3, Vm3) # scalar values for M3
+      M4_Thrust, M4_Torque, M4_a1, M4_b1 = self.Motor(dT4, Vm4) # scalar values for M4
 
       # Evaluation of transformation matrix from Body to NED axes: LEB
 
@@ -607,21 +625,22 @@ class Hummingbird_6DOF(gym.Env):
       LBE = np.transpose(LEB) # Evaluate transpose of body to NED---> NED to body
       
 
-      #THRUST Evaluation [N] 
-      # is evaluated negative because thrust is oriented in the negative verse of Zb
-      # according to how props generate the thrust.
-      T1 = np.array([0, 0, - M1_Thrust])
-      T2 = np.array([0, 0, - M2_Thrust])
-      T3 = np.array([0, 0, - M3_Thrust])
-      T4 = np.array([0, 0, - M4_Thrust])
+      #Motor FORCE vector Evaluation [N] 
+      # this vector is evaluated according to values given by motor function
+      # and construction specs and taking into account the assumptions and conventions 
+      # used in motor method to evaluate flapping coefficients
+      F1 = np.array([-M1_Thrust * sin(M1_a1), -M1_Thrust * sin(M1_b1), -M1_Thrust])
+      F2 = np.array([-M2_Thrust * sin(M2_a1), -M2_Thrust * sin(M2_b1), -M2_Thrust])
+      F3 = np.array([-M3_Thrust * sin(M3_a1), -M3_Thrust * sin(M3_b1), -M3_Thrust])
+      F4 = np.array([-M4_Thrust * sin(M4_a1), -M4_Thrust * sin(M4_b1), -M4_Thrust])
 
       # TORQUES [N m]:
       # as first assumption only the thrust components of the motors combined are considered
       # as torque generator; gyroscopical effects of the props are neglected in this model. 
       # those components are NOT divided by the respective moment of Inertia.
       # Also the aerodynamic drag torque effect is added
-      Mtot = np.cross(self.rM1, T1) + np.cross(self.rM2, T2)\
-         + np.cross(self.rM3, T3) + np.cross(self.rM4, T4)\
+      Mtot = np.cross(self.rM1, F1) + np.cross(self.rM2, F2)\
+         + np.cross(self.rM3, F3) + np.cross(self.rM4, F4)\
             + np.array([0., 0., (M1_Torque + M3_Torque - M2_Torque - M4_Torque)])\
               + self.dragTorque(Omega)
 
@@ -632,7 +651,7 @@ class Hummingbird_6DOF(gym.Env):
       DB = self.Drag(Vb)
       
       # TOTAL FORCES in body axes divided by mass [N/kg = m/s^2]
-      Ftot_m = (DB + WB + T1 + T2 + T3 + T4) / self.mass 
+      Ftot_m = (DB + WB + F1 + F2 + F3 + F4) / self.mass 
 
       # Evaluation of LINEAR ACCELERATION components [m/s^2]
       Vb_dot = - np.cross(Omega, Vb) + Ftot_m + Acc_disturbance

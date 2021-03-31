@@ -14,10 +14,10 @@ from mpl_toolkits.mplot3d import axes3d
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
-from quadcopt_6DOF import QuadcoptEnv_6DOF
+from Humming_env import Hummingbird_6DOF
 
 
-env = QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)
+env = Hummingbird_6DOF(Random_reset=True, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -33,7 +33,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Stable_Baselines2_Frame/QuadEnvTest_6DOF/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Hummingbird/Hummingbird_env/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
@@ -88,7 +88,7 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==1024:
-      env.X_Pos_Goal=15.
+      env.X_Pos_Goal=25.
       env.Y_Pos_Goal=20.
       env.Goal_Altitude=-50.
     
