@@ -33,7 +33,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/giorgio/Scrivania/Python/ReinforcementLearning/Hummingbird/Hummingbird_env/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Hummingbird/Hummingbird_env/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
@@ -94,6 +94,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
+    if i==1:
+      print(action)
+
     obs, reward, done, info = env.step(action) 
 
     info_u.append(info["u"])

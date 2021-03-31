@@ -154,9 +154,9 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 12.5 #[m] goal x position
-    self.Y_Pos_Goal = 10. #[m] goal y position
-    self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
+    self.X_Pos_Goal = 20 #[m] goal x position
+    self.Y_Pos_Goal = 15. #[m] goal y position
+    self.Goal_Altitude = -40. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
@@ -300,11 +300,11 @@ class Hummingbird_6DOF(gym.Env):
 
       #q_weight = 0.1
 
-      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/100.)\
+      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/50.)\
         - w_error_weight * (abs(w/50.))\
           - pos_weight * (abs(X_error)/50) - uv_weight * (abs(u)/50)\
-            - pos_weight * (abs(Y_error)/50) -  4*uv_weight * (abs(v)/50)\
-              - pq_weight * (abs(q/50) + abs(p/50) + abs(r/50)) 
+            - pos_weight * (abs(Y_error)/50) -  uv_weight * (abs(v)/50)\
+              - pq_weight * (abs(q/50) + abs(p/50)) - pq_weight * abs(r/50)
 
       if R >= 0:
         reward = R
@@ -333,17 +333,17 @@ class Hummingbird_6DOF(gym.Env):
         done = True
         print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(u_1)>=50. :
+      elif abs(u_1)>=40. :
 
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=50. :
+      elif abs(v_1)>=40. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(w_1)>=50. :
+      elif abs(w_1)>=40. :
 
         done = True
         print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
@@ -408,7 +408,7 @@ class Hummingbird_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.65 * action)
+      Thr = self.dTt * (1 + 0.5 * action)
 
       return Thr
 
@@ -465,8 +465,8 @@ class Hummingbird_6DOF(gym.Env):
         if Throttle_array[thr_count] >= 1.:
           Throttle_array[thr_count] = 1.
 
-        elif Throttle_array[thr_count] <= 0.:
-          Throttle_array[thr_count] = 0.
+        elif Throttle_array[thr_count] <= 0.00001:
+          Throttle_array[thr_count] = 0.0001
 
         else: 
           Throttle_array[thr_count] = Throttle_array[thr_count]
@@ -532,16 +532,25 @@ class Hummingbird_6DOF(gym.Env):
       #   rand_torque = 0.
 
       um, vm, wm = Vm # [m/s] velocity components
+
       RPS_squared = Throttle * (self.nMax_motor**2) #[RPS**2] square of actual prop speed
       RPS = np.sqrt(RPS_squared) #[RPS]
       Omega_prop = RPS * 2 * np.pi #[rad/s] 
+
+      ## setting up a minimum value for tip velocity to avoid division by zero in evaluation of advance ratios
+      # 450. [rad/s] is the hovering prop angular velocity for tis kind of drone
+      if Omega_prop<=450.:
+        U_tip = 450. * self.D_prop / 2 #[m/s]
+
+      else:
+        U_tip = Omega_prop * self.D_prop / 2 #[m/s]
       
       Thrust_FP = self.Prop_Kf * RPS_squared #[N] thrust at fix point 
       
       # evaluation of total induced velocity to calculate the differential thrust due to 
       # vertical velocity. the formula is the standard one for normal condition. 
       # no distribution of induced velocity on disk is considered.
-      vi = wm/2 + np.sqrt(((0.5*wm)**2) + (self.vh**2))
+      vi = (wm/2) + np.sqrt(((0.5*wm)**2) + (self.vh**2))
 
       # Evaluation of thrust as fix point thrust - delta which depends on effects due to vertical vel
       # 2*pi is considered as dCl/dAlpha for prop profile dT=1/4*rho*a*b*c*
@@ -558,10 +567,10 @@ class Hummingbird_6DOF(gym.Env):
       # Evaluation of rotor disk flapping coefficients: a1 represents the x_relative coeff.
       # while b1 is the y rel coeff.
 
-      mi_x = um / (Omega_prop * self.D_prop/2) # advance ratios relative to u and v velocities
-      mi_y = vm / (Omega_prop * self.D_prop/2)
+      mi_x = um / U_tip # advance ratios relative to u and v velocities
+      mi_y = vm / U_tip
 
-      lambda_i = (wm - vi) / (Omega_prop * self.D_prop/2) # induced velocity coefficient
+      lambda_i = (wm - vi) / U_tip # induced velocity coefficient
 
       a1 = 2 * mi_x * (((4/3)*self.prop_Theta0) + lambda_i)/(1 - ((mi_x**2)/2))
       b1 = 2 * mi_y * (((4/3)*self.prop_Theta0) + lambda_i)/(1 - ((mi_y**2)/2))
