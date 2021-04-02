@@ -55,7 +55,11 @@ In root/Stable_Baselines2_Frame is possible to find some sub directory such as .
 * Directory Trajectory_gen is a simple 2D environment to train a simple policy for obstacle avoidance and waypoint navigation, this model does not include dynamics and rotation.
 
 All thhose directories contains a simple model of the dynamics if the quadrotor and are used to learn the basics of RL applied to such a continous-acion-observation-space MIMO poblem.
-The directory /Hummingbird contains the codes to tain a more specific model of "+ config", 08*3.8 inch propeller quadcopter; this code is made specifically to deploy the trained policy on the GMBH Hummingbird quadcopter.
+The directory /Hummingbird contains the codes to simulate a more specific model of "+ config", 08*3.8 inch propeller quadcopter; this code is made specifically to deploy the trained policy on the GMBH Hummingbird quadcopter or any other of this class. In particular:
+
+* Directory /Hummingbird/Hummingbird_6DOF contains a model to train a policy to control all four control parameters with visibility on all the states and position errors from a waypoin, the goal of the policy is to reach the given waypoints and maintain the position starting from any attitude initial condition.
+
+* Directory /Hummingbird/Hummingbird_PhiThetaRref contains a model to train a policy to reac and maintain certain pitch/roll reference angles and r rate that can be pilot inputs; in this case the obs space is only on the errors between the actual pitch and roll angles and r rates and reference values, while the action space is supposed to control only Aileron, Elevator and Rudder.
 
 ## Usage of a QuadEnv directory
 

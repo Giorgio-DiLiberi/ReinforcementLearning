@@ -136,7 +136,7 @@ class Hummingbird_6DOF(gym.Env):
     # Zb normal surface is greater than othe two  
 
     self.C_DR = np.array([0., 0., 0.]) # [kg m^2/s] coefficients are evaluated with aid of the 
-    # Arena and apoleoni thesis
+    # Arena and Napoleoni thesis
     
 
     # integration parameters: The dynamics simulation time is different from the time step size
