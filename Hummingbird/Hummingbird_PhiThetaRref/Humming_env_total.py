@@ -40,7 +40,7 @@ class Hummingbird_6DOF(gym.Env):
     # visibility is gven only on three parameters which are pitch and roll angles and yaw angular velocity 
     # pitch and roll angles are evaluated from the quaternion with the convertion relations and than error 
     # from the request is calculated. error is given in radians and maximum possible values are 45 degs
-    highObsSpace = np.array([1.1 , 1.1, 1.1])
+    highObsSpace = np.array([1.1 , 1.1, 1.1, 1.1, 1.1])    
     lowObsSpace = -highObsSpace
     
 
@@ -49,7 +49,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([50., 50., 50.]) # normalization constants
+    self.Obs_normalization_vector = np.array([50., 50., 50., np.pi, np.pi]) # normalization constants
     # maximum values for pitch and roll angles are 45 deg. those values will affect the done condition
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
@@ -158,8 +158,8 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.p_ref = 0.
-    self.q_ref = 0.
+    self.Phi_ref = 0.
+    self.Theta_ref = 0.
     self.r_ref = 0.
 
     self.Avg_Thr = self.dTt  # average throttle is updated with pitch and roll angles
@@ -206,11 +206,11 @@ class Hummingbird_6DOF(gym.Env):
       # error is normalized dividing by the normalization vector stated yet, sign also is given.
       Q = self.state[6:10]
       Phi, Theta = self.quat2Att(Q)
-      p_error = self.state[3] - self.p_ref
-      q_error = self.state[4] - self.q_ref
+      Phi_error = Phi - self.Phi_ref
+      Theta_error = Theta - self.Theta_ref
       r_error = self.state[5] - self.r_ref
     
-      obs = np.array([p_error, q_error, r_error])/self.Obs_normalization_vector
+      obs = np.array([self.state[3], self.state[4], r_error, Phi_error, Theta_error])/self.Obs_normalization_vector
 
       reward = self.getReward()
 
@@ -248,7 +248,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -15. #[m]
+        Z_reset = -30. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
@@ -258,10 +258,15 @@ class Hummingbird_6DOF(gym.Env):
         q_reset = 0.
         r_reset = 0.
 
-        q0_reset = 1.
-        q1_reset = 0.
-        q2_reset = 0.
-        q3_reset = 0.      
+        phi = -np.pi/18. #[rad]
+        theta = 0.
+        psi = 0.
+
+        q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
+        q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
+        q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
+        q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
+
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
@@ -269,11 +274,11 @@ class Hummingbird_6DOF(gym.Env):
 
       Q = self.state[6:10]
       Phi, Theta = self.quat2Att(Q)
-      p_error = self.state[3] - self.p_ref
-      q_error = self.state[4] - self.q_ref
+      Phi_error = Phi - self.Phi_ref
+      Theta_error = Theta - self.Theta_ref
       r_error = self.state[5] - self.r_ref
     
-      obs = np.array([p_error, q_error, r_error])/self.Obs_normalization_vector
+      obs = np.array([self.state[3], self.state[4], r_error, Phi_error, Theta_error])/self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
 
@@ -287,13 +292,18 @@ class Hummingbird_6DOF(gym.Env):
 
       Q = self.state[6:10]
       Phi, Theta = self.quat2Att(Q)
-      p_error = self.state[3] - self.p_ref
-      q_error = self.state[4] - self.q_ref
+      Phi_error = Phi - self.Phi_ref
+      Theta_error = Theta - self.Theta_ref
       r_error = self.state[5] - self.r_ref
+      p = self.state[3]
+      q = self.state[4]
+    
+      rate_weight = 0.4
+      angle_error_weight = 1.
+      r_error_weight = 1.
 
-      rate_error_weight = 0.8
-
-      R = 1. - rate_error_weight * (abs(p_error/20.) + abs(q_error/20.) + abs(r_error/20.))
+      R = 1. - angle_error_weight * (abs(Phi_error/np.pi) + abs(Theta_error/np.pi)) - r_error_weight * abs(r_error/50.)\
+        - rate_weight * (abs(p/50.) + abs(q/50.))
 
       if R >= 0:
         reward = R

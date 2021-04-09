@@ -27,16 +27,17 @@ class Hummingbird_3DOF(gym.Env):
     # the controls re given as pseudo commands for aileron, elevator and rudder
     # so torques are controlled in order to achieve an attitude control.
     # The motor model tries to be as accurate as possible 
-    highActionSpace = np.array([1., 1., 1.])
-    lowActionSpace = np.array([-1., -1., -1.])
+    highActionSpace = np.array([1., 1.])
+    lowActionSpace = np.array([-1., -1.])
     self.action_space = spaces.Box(lowActionSpace, highActionSpace, dtype=np.float32)
 
     # The states are composed only of the three rotation velocity and the three angles
 
-    # visibility is gven only on three parameters which are pitch and roll angles and yaw angular velocity 
+    # visibility is gven only on 5 parameters which are pitch and roll angles and angular velocities
+
     # pitch and roll angles are evaluated from the quaternion with the convertion relations and than error 
     # from the request is calculated. error is given in radians and maximum possible values are 45 degs
-    highObsSpace = np.array([1.1 , 1.1, 1.1])
+    highObsSpace = np.array([1.1 , 1.1, 1.1, 1.1, 1.1, 1.1, 1.1])    
     lowObsSpace = -highObsSpace
     
 
@@ -45,8 +46,8 @@ class Hummingbird_3DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([50., 50., 50.]) # normalization constants
-    # maximum values for pitch and roll angles are 45 deg. those values will affect the done condition
+    self.Obs_normalization_vector = np.array([50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    # maximum values for pitch and roll angles are 1 rad. those values will affect the done condition
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -128,7 +129,7 @@ class Hummingbird_3DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.18 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
     self.CdA = np.array([0.1, 0.1, 0.4]) #[kg/s] drag constant on linear aerodynamical drag model
@@ -154,10 +155,9 @@ class Hummingbird_3DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.p_ref = 0.
-    self.q_ref = - 0.
-    self.r_ref = 0.
-
+    self.Phi_ref = 0.
+    self.Theta_ref = 0.
+    
     self.Avg_Thr = self.dTt  # average throttle is updated with pitch and roll angles
 
   def step(self, action):
@@ -165,7 +165,7 @@ class Hummingbird_3DOF(gym.Env):
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation
 
-      controls = np.array([self.Avg_Thr, action[0], action[1], action[2]]) ## This variable is used to make possible the separation of actions 
+      controls = np.array([self.Avg_Thr, action[0], action[1], 0.]) ## This variable is used to make possible the separation of actions 
       # in this example actions represent pseudo controls
 
       Throttles = self.getThrsFromControls(controls) # commands are the actions given by the policy
@@ -201,12 +201,13 @@ class Hummingbird_3DOF(gym.Env):
       # as obs attitude anr r rate error is gven, evaluated on reference values.
       # error is normalized dividing by the normalization vector stated yet, sign also is given.
       Q = self.state[3:7]
-      Phi, Theta = self.quat2Att(Q)
-      p_error = self.state[0] - self.p_ref
-      q_error = self.state[1] - self.q_ref
-      r_error = self.state[2] - self.r_ref
-    
-      obs = np.array([p_error, q_error, r_error])/self.Obs_normalization_vector
+      Q_ref = self.Ang2Quat(env.Phi_ref, env.Theta_ref)
+      q0_error = Q[0] - Q_ref[0]
+      q1_error = Q[1] - Q_ref[1]
+      q2_error = Q[2] - Q_ref[2]
+      q3_error = Q[3] - Q_ref[3]
+      
+      obs = np.array([self.state[0], self.state[1], self.state[2], q0_error, q1_error, q2_error, q3_error])/self.Obs_normalization_vector
 
       reward = self.getReward()
 
@@ -222,12 +223,12 @@ class Hummingbird_3DOF(gym.Env):
       Reset state 
       """
       if self.Random_reset:
-        p_reset = np_normal(0., 10.*0.175)
-        q_reset = np_normal(0., 10.*0.175)
-        r_reset = np_normal(0., 10.*0.175)
+        p_reset = np_normal(0., 0.175)
+        q_reset = np_normal(0., 0.175)
+        r_reset = np_normal(0., 0.175)
 
-        phi = 0. #[rad]
-        theta = 0. #[rad]
+        phi = np_normal(0., np.pi/18.) #[rad]
+        theta = np_normal(0., np.pi/18.) #[rad]
         psi = 0.
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
@@ -245,20 +246,21 @@ class Hummingbird_3DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.     
 
-      self.p_ref = np_normal(0., 1.)
-      self.q_ref = np_normal(0., 1.)
-      self.r_ref = np_normal(0., 1.)
+      self.Phi_ref = np_normal(0., np.pi/18.)
+      self.Theta_ref = np_normal(0., np.pi/18.)
 
       self.state = np.array([p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
       Q = self.state[3:7]
-      p_error = self.state[0] - self.p_ref
-      q_error = self.state[1] - self.q_ref
-      r_error = self.state[2] - self.r_ref
-    
-      obs = np.array([p_error, q_error, r_error])/self.Obs_normalization_vector
+      Q_ref = self.Ang2Quat(env.Phi_ref, env.Theta_ref)
+      q0_error = Q[0] - Q_ref[0]
+      q1_error = Q[1] - Q_ref[1]
+      q2_error = Q[2] - Q_ref[2]
+      q3_error = Q[3] - Q_ref[3]
+      
+      obs = np.array([self.state[0], self.state[1], self.state[2], q0_error, q1_error, q2_error, q3_error])/self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
 
@@ -271,14 +273,23 @@ class Hummingbird_3DOF(gym.Env):
       """
 
       Q = self.state[3:7]
-      Phi, Theta = self.quat2Att(Q)
-      p_error = self.state[0] - self.p_ref
-      q_error = self.state[1] - self.q_ref
-      r_error = self.state[2] - self.r_ref
-    
-      rate_error_weight = 1.
+      Q_ref = self.Ang2Quat(env.Phi_ref, env.Theta_ref)
+      q0_error = Q[0] - Q_ref[0]
+      q1_error = Q[1] - Q_ref[1]
+      q2_error = Q[2] - Q_ref[2]
+      q3_error = Q[3] - Q_ref[3]
+      
+      p = self.state[0]
+      q = self.state[1]
+      r = self.state[2]
+      
+      rate_weight = 0.4
+      qaternion_error_w = 1.
+      r_error_weight = 1.
 
-      R = 1. - rate_error_weight * (abs(p_error/50.) + abs(q_error/50.) + abs(r_error/50.))
+      R = 1. - qaternion_error_w * (abs(q0_error) + abs(q1_error) + abs(q2_error) + abs(q3_error))\
+        - r_error_weight * abs(r/50.)\
+          - rate_weight * (abs(p/50.) + abs(q/50.))
 
       if R >= 0:
         reward = R
@@ -358,6 +369,27 @@ class Hummingbird_3DOF(gym.Env):
 
       return Phi, Theta
 
+  def Ang2Quat(self, Phi_ref, Theta_ref):
+
+      """
+      Function to convert pi and theta ref to quaternion, psi is assumed to be and stay zero
+      input: phiref and theta ref
+      output: reference quaternion with psi zero 
+      """
+
+      psi = 0.
+      phi = Phi_ref
+      theta = Theta_ref
+
+      q0 = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
+      q1 = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
+      q2 = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
+      q3 = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
+
+      Q_ref = np.array([q0, q1, q2, q3])
+      
+      return Q_ref
+
 ## Control section: this section contains all the methods used to get commands and throttles from 
 # actions
   def linearAct2ThrMap(self, action):
@@ -371,7 +403,7 @@ class Hummingbird_3DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.65 * action)
+      Thr = self.dTt * (1 + 0.5 * action)
 
       return Thr
 

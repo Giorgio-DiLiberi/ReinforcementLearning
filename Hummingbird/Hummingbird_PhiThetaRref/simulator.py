@@ -88,18 +88,20 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==512:
-      env.p_ref=10.*0.0175
-      env.q_ref=0.
-      env.r_ref=0.
+      env.Phi_ref = np.pi/18.
+      #env.Avg_Thr = 1.01*env.dTt
+      env.Theta_ref = 0.
+      env.r_ref = 0.
 
     elif i==537:
-      env.p_ref=0.
+      env.Phi_ref = 0.
 
     elif i==787:
-      env.p_ref=-10.*0.0175
+      env.Phi_ref = -np.pi/18.
 
     elif i==812:
-      env.p_ref=0.
+      env.Phi_ref = 0.
+      #env.Avg_Thr = env.dTt
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
