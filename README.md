@@ -82,10 +82,11 @@ The directory /SimulationResults can be used to store some graphs and useful dat
 To run a script in background and continue the process till the end even if the terminal window is closed use the following command:
 
 ```bash
-nohup python -u filename.py 
+nohup python scripToRun.py > output.log &
 ```
 
-this command will save the printed output of the script in a Logfile named nohup.out.
+this command will save the printed output of the script in a Logfile named nohup.out and run the process in background.
+
 
 ## Create a virtualenv to use old packages
 
