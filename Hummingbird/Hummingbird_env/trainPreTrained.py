@@ -21,7 +21,7 @@ from Humming_env import Hummingbird_6DOF
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 15 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = 10 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
 
 LearningRate_ini = 1.e-4 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
@@ -85,7 +85,7 @@ if __name__ == '__main__':
   
     
     model = PPO2.load(Policy2Load, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
-            cliprange=cliprange, nminibatches=4, gamma=0.9999, noptepochs=32, n_steps=8156, n_cpu_tf_sess=4)
+            cliprange=cliprange, nminibatches=4, gamma=0.9999, noptepochs=16, n_steps=8156, n_cpu_tf_sess=4)
 
     model.tensorboard_log="./tensorboardLogs/"
 

@@ -3,9 +3,9 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 
-from quadcopt_TEST import QuadcoptEnv_TEST
+from quadcopt_6DOF import QuadcoptEnv_6DOF
 
-env = QuadcoptEnv_TEST()
+env = QuadcoptEnv_6DOF()
 ## Testing some environments values
 print("Trim_thr= ", env.dTt)
 
@@ -19,6 +19,9 @@ print("average throttle", 0.25 * (dT1+dT2+dT3+dT4))
 
 ## RESET ENVIRONMENT
 obs = env.reset()
+
+#custom reset
+env.state[5] = 1.
 
 # info vectors initialization for simulation history
 info_u=[env.state[0]]
@@ -35,14 +38,15 @@ info_Z=[env.state[12]]
 time=0.
 info_time=[time] # elased time vector
 
+
 # SIMULATION
 
 for i in range(100000):
 
     # Uncomment the action to test
-    #action = np.array([0., 0., 0., 0.]) # Trim
+    action = np.array([0., 0., 0., 0.]) # Trim
     #action = np.array([-1., 0., 0., 0.]) # Free-Fall
-    action = np.array([value]) # variable
+    #action = np.array([value]) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 
@@ -122,3 +126,7 @@ plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
 
 plt.show()
+
+## saving on file 
+
+np.savetxt("simout_r_Psi.txt", np.stack([info_r, Euler_angles[:, 2]], axis=1))

@@ -79,6 +79,14 @@ The directory can be used for:
 
 The directory /SimulationResults can be used to store some graphs and useful data resulting from simulation of trained Policies; the directory /custom_modules contains some useful functions.
 
+To run a script in background and continue the process till the end even if the terminal window is closed use the following command:
+
+```bash
+nohup python -u filename.py 
+```
+
+this command will save the printed output of the script in a Logfile named nohup.out.
+
 ## Create a virtualenv to use old packages
 
 Here is a how-to create a virtualenv on pc and run it, after run is it possible to install packages on the environment and run them without affecting the main pc packages.

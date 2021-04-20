@@ -186,7 +186,8 @@ class QuadcoptEnv_6DOF(gym.Env):
       X_error = self.state[10] - self.X_Pos_Goal
       Y_error = self.state[11] - self.Y_Pos_Goal
       Z_error = self.state[12] - self.Goal_Altitude
-      obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
+      obs_state = np.concatenate((self.state[0:10], [X_error, Y_error, Z_error]))
+      #obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)

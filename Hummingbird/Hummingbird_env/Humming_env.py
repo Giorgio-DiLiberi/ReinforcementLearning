@@ -46,7 +46,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 30., 30., 30.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -220,7 +220,7 @@ class Hummingbird_6DOF(gym.Env):
       """
       if self.Random_reset:
         w_reset = np_normal(0., 0.025) #[m/s]
-        Z_reset = np_normal(-28., 2.) #[m]
+        Z_reset = np_normal(-18., 2.) #[m]
         u_reset = np_normal(0., 0.025) #[m/s]
         X_reset = np_normal(0., 2.) #[m]
         v_reset = np_normal(0., 0.025) #[m/s]
@@ -290,7 +290,7 @@ class Hummingbird_6DOF(gym.Env):
       #q2 = self.state[8]
       #q3 = self.state[9]
 
-      altitude_onReward_weight = 0.8 #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
+      altitude_onReward_weight = 1. #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
       w_error_weight = 0.08
 
       pos_weight = 0.8
@@ -300,10 +300,10 @@ class Hummingbird_6DOF(gym.Env):
 
       #q_weight = 0.1
 
-      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/50.)\
-        - w_error_weight * (abs(w/50.))\
-          - pos_weight * (abs(X_error)/50) - uv_weight * (abs(u)/50)\
-            - pos_weight * (abs(Y_error)/50) -  uv_weight * (abs(v)/50)\
+      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/30.)\
+        - w_error_weight * (abs(w/30.))\
+          - pos_weight * (abs(X_error)/30.) - uv_weight * (abs(u)/30.)\
+            - pos_weight * (abs(Y_error)/30.) -  uv_weight * (abs(v)/30.)\
               - pq_weight * (abs(q/50) + abs(p/50)) - pq_weight * abs(r/50)
 
       if R >= 0:

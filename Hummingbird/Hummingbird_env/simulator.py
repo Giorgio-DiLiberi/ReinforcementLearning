@@ -220,13 +220,6 @@ plt.savefig('SimulationResults/trajectory.jpg')
 # plt.title('Average throttle in episode')
 # plt.savefig('SimulationResults/Avg_thr.jpg')
 
-Simulation_state_file = open("SimulationResults/Sim_out.txt", "w")
-
-Complete_state = np.array([info_time, info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z])
-
-Simulation_state_file.write(str(Complete_state))
-Simulation_state_file.write(str(action_memory))
-
-Simulation_state_file.close()
+np.savetxt("simout_w_Z.txt", np.stack([info_w, info_Z], axis=1))
 
 
