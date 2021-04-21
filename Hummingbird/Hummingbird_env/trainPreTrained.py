@@ -85,7 +85,7 @@ if __name__ == '__main__':
   
     
     model = PPO2.load(Policy2Load, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
-            cliprange=cliprange, nminibatches=4, gamma=0.9999, noptepochs=16, n_steps=8156, n_cpu_tf_sess=4)
+            cliprange=cliprange, nminibatches=4, gamma=0.9999, noptepochs=64, n_steps=8156, n_cpu_tf_sess=4)
 
     model.tensorboard_log="./tensorboardLogs/"
 

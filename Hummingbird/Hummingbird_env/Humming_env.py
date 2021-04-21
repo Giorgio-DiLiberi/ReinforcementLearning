@@ -46,7 +46,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 30., 30., 30.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 100., 100., 100.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -145,7 +145,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -154,9 +154,9 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 20 #[m] goal x position
-    self.Y_Pos_Goal = 15. #[m] goal y position
-    self.Goal_Altitude = -40. #[m] altitude to achieve is 30 m
+    self.X_Pos_Goal = 25. #[m] goal x position
+    self.Y_Pos_Goal = 25. #[m] goal y position
+    self.Goal_Altitude = -45. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
@@ -198,7 +198,7 @@ class Hummingbird_6DOF(gym.Env):
       # error is normalized dividing by the normalization vector stated yet, sign also is given.
       X_error = self.state[10] - self.X_Pos_Goal
       Y_error = self.state[11] - self.Y_Pos_Goal
-      Z_error = self.state[12] - self.Goal_Altitude
+      Z_error = self.state[12] - self.Goal_Altitude 
       obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
 
@@ -219,11 +219,11 @@ class Hummingbird_6DOF(gym.Env):
       Reset state 
       """
       if self.Random_reset:
-        w_reset = np_normal(0., 0.025) #[m/s]
-        Z_reset = np_normal(-18., 2.) #[m]
-        u_reset = np_normal(0., 0.025) #[m/s]
+        w_reset = np_normal(0., 0.1) #[m/s]
+        Z_reset = np_normal(-20., 2.) #[m]
+        u_reset = np_normal(0., 0.1) #[m/s]
         X_reset = np_normal(0., 2.) #[m]
-        v_reset = np_normal(0., 0.025) #[m/s]
+        v_reset = np_normal(0., 0.1) #[m/s]
         Y_reset = np_normal(0., 2.) #[m]
 
         p_reset = np_normal(0., 0.0175)
@@ -241,7 +241,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -15. #[m]
+        Z_reset = -20. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
@@ -262,7 +262,7 @@ class Hummingbird_6DOF(gym.Env):
 
       X_error = self.state[10] - self.X_Pos_Goal
       Y_error = self.state[11] - self.Y_Pos_Goal
-      Z_error = self.state[12] - self.Goal_Altitude
+      Z_error = self.state[12] - self.Goal_Altitude 
       obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
 
@@ -290,7 +290,7 @@ class Hummingbird_6DOF(gym.Env):
       #q2 = self.state[8]
       #q3 = self.state[9]
 
-      altitude_onReward_weight = 1. #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
+      altitude_onReward_weight = 0.8 #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
       w_error_weight = 0.08
 
       pos_weight = 0.8
@@ -300,10 +300,10 @@ class Hummingbird_6DOF(gym.Env):
 
       #q_weight = 0.1
 
-      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/30.)\
+      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/100.)\
         - w_error_weight * (abs(w/30.))\
-          - pos_weight * (abs(X_error)/30.) - uv_weight * (abs(u)/30.)\
-            - pos_weight * (abs(Y_error)/30.) -  uv_weight * (abs(v)/30.)\
+          - pos_weight * (abs(X_error)/100.) - uv_weight * (abs(u)/30.)\
+            - pos_weight * (abs(Y_error)/100.) - uv_weight * (abs(v)/30.)\
               - pq_weight * (abs(q/50) + abs(p/50)) - pq_weight * abs(r/50)
 
       if R >= 0:
@@ -328,7 +328,7 @@ class Hummingbird_6DOF(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      if Z_1>=5. or Z_1<=-200. : 
+      if Z_1>=10. or Z_1<=-200. : 
 
         done = True
         print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
@@ -408,7 +408,7 @@ class Hummingbird_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.5 * action)
+      Thr = self.dTt * (1 + 0.6 * action)
 
       return Thr
 
