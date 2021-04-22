@@ -46,7 +46,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 100., 100., 100.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -145,7 +145,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -154,8 +154,8 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 25. #[m] goal x position
-    self.Y_Pos_Goal = 25. #[m] goal y position
+    self.X_Pos_Goal = 10. #[m] goal x position
+    self.Y_Pos_Goal = 20. #[m] goal y position
     self.Goal_Altitude = -45. #[m] altitude to achieve is 30 m
 
   def step(self, action):
@@ -220,11 +220,11 @@ class Hummingbird_6DOF(gym.Env):
       """
       if self.Random_reset:
         w_reset = np_normal(0., 0.1) #[m/s]
-        Z_reset = np_normal(-20., 2.) #[m]
+        Z_reset = -20. #[m]
         u_reset = np_normal(0., 0.1) #[m/s]
-        X_reset = np_normal(0., 2.) #[m]
+        X_reset = 0. #[m]
         v_reset = np_normal(0., 0.1) #[m/s]
-        Y_reset = np_normal(0., 2.) #[m]
+        Y_reset = 0. #[m]
 
         p_reset = np_normal(0., 0.0175)
         q_reset = np_normal(0., 0.0175)
@@ -243,9 +243,9 @@ class Hummingbird_6DOF(gym.Env):
         w_reset = 0. #[m/s]
         Z_reset = -20. #[m]
         u_reset = 0. #[m/s]
-        X_reset = 0. #[m]
+        X_reset = -10. #[m]
         v_reset = 0. #[m/s]
-        Y_reset = 0. #[m]
+        Y_reset = 10. #[m]
 
         p_reset = 0.
         q_reset = 0.
@@ -300,10 +300,10 @@ class Hummingbird_6DOF(gym.Env):
 
       #q_weight = 0.1
 
-      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/100.)\
+      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/50.)\
         - w_error_weight * (abs(w/30.))\
-          - pos_weight * (abs(X_error)/100.) - uv_weight * (abs(u)/30.)\
-            - pos_weight * (abs(Y_error)/100.) - uv_weight * (abs(v)/30.)\
+          - pos_weight * (abs(X_error)/50.) - uv_weight * (abs(u)/30.)\
+            - pos_weight * (abs(Y_error)/50.) - uv_weight * (abs(v)/30.)\
               - pq_weight * (abs(q/50) + abs(p/50)) - pq_weight * abs(r/50)
 
       if R >= 0:
@@ -328,22 +328,22 @@ class Hummingbird_6DOF(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      if Z_1>=10. or Z_1<=-200. : 
+      if Z_1>=5. or Z_1<=-95. : 
 
         done = True
         print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(u_1)>=40. :
+      elif abs(u_1)>=30. :
 
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=40. :
+      elif abs(v_1)>=30. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(w_1)>=40. :
+      elif abs(w_1)>=30. :
 
         done = True
         print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")

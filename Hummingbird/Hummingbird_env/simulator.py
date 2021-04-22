@@ -88,9 +88,9 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==1024:
-      env.X_Pos_Goal=25.
-      env.Y_Pos_Goal=20.
-      env.Goal_Altitude=-50.
+      env.X_Pos_Goal=3.
+      env.Y_Pos_Goal=33.
+      env.Goal_Altitude=-12.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -120,9 +120,6 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     if done:
       # obs = env.reset()
       break
-
-    if i==512:
-      print("mid sim posiion [X, Y, Z]= ", env.state[10:13])
 
 print("final posiion [X, Y, Z]= ", env.state[10:13])
 

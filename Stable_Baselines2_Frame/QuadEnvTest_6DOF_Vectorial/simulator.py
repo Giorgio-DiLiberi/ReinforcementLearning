@@ -76,6 +76,9 @@ info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array 
 info_X = [env.state[10]]
 info_Y = [env.state[11]]
 info_Z = [env.state[12]]
+info_V_N = [0.]
+info_V_E = [0.]
+info_V_D = [0.]
 action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the simulation
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
@@ -86,21 +89,6 @@ info_time=[time] # elapsed time vector
 # SIMULATION
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
-
-    if i==700:
-      env.X_Pos_Goal=15.
-      env.Y_Pos_Goal=20.
-      env.Goal_Altitude=-50.
-
-    if i==1024:
-      env.X_Pos_Goal=25.
-      env.Y_Pos_Goal=10.
-      env.Goal_Altitude=-40.
-
-    if i==1536:
-      env.X_Pos_Goal=0.
-      env.Y_Pos_Goal=11.1
-      env.Goal_Altitude=-28.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -116,6 +104,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
+    info_V_N.append(info["V_Nord"])
+    info_V_E.append(info["V_Est"])
+    info_V_D.append(info["V_Down"])
     action_memory = np.vstack([action_memory, action])
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
@@ -209,31 +200,14 @@ plt.title('Actions in episode [-1, 1]')
 plt.legend(['Avg_thr', 'Ail', 'Ele', 'Rud'])
 plt.savefig('SimulationResults/action.jpg')
 
-info_H = -1 * np.array([info_Z])
-fig = plt.figure(7)
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
-#ax.xlabel('X')
-#ax.ylabel('Y')
-#ax.ylabel('H==-Z')
-#ax.title('Trajectory')
-plt.savefig('SimulationResults/trajectory.jpg')
-
-
-# plt.figure(7)
-# plt.plot(info_time, Throttle_memory)
-# plt.xlabel('time')
-# plt.ylabel('Average throttle [0, 1]')
-# plt.title('Average throttle in episode')
-# plt.savefig('SimulationResults/Avg_thr.jpg')
-
-Simulation_state_file = open("SimulationResults/Sim_out.txt", "w")
-
-Complete_state = np.array([info_time, info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z])
-
-Simulation_state_file.write(str(Complete_state))
-Simulation_state_file.write(str(action_memory))
-
-Simulation_state_file.close()
+plt.figure(7)
+plt.plot(info_time, info_V_N)
+plt.plot(info_time, info_V_E)
+plt.plot(info_time, info_V_D)
+plt.xlabel('time')
+plt.ylabel('V_NED')
+plt.title('Earth frame velocity')
+plt.legend(['V_Nord', 'V_Est', 'V_Down'])
+plt.savefig('SimulationResults/V_NED.jpg')
 
 

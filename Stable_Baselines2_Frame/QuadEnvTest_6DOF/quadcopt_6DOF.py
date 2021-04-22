@@ -45,20 +45,20 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 25., 25., 25.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
     
 
-    self.Lx = 0.241   #[m] X body Length (squared x configuration)
-    self.Ly = 0.241   #[m] Y body Length
+    self.Lx = 0.34   #[m] X body Length (squared x configuration)
+    self.Ly = 0.34   #[m] Y body Length
     
     # Motors position vectors from CG
-    self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
-    self.rM2=np.array([-self.Lx/2, self.Ly/2, 0.])
-    self.rM3=np.array([-self.Lx/2, -self.Ly/2, 0.])
-    self.rM4=np.array([self.Lx/2, -self.Ly/2, 0.]) 
+    self.rM1=np.array([self.Lx/2, 0., 0.]) 
+    self.rM2=np.array([0., self.Ly/2, 0.])
+    self.rM3=np.array([-self.Lx/2, 0., 0.])
+    self.rM4=np.array([0., -self.Ly/2, 0.]) 
 
     # atmosphere and gravity definition (assumed constant but a standard atmosphere model can be included)
     self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
@@ -115,14 +115,14 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.35 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.CdA = np.array([0.1, 0.1, 0.3951]) #[kg/s] drag constant on linear aerodynamical drag model
+    self.CdA = np.array([0.05, 0.05, 0.5]) #[kg/s] drag constant on linear aerodynamical drag model
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0.02, 0.02, 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    self.C_DR = np.array([0.02, 0.02, 0.001]) # [kg m^2/s] coefficients are evaluated with aid of the 
     # Arena and apoleoni thesis
     
 
@@ -141,8 +141,8 @@ class QuadcoptEnv_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 0. #[m] goal x position
-    self.Y_Pos_Goal = 0. #[m] goal y position
+    self.X_Pos_Goal = 10. #[m] goal x position
+    self.Y_Pos_Goal = 15. #[m] goal y position
     self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
@@ -209,7 +209,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       if self.Random_reset:
         w_reset = np_normal(0., 0.025) #[m/s]
-        Z_reset = np_normal(-28., 2.) #[m]
+        Z_reset = np_normal(-25., 2.) #[m]
         u_reset = np_normal(0., 0.025) #[m/s]
         X_reset = np_normal(0., 2.) #[m]
         v_reset = np_normal(0., 0.025) #[m/s]
@@ -230,7 +230,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -28. #[m]
+        Z_reset = -25. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
@@ -289,7 +289,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       #q_weight = 0.1
 
-      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/100.)\
+      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/50.)\
         - w_error_weight * (abs(w/50.))\
           - pos_weight * (abs(X_error)/50) - uv_weight * (abs(u)/50)\
             - pos_weight * (abs(Y_error)/50) -  4*uv_weight * (abs(v)/50)\
@@ -317,7 +317,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      if Z_1>=5. or Z_1<=-200. : 
+      if Z_1>=5. or Z_1<=-150. : 
 
         done = True
         print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
@@ -397,7 +397,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.65 * action)
+      Thr = self.dTt * (1 + 0.6 * action)
 
       return Thr
 
@@ -441,10 +441,10 @@ class QuadcoptEnv_6DOF(gym.Env):
       Elevator = actions[2]
       Rudder = actions[3]
 
-      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator - Aileron + Rudder)
-      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Elevator - Aileron - Rudder)
-      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Aileron + Rudder)
-      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Elevator + Aileron - Rudder)
+      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator + Rudder)
+      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Aileron - Rudder)
+      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Rudder)
+      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Aileron - Rudder)
 
       Throttle_array = np.array([Throttle_M1, Throttle_M2, Throttle_M3, Throttle_M4])
 

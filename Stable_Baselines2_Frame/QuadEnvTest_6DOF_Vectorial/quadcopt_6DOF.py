@@ -56,10 +56,10 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.Ly = 0.241   #[m] Y body Length
     
     # Motors position vectors from CG
-    self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
-    self.rM2=np.array([-self.Lx/2, self.Ly/2, 0.])
-    self.rM3=np.array([-self.Lx/2, -self.Ly/2, 0.])
-    self.rM4=np.array([self.Lx/2, -self.Ly/2, 0.]) 
+    self.rM1=np.array([self.Lx/2, 0., 0.]) 
+    self.rM2=np.array([0., self.Ly/2, 0.])
+    self.rM3=np.array([-self.Lx/2, 0., 0.])
+    self.rM4=np.array([0., -self.Ly/2, 0.]) 
 
     # atmosphere and gravity definition (assumed constant but a standard atmosphere model can be included)
     self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
@@ -116,14 +116,14 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.35 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.CdA = np.array([0.1, 0.1, 0.3951]) #[kg/s] drag constant on linear aerodynamical drag model
+    self.CdA = np.array([0.05, 0.05, 0.4]) #[kg/s] drag constant on linear aerodynamical drag model
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0.02, 0.02, 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    self.C_DR = np.array([0.02, 0.02, 0.005]) # [kg m^2/s] coefficients are evaluated with aid of the 
     # Arena and apoleoni thesis
     
 
@@ -133,7 +133,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -201,7 +201,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error], self.state[1], self.state[3:10]))
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1]], self.state[3:10]))
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -211,7 +211,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       done = self.isDone()
     
-      info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1}
+      info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1, "V_Nord": V_NED[0], "V_Est": V_NED[1], "V_Down": V_NED[2]}
 
       return obs, reward, done, info
 
@@ -223,7 +223,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       if self.Random_reset:
         w_reset = np_normal(0., 1.) #[m/s]
-        Z_reset = -25. #[m]
+        Z_reset = -30. #[m]
         u_reset = np_normal(0., 1.) #[m/s]
         X_reset = 0. #[m]
         v_reset = np_normal(0., 1.) #[m/s]
@@ -263,6 +263,10 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
+        self.VNord_ref = 5. #[m/s]
+        self.VEst_ref = 5. #[m/s]
+        self.VDown_ref = 0. #[m/s]
+
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
@@ -287,7 +291,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error], self.state[1], self.state[3:10]))
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1]], self.state[3:10]))
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -302,6 +306,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]
+      p, q, r = self.state[3:6]
 
       abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
@@ -324,9 +329,10 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       V_error_Weight = 0.8 
       drift_weight = 0.8
+      rate_weight = 0.6
 
       R = 1. - V_error_Weight * (abs(VNord_error/30.) + abs(VEst_error/30.) + abs(VDown_error/30.))\
-        - drift_weight * abs(v/30.)
+        - drift_weight * abs(v/30.) - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
         reward = R
@@ -350,17 +356,17 @@ class QuadcoptEnv_6DOF(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      if abs(u_1)>=50. :
+      if abs(u_1)>=30. :
 
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=50. :
+      elif abs(v_1)>=30. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(w_1)>=50. :
+      elif abs(w_1)>=30. :
 
         done = True
         print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
@@ -415,7 +421,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.65 * action)
+      Thr = self.dTt * (1 + 0.6 * action)
 
       return Thr
 
@@ -459,10 +465,10 @@ class QuadcoptEnv_6DOF(gym.Env):
       Elevator = actions[2]
       Rudder = actions[3]
 
-      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator - Aileron + Rudder)
-      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Elevator - Aileron - Rudder)
-      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Aileron + Rudder)
-      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Elevator + Aileron - Rudder)
+      Throttle_M1 = Av_Throttle + self.Command_scaling_factor * (Elevator + Rudder)
+      Throttle_M2 = Av_Throttle + self.Command_scaling_factor * (- Aileron - Rudder)
+      Throttle_M3 = Av_Throttle + self.Command_scaling_factor * (- Elevator + Rudder)
+      Throttle_M4 = Av_Throttle + self.Command_scaling_factor * (Aileron - Rudder)
 
       Throttle_array = np.array([Throttle_M1, Throttle_M2, Throttle_M3, Throttle_M4])
 
