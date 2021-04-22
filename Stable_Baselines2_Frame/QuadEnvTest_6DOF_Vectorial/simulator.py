@@ -17,7 +17,7 @@ from stable_baselines import PPO2
 from quadcopt_6DOF import QuadcoptEnv_6DOF
 
 
-env = QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)
+env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -89,6 +89,11 @@ info_time=[time] # elapsed time vector
 # SIMULATION
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
+
+    if i==1024:
+      env.VNord_ref = -2.5
+      env.VEst_ref = 3.
+      env.VDown_ref = -5.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
