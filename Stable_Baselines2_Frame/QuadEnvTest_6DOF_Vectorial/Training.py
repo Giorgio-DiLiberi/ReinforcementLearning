@@ -19,13 +19,13 @@ from quadcopt_6DOF import QuadcoptEnv_6DOF
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 40 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = 60 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
 
-LearningRate_ini = 2.5e-4 # LR initial value for linear interpolation
+LearningRate_ini = 5.0e-4 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
 LearningRate = linear_schedule(LearningRate_ini)
 
-cliprange_ini = 0.3 # Clip initial value for linear interpolation
+cliprange_ini = 0.35 # Clip initial value for linear interpolation
 #clipRange_fin = 1.e-4 # LR final value for linear interpolation
 cliprange = linear_schedule(cliprange_ini)
 
@@ -38,18 +38,18 @@ if __name__ == '__main__':
     cpu = 8
 
     # Creating the environment parallelized to use all 4 threads
-    env = SubprocVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
+    env = SubprocVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
 
     ### AGENT MODEL AND CALLBACK DEFINITION
 
-    eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True)]) # Definition of one evaluation environment
+    eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
                              log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8192,
                              deterministic=True, render=False)
 
     model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
-            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=8, gamma=0.9999,
-            noptepochs=16, n_steps=8192, n_cpu_tf_sess=8)
+            cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=cpu, gamma=0.9999,
+            noptepochs=16, n_steps=8192, n_cpu_tf_sess=cpu)
 
     ################################################
     # Train the agent and take the time for learning

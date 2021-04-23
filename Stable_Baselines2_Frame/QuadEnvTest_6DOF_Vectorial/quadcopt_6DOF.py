@@ -37,7 +37,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
     # order is V_N_Err, V_E_Err, V_D_Err, v, p, q, r, q0, q1, q2, q3
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -46,7 +46,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 30., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 20., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -133,7 +133,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -222,11 +222,11 @@ class QuadcoptEnv_6DOF(gym.Env):
       """
 
       if self.Random_reset:
-        w_reset = np_normal(0., 1.) #[m/s]
+        w_reset = 0. #[m/s]
         Z_reset = -30. #[m]
-        u_reset = np_normal(0., 1.) #[m/s]
+        u_reset = 0. #[m/s]
         X_reset = 0. #[m]
-        v_reset = np_normal(0., 1.) #[m/s]
+        v_reset = 0. #[m/s]
         Y_reset = 0. #[m]
 
         p_reset = np_normal(0., 0.0175)
@@ -235,16 +235,16 @@ class QuadcoptEnv_6DOF(gym.Env):
 
         phi = np_normal(0., 0.44) #[rad]
         theta = np_normal(0., 0.44) #[rad]
-        psi = 0.
+        psi = np_normal(0., 0.175) #[rad]
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(0., 10.) #[m/s]
-        self.VEst_ref = np_normal(0., 10.) #[m/s]
-        self.VDown_ref = 0. #[m/s]
+        self.VNord_ref = np_normal(5., 2.) #[m/s]
+        self.VEst_ref = np_normal(5., 2.) #[m/s]
+        self.VDown_ref = np_normal(-5., 2.) #[m/s]
 
       else:
         w_reset = 0. #[m/s]
@@ -263,8 +263,8 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.VNord_ref = 5. #[m/s]
-        self.VEst_ref = 5. #[m/s]
+        self.VNord_ref = 0. #[m/s]
+        self.VEst_ref = 0. #[m/s]
         self.VDown_ref = 0. #[m/s]
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
@@ -307,6 +307,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]
       p, q, r = self.state[3:6]
+      v = self.state[1]
 
       abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
@@ -325,13 +326,11 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      v = self.state[1]
-
-      V_error_Weight = 0.8 
+      V_error_Weight = 0.9
       drift_weight = 0.8
       rate_weight = 0.6
 
-      R = 1. - V_error_Weight * (abs(VNord_error/30.) + abs(VEst_error/30.) + abs(VDown_error/30.))\
+      R = 1. - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
         - drift_weight * abs(v/30.) - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
@@ -356,17 +355,17 @@ class QuadcoptEnv_6DOF(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      if abs(u_1)>=30. :
+      if abs(u_1)>=20. :
 
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=30. :
+      elif abs(v_1)>=20. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(w_1)>=30. :
+      elif abs(w_1)>=20. :
 
         done = True
         print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
@@ -421,7 +420,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.6 * action)
+      Thr = self.dTt * (1 + 0.62 * action)
 
       return Thr
 
@@ -485,6 +484,26 @@ class QuadcoptEnv_6DOF(gym.Env):
           Throttle_array[thr_count] = Throttle_array[thr_count]
 
       return Throttle_array
+
+## Conversion from quaternions to Phi_theta
+  def quat2Att(self, Q):
+
+      """
+      Function to convert from quaternion to attitude angles, for simplicity only phi and theta are the output
+      input: Q [array_like, quaternion]
+      Output: Phi, Theta 
+      """
+
+      q0 = Q[0]
+      q1 = Q[1]
+      q2 = Q[2]
+      q3 = Q[3]
+
+      Phi = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
+      Theta = np.arcsin(2*(q0*q2-q3*q1))
+      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+
+      return Phi, Theta, Psi
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 

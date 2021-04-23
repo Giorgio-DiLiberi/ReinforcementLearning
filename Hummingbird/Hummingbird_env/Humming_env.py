@@ -220,11 +220,11 @@ class Hummingbird_6DOF(gym.Env):
       """
       if self.Random_reset:
         w_reset = np_normal(0., 0.1) #[m/s]
-        Z_reset = -20. #[m]
+        Z_reset = np_normal(-20., 1.) #[m]
         u_reset = np_normal(0., 0.1) #[m/s]
-        X_reset = 0. #[m]
+        X_reset = np_normal(0., 1.) #[m]
         v_reset = np_normal(0., 0.1) #[m/s]
-        Y_reset = 0. #[m]
+        Y_reset = np_normal(0., 1.) #[m]
 
         p_reset = np_normal(0., 0.0175)
         q_reset = np_normal(0., 0.0175)
@@ -239,13 +239,17 @@ class Hummingbird_6DOF(gym.Env):
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
+        self.X_Pos_Goal = np_normal(0., 10.) #[m] goal x position
+        self.Y_Pos_Goal = np_normal(0., 10.) #[m] goal y position
+        self.Goal_Altitude = np_normal(-45., 10.) #[m] altitude to achieve is 30 m
+
       else:
         w_reset = 0. #[m/s]
         Z_reset = -20. #[m]
         u_reset = 0. #[m/s]
-        X_reset = -10. #[m]
+        X_reset = -0. #[m]
         v_reset = 0. #[m/s]
-        Y_reset = 10. #[m]
+        Y_reset = 0. #[m]
 
         p_reset = 0.
         q_reset = 0.

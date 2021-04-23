@@ -17,7 +17,7 @@ from stable_baselines import PPO2
 from Humming_env import Hummingbird_6DOF
 
 
-env = Hummingbird_6DOF(Random_reset=True, Process_perturbations=True)
+env = Hummingbird_6DOF(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -88,15 +88,12 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==1024:
-      env.X_Pos_Goal=3.
-      env.Y_Pos_Goal=33.
-      env.Goal_Altitude=-12.
+      env.X_Pos_Goal=8.
+      env.Y_Pos_Goal=10.
+      env.Goal_Altitude=-38.5
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
-    if i==1:
-      print(action)
-
     obs, reward, done, info = env.step(action) 
 
     info_u.append(info["u"])
@@ -121,7 +118,10 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       # obs = env.reset()
       break
 
-print("final posiion [X, Y, Z]= ", env.state[10:13])
+X_Err = env.state[10] - env.X_Pos_Goal
+Y_Err = env.state[11] - env.Y_Pos_Goal
+Z_Err = env.state[12] - env.Goal_Altitude
+print("final Error [X, Y, Z]= ", [X_Err, Y_Err, Z_Err])
 
 ## PLOT AND DISPLAY SECTION
 
