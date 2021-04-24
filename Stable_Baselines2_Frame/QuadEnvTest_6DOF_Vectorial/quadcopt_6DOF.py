@@ -263,9 +263,9 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.VNord_ref = 0. #[m/s]
-        self.VEst_ref = 0. #[m/s]
-        self.VDown_ref = 0. #[m/s]
+        self.VNord_ref = 3. #[m/s]
+        self.VEst_ref = 4. #[m/s]
+        self.VDown_ref = -3. #[m/s]
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
