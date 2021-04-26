@@ -13,7 +13,8 @@ class QuadcoptEnv_6DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, Random_reset = False, Process_perturbations = False):
+  def __init__(self, Random_reset=False, Process_perturbations=False, Lx=0.34, Ly=0.34, motor_mass=0.04, body_mass=0.484,
+              batt_payload_mass=0.186, prop_D=0.2032, Prop_Ct=0.1087, Prop_Cp=0.0477, Max_prop_RPM=8500):
     super(QuadcoptEnv_6DOF, self).__init__()
 
 
@@ -45,14 +46,14 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 30., 30., 30.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
     
 
-    self.Lx = 0.34   #[m] X body Length (squared x configuration)
-    self.Ly = 0.34   #[m] Y body Length
+    self.Lx = Lx   #[m] X body Length (squared x configuration)
+    self.Ly = Ly   #[m] Y body Length
     
     # Motors position vectors from CG
     self.rM1=np.array([self.Lx/2, 0., 0.]) 
@@ -65,22 +66,22 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.g0 = 9.815  #[m/s^2] gravity acceleration
 
     # mass of components
-    self.mass = 0.71   #[kg] mass is 710 grams can be changed
-    self.motor_mass = 0.04 #[kg] mass of one motor+prop
-    self.body_mass= 0.484 #[kg] mass of body frame + electronics (for inertia it is considered as 
+    self.motor_mass = motor_mass #[kg] mass of one motor+prop
+    self.body_mass= body_mass #[kg] mass of body frame + electronics (for inertia it is considered as 
     # uniformly distributed in a sphere centered in CG with radius 0.06m)
-    self.battery_mass = 0.186 #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+    self.battery_mass = batt_payload_mass #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+    self.mass = 0.71 #self.mass = (4*self.motor_mass) + self.body_mass + self.battery_mass  #[kg] total mass of the vehicle
     
     self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
    
     ## Inertia tensor is considered dyagonal, null the other components
-    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass +\
+    self.Ix = 2*((self.Ly/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
     
-    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass +\
+    self.Iy = 2*((self.Lx/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
     
-    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass +\
+    self.Iz = 4*((self.Lx/2)**2)*self.motor_mass +\
       0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
 
     # Inertia tensor composition
@@ -92,14 +93,14 @@ class QuadcoptEnv_6DOF(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1200. # [RPM/V] known for te specific motor
-    self.V_batt_nom = 11.1 # [V] nominal battery voltage 
-    self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
+    #self.Motor_Kv = Motor_KV # [RPM/V] known for te specific motor
+    #self.V_batt_nom = Batt_V_nom # [V] nominal battery voltage 
+    self.nMax_motor = Max_prop_RPM / 60 #[RPS]
 
     # Props Values
-    self.D_prop = 0.2032 #[m] diameter for 7 inch prop
-    self.Ct = 0.1087 # Constant of traction tabulated for V=0
-    self.Cp = 0.0477  # Constant of power tabulated for v=0
+    self.D_prop = prop_D #[m] diameter for prop
+    self.Ct = Prop_Ct # Constant of traction tabulated for V=0
+    self.Cp = Prop_Cp  # Constant of power tabulated for v=0
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
     # now force and torque are evaluated as:

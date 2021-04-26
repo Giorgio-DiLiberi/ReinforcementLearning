@@ -1,7 +1,7 @@
 # Code to generate a Quadcopter Environment to train an RL agent with stable baselines
 # this model include a mathematical rapresentation of the quadcopter in which the possible
-# trivialized to all controls or two controls per attempt, this is done in the aim to simplify the
-# identification of problems and criticism 
+# Here the parameters of the qudcopter class are initialized at class creation but then are updated
+# in the reset method accorig to different classes of quadcopters 
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos
@@ -13,7 +13,8 @@ class QuadcoptEnv_6DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, Random_reset = False, Process_perturbations = False):
+  def __init__(self, Random_reset=False, Process_perturbations=False, Lx=0.34, Ly=0.34, motor_mass=0.04, body_mass=0.484,
+              batt_payload_mass=0.186, prop_D=0.2032, Prop_Ct=0.1087, Prop_Cp=0.0477, Max_prop_RPM=8500):
     super(QuadcoptEnv_6DOF, self).__init__()
 
 
@@ -45,42 +46,42 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 25., 25., 25.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
     
 
-    self.Lx = 0.241   #[m] X body Length (squared x configuration)
-    self.Ly = 0.241   #[m] Y body Length
+    self.Lx = Lx   #[m] X body Length (squared x configuration)
+    self.Ly = Ly   #[m] Y body Length
     
     # Motors position vectors from CG
-    self.rM1=np.array([self.Lx/2, self.Ly/2, 0.]) 
-    self.rM2=np.array([-self.Lx/2, self.Ly/2, 0.])
-    self.rM3=np.array([-self.Lx/2, -self.Ly/2, 0.])
-    self.rM4=np.array([self.Lx/2, -self.Ly/2, 0.]) 
+    self.rM1=np.array([self.Lx/2, 0., 0.]) 
+    self.rM2=np.array([0., self.Ly/2, 0.])
+    self.rM3=np.array([-self.Lx/2, 0., 0.])
+    self.rM4=np.array([0., -self.Ly/2, 0.]) 
 
     # atmosphere and gravity definition (assumed constant but a standard atmosphere model can be included)
     self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
     self.g0 = 9.815  #[m/s^2] gravity acceleration
 
     # mass of components
-    self.mass = 0.71   #[kg] mass is 710 grams can be changed
-    self.motor_mass = 0.04 #[kg] mass of one motor+prop
-    self.body_mass= 0.484 #[kg] mass of body frame + electronics (for inertia it is considered as 
+    self.motor_mass = motor_mass #[kg] mass of one motor+prop
+    self.body_mass= body_mass #[kg] mass of body frame + electronics (for inertia it is considered as 
     # uniformly distributed in a sphere centered in CG with radius 0.06m)
-    self.battery_mass = 0.186 #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+    self.battery_mass = batt_payload_mass #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+    self.mass = (4*self.motor_mass) + self.body_mass + self.battery_mass  #[kg] total mass of the vehicle
     
     self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
    
     ## Inertia tensor is considered dyagonal, null the other components
-    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass +\
+    self.Ix = 2*((self.Ly/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
     
-    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass +\
+    self.Iy = 2*((self.Lx/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
     
-    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass +\
+    self.Iz = 4*((self.Lx/2)**2)*self.motor_mass +\
       0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
 
     # Inertia tensor composition
@@ -92,14 +93,14 @@ class QuadcoptEnv_6DOF(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1200. # [RPM/V] known for te specific motor
-    self.V_batt_nom = 11.1 # [V] nominal battery voltage 
-    self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
+    #self.Motor_Kv = Motor_KV # [RPM/V] known for te specific motor
+    #self.V_batt_nom = Batt_V_nom # [V] nominal battery voltage 
+    self.nMax_motor = Max_prop_RPM / 60 #[RPS]
 
     # Props Values
-    self.D_prop = 0.2032 #[m] diameter for 7 inch prop
-    self.Ct = 0.1087 # Constant of traction tabulated for V=0
-    self.Cp = 0.0477  # Constant of power tabulated for v=0
+    self.D_prop = prop_D #[m] diameter for prop
+    self.Ct = Prop_Ct # Constant of traction tabulated for V=0
+    self.Cp = Prop_Cp  # Constant of power tabulated for v=0
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
     # now force and torque are evaluated as:
@@ -107,22 +108,22 @@ class QuadcoptEnv_6DOF(gym.Env):
     # F=Kq * N_prop^2 in an appropriate method   
     # N are rounds per sec (not rad/s) 
 
-    # Throttle constants for mapping (mapping is linear-cubic, see the act2Thr() method)
-    self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover
+    # Throttle constants for linear-cubic mapping, usage of linear mapping is preferred, see appropriate method
+    self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover, motor model is where Thr controls the square of RPS
     self.d2 = 1 - self.dTt - 0.3 # Assumed value for first constant in action to throttle mapping
     self.d1 = 1 - self.d2 - self.dTt # second constant for maping (see notebook)
     self.s2 = self.d2 - 1 + 2*self.dTt # first constant for left part
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.15 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.35 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
-    self.CdA = np.array([0.1, 0.1, 0.3951]) #[kg/s] drag constant on linear aerodynamical drag model
+    self.CdA = np.array([0.05, 0.05, 0.5]) #[kg/s] drag constant on linear aerodynamical drag model
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0.02, 0.02, 0.01]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    self.C_DR = np.array([0.02, 0.02, 0.001]) # [kg m^2/s] coefficients are evaluated with aid of the 
     # Arena and apoleoni thesis
     
 
@@ -135,14 +136,18 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
+    self.fileCount = 8 # this variable stores the prop diameter examined, at each reset this number is 
+    # incremented and represent the prop diameter/config for the specific training session. starts from
+    # 8 inches as the hummingbird by default but minimum value is 6 in to 20, in the simulator session 
+    # the configuration to simulate is asked before loading the environment
 
     # Constants to normalize state and reward
     
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 0. #[m] goal x position
-    self.Y_Pos_Goal = 0. #[m] goal y position
+    self.X_Pos_Goal = 10. #[m] goal x position
+    self.Y_Pos_Goal = 15. #[m] goal y position
     self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
 
   def step(self, action):
@@ -203,8 +208,80 @@ class QuadcoptEnv_6DOF(gym.Env):
   def reset(self):
 
       """
-      Reset state 
+      Reset state and build parameters
       """
+
+      file2Open = "buildParamsFiles/D_" + str(self.fileCount)+"_in.txt"
+
+      self.fileCount += 1 # updates the counter for diameter and if 20 is overcome reset the variable to 6
+
+      if self.fileCount==21:
+        self.fileCount = 6
+      # at each reset the build parameters changes simulating multiple types of builds for the learning
+
+      with open(file2Open, "r") as input_file: # with open context
+        input_file_all = input_file.readlines() # crate an array of strings containing all the file lines
+        for line in input_file_all: # read line
+            line = line.split() # splits lines into 2 strings and set left = right, this suggest how to format the file
+            globals()[line[0]] = line[1]
+
+      # Now initialization statements are repeated with updated values
+      self.Lx = float(Lx)   #[m] X body Length (squared x configuration)
+      self.Ly = float(Ly)   #[m] Y body Length
+      
+      # Motors position vectors from CG
+      self.rM1=np.array([self.Lx/2, 0., 0.]) 
+      self.rM2=np.array([0., self.Ly/2, 0.])
+      self.rM3=np.array([-self.Lx/2, 0., 0.])
+      self.rM4=np.array([0., -self.Ly/2, 0.]) 
+
+      # atmosphere and gravity definition (assumed constant but a standard atmosphere model can be included)
+      self.rho = 1.225 #[kg/m^3] Standard day at 0 m ASL
+      self.g0 = 9.815  #[m/s^2] gravity acceleration
+
+      # mass of components
+      self.motor_mass = float(motor_mass) #[kg] mass of one motor+prop
+      self.body_mass= float(body_mass) #[kg] mass of body frame + electronics (for inertia it is considered as 
+      # uniformly distributed in a sphere centered in CG with radius 0.06m)
+      self.battery_mass = float(batt_payload_mass) #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+      self.mass = (4*self.motor_mass) + self.body_mass + self.battery_mass  #[kg] total mass of the vehicle
+      
+      self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
+    
+      ## Inertia tensor is considered dyagonal, null the other components
+      self.Ix = 2*((self.Ly/2)**2)*self.motor_mass +\
+        (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
+      
+      self.Iy = 2*((self.Lx/2)**2)*self.motor_mass +\
+        (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
+      
+      self.Iz = 4*((self.Lx/2)**2)*self.motor_mass +\
+        0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
+
+      # Inertia tensor composition
+      self.InTen = np.array([[self.Ix, 0., 0.],[0., self.Iy, 0.],[0., 0., self.Iz]])
+
+      # Inertia vector: vector with 3 principal inertia useful in evaluating the Omega_dot
+      self.InVec = np.diag(self.InTen)
+
+      ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
+      # a constant multiplied by the square of prop's rounds per sec:
+      # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
+      self.nMax_motor = float(Max_prop_RPM) / 60 #[RPS]
+
+      # Props Values
+      self.D_prop = float(prop_D) #[m] diameter for prop
+      self.Ct = float(Prop_Ct) # Constant of traction tabulated for V=0
+      self.Cp = float(Prop_Cp)  # Constant of power tabulated for v=0
+      self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
+      self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
+      # now force and torque are evaluated as:
+      # F=Kf * N_prop^2 
+      # F=Kq * N_prop^2 in an appropriate method   
+      # N are rounds per sec (not rad/s) 
+
+      # Throttle constants for linear-cubic mapping, usage of linear mapping is preferred, see appropriate method
+      self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover
 
       if self.Random_reset:
         w_reset = np_normal(0., 0.025) #[m/s]
@@ -396,7 +473,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.65 * action)
+      Thr = self.dTt * (1 + 0.6 * action)
 
       return Thr
 

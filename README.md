@@ -61,6 +61,8 @@ The directory /Hummingbird contains the codes to simulate a more specific model 
 
 * Directory /Hummingbird/Hummingbird_PhiThetaRref contains a model to train a policy to reac and maintain certain pitch/roll reference angles and r rate that can be pilot inputs; in this case the obs space is only on the errors between the actual pitch and roll angles and r rates and reference values, while the action space is supposed to control only Aileron, Elevator and Rudder.
 
+* Directory /QuadEnvTest_6DOF_NoisyBuild contains a model in which LSTM is trained to handle waypoint nav with different classes of quads from 6 inch prop to 20; this directory contains a model in wich the parameters are initialized in the init method with default parameters of 8 inch Hummingbird by Ascending Technologies.
+
 ## Usage of a QuadEnv directory
 
 The directory can be used for:

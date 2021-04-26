@@ -1,0 +1,3 @@
+cose        1
+coseVarie   2
+coseAss     3
