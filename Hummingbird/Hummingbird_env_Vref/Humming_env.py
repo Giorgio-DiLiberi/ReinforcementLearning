@@ -2,7 +2,9 @@
 # like the hummigbird by Asc. Tech. This code tries to stay more generale as possible
 # so it will be good to simulate any quadcopter with 8 inches props in + config
 # because it tries to simulate only the physics of the model without any stack of 
-# control systems or stability augmentation systems. 
+# control systems or stability augmentation systems. Goal is to control Velocity 
+# given a reference on V_Nord, V_Down, V_Est
+# and locking drift velocity v to 0 in the reward to mix rudder and aileron
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos
@@ -36,8 +38,9 @@ class Hummingbird_6DOF(gym.Env):
     # The normalization is performed using limits reported above
 
     ##full visibility on the states as given in the previous section.
-    # instead of X_POS, Y_POS ans Z_POS error from the request is given as obs
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
+    # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
+    # order is V_N_Err, V_E_Err, V_D_Err, v, p, q, r, q0, q1, q2, q3
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -46,7 +49,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 50., 50., 50.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 20., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -98,8 +101,8 @@ class Hummingbird_6DOF(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 900. # [RPM/V] known for te specific motor
-    self.V_batt_nom = 11.1 # [V] nominal battery voltage 
+    # self.Motor_Kv = 900. # [RPM/V] known for te specific motor
+    # self.V_batt_nom = 11.1 # [V] nominal battery voltage 
     self.nMax_motor = 8500 / 60 #[RPS] set from the thesis
 
     # Props Values
@@ -154,9 +157,9 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 10. #[m] goal x position
-    self.Y_Pos_Goal = 20. #[m] goal y position
-    self.Goal_Altitude = -45. #[m] altitude to achieve is 30 m
+    self.VNord_ref = 0. #[m] 
+    self.VEst_ref = 0. #[m]
+    self.VDown_ref = 0. #[m]
 
   def step(self, action):
 
@@ -193,13 +196,27 @@ class Hummingbird_6DOF(gym.Env):
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
 
-      # as obs on Z_position and X_position, error instead absolut position is given as 
-      # observation to the agent, purpose is to minimize (zero) this quantity.
-      # error is normalized dividing by the normalization vector stated yet, sign also is given.
-      X_error = self.state[10] - self.X_Pos_Goal
-      Y_error = self.state[11] - self.Y_Pos_Goal
-      Z_error = self.state[12] - self.Goal_Altitude 
-      obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
+      Vb = self.state[0:3]
+
+      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+
+      q0 = q0/abs_Q
+      q1 = q1/abs_Q
+      q2 = q2/abs_Q
+      q3 = q3/abs_Q
+
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+      V_NED = np.dot(LEB, Vb)
+
+      VNord_error = V_NED[0] - self.VNord_ref
+      VEst_error = V_NED[1] - self.VEst_ref
+      VDown_error = V_NED[2] - self.VDown_ref
+
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1]], self.state[3:10]))
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -218,13 +235,14 @@ class Hummingbird_6DOF(gym.Env):
       """
       Reset state 
       """
+
       if self.Random_reset:
-        w_reset = np_normal(0., 0.1) #[m/s]
-        Z_reset = np_normal(-20., 1.) #[m]
-        u_reset = np_normal(0., 0.1) #[m/s]
-        X_reset = np_normal(0., 1.) #[m]
-        v_reset = np_normal(0., 0.1) #[m/s]
-        Y_reset = np_normal(0., 1.) #[m]
+        w_reset = 0. #[m/s]
+        Z_reset = -30. #[m]
+        u_reset = 0. #[m/s]
+        X_reset = 0. #[m]
+        v_reset = 0. #[m/s]
+        Y_reset = 0. #[m]
 
         p_reset = np_normal(0., 0.0175)
         q_reset = np_normal(0., 0.0175)
@@ -232,22 +250,22 @@ class Hummingbird_6DOF(gym.Env):
 
         phi = np_normal(0., 0.44) #[rad]
         theta = np_normal(0., 0.44) #[rad]
-        psi = 0.
+        psi = np_normal(0., 0.175) #[rad]
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.X_Pos_Goal = np_normal(0., 10.) #[m] goal x position
-        self.Y_Pos_Goal = np_normal(0., 10.) #[m] goal y position
-        self.Goal_Altitude = np_normal(-45., 10.) #[m] altitude to achieve is 30 m
+        self.VNord_ref = np_normal(5., 2.) #[m/s]
+        self.VEst_ref = np_normal(5., 2.) #[m/s]
+        self.VDown_ref = np_normal(-5., 2.) #[m/s]
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -20. #[m]
+        Z_reset = -28. #[m]
         u_reset = 0. #[m/s]
-        X_reset = -0. #[m]
+        X_reset = 0. #[m]
         v_reset = 0. #[m/s]
         Y_reset = 0. #[m]
 
@@ -260,14 +278,35 @@ class Hummingbird_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
+        self.VNord_ref = 3. #[m/s]
+        self.VEst_ref = 4. #[m/s]
+        self.VDown_ref = -3. #[m/s]
+
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
-      X_error = self.state[10] - self.X_Pos_Goal
-      Y_error = self.state[11] - self.Y_Pos_Goal
-      Z_error = self.state[12] - self.Goal_Altitude 
-      obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
+      Vb = self.state[0:3]
+
+      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+
+      q0 = q0/abs_Q
+      q1 = q1/abs_Q
+      q2 = q2/abs_Q
+      q3 = q3/abs_Q
+
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+      V_NED = np.dot(LEB, Vb)
+
+      VNord_error = V_NED[0] - self.VNord_ref
+      VEst_error = V_NED[1] - self.VEst_ref
+      VDown_error = V_NED[2] - self.VDown_ref
+
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1]], self.state[3:10]))
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -280,35 +319,34 @@ class Hummingbird_6DOF(gym.Env):
       output: reward, scalar value.
       """
 
-      w = self.state[2]
-      Z_error = self.state[12] - self.Goal_Altitude
-      u = self.state[0]
-      X_error = self.state[10] - self.X_Pos_Goal
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
+      Vb = self.state[0:3]
+      p, q, r = self.state[3:6]
       v = self.state[1]
-      Y_error = self.state[11] - self.Y_Pos_Goal
-      p = self.state[3]
-      q = self.state[4]
-      r = self.state[5]
-      q0 = self.state[6]
-      #q1 = self.state[7]
-      #q2 = self.state[8]
-      #q3 = self.state[9]
 
-      altitude_onReward_weight = 0.8 #+ (900 * self.elapsed_time_steps/self.max_Episode_time_steps)
-      w_error_weight = 0.08
+      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
-      pos_weight = 0.8
-      uv_weight = 0.08
+      q0 = q0/abs_Q
+      q1 = q1/abs_Q
+      q2 = q2/abs_Q
+      q3 = q3/abs_Q
 
-      pq_weight = 0.1
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
 
-      #q_weight = 0.1
+      V_NED = np.dot(LEB, Vb)
 
-      R = (1. * q0) - altitude_onReward_weight * abs((Z_error)/50.)\
-        - w_error_weight * (abs(w/30.))\
-          - pos_weight * (abs(X_error)/50.) - uv_weight * (abs(u)/30.)\
-            - pos_weight * (abs(Y_error)/50.) - uv_weight * (abs(v)/30.)\
-              - pq_weight * (abs(q/50) + abs(p/50)) - pq_weight * abs(r/50)
+      VNord_error = V_NED[0] - self.VNord_ref
+      VEst_error = V_NED[1] - self.VEst_ref
+      VDown_error = V_NED[2] - self.VDown_ref
+
+      V_error_Weight = 0.9
+      drift_weight = 0.8
+      rate_weight = 0.6
+
+      R = 1. - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
+        - drift_weight * abs(v/30.) - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
         reward = R
@@ -332,22 +370,17 @@ class Hummingbird_6DOF(gym.Env):
     
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = self.state
 
-      if Z_1>=5. or Z_1<=-95. : 
-
-        done = True
-        print("Z outbound---> ", Z_1, "   in ", self.elapsed_time_steps, " steps")
-
-      elif abs(u_1)>=30. :
+      if abs(u_1)>=20. :
 
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=30. :
+      elif abs(v_1)>=20. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(w_1)>=30. :
+      elif abs(w_1)>=20. :
 
         done = True
         print("w outbound---> ", w_1, "   in ", self.elapsed_time_steps, " steps")
@@ -366,16 +399,6 @@ class Hummingbird_6DOF(gym.Env):
 
         done = True
         print("r outbound---> ", r_1, "   in ", self.elapsed_time_steps, " steps")
-
-      elif abs(X_1)>=50. :
-
-        done = True
-        print("X outbound---> ", X_1, "   in ", self.elapsed_time_steps, " steps")
-
-      elif abs(Y_1)>=50. :
-
-        done = True
-        print("Y outbound---> ", Y_1, "   in ", self.elapsed_time_steps, " steps")
 
       elif abs(q0_1)>=1.001 or abs(q1_1)>=1.001 or abs(q2_1)>=1.001 or abs(q3_1)>=1.001 :
 
@@ -412,7 +435,7 @@ class Hummingbird_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.6 * action)
+      Thr = self.dTt * (1 + 0.62 * action)
 
       return Thr
 

@@ -90,10 +90,15 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==512:
-      env.VNord_ref = -3.
+    if i==350:
+      env.VNord_ref = -0.
+      env.VEst_ref = -0.
+      env.VDown_ref = 0.
+
+    if i==650:
+      env.VNord_ref = -2.
       env.VEst_ref = -1.
-      env.VDown_ref = 2.
+      env.VDown_ref = 1.2
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     

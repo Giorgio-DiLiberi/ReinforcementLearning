@@ -52,8 +52,8 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
     
 
-    self.Lx = 0.241   #[m] X body Length (squared x configuration)
-    self.Ly = 0.241   #[m] Y body Length
+    self.Lx = 0.34   #[m] X body Length (squared x configuration)
+    self.Ly = 0.34   #[m] Y body Length
     
     # Motors position vectors from CG
     self.rM1=np.array([self.Lx/2, 0., 0.]) 
@@ -75,13 +75,13 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
    
     ## Inertia tensor is considered dyagonal, null the other components
-    self.Ix = 4*((self.Ly/2)**2)*self.motor_mass +\
+    self.Ix = 2*((self.Ly/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to X axis
     
-    self.Iy = 4*((self.Lx/2)**2)*self.motor_mass +\
+    self.Iy = 2*((self.Lx/2)**2)*self.motor_mass +\
       (0.06**2)*self.battery_mass + 0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Y axis
     
-    self.Iz = 4*(((self.Lx/2)**2)+((self.Ly/2)**2))*self.motor_mass +\
+    self.Iz = 4*((self.Lx/2)**2)*self.motor_mass +\
       0.4*(0.06**2)*self.body_mass #[kg m^2] rotational Inertia referred to Z axis
 
     # Inertia tensor composition
@@ -93,13 +93,13 @@ class QuadcoptEnv_6DOF(gym.Env):
     ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
     # a constant multiplied by the square of prop's rounds per sec:
     # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-    self.Motor_Kv = 1200. # [RPM/V] known for te specific motor
-    self.V_batt_nom = 11.1 # [V] nominal battery voltage 
-    self.nMax_motor = self.Motor_Kv * self.V_batt_nom / 60 #[RPS]
+    # self.Motor_Kv = 1200. # [RPM/V] known for te specific motor
+    # self.V_batt_nom = 11.1 # [V] nominal battery voltage 
+    self.nMax_motor = 8500 / 60 #[RPS] as the hummingbird, max RPM can be limited via software 
 
     # Props Values
     self.D_prop = 0.2032 #[m] diameter for 7 inch prop
-    self.Ct = 0.1087 # Constant of traction tabulated for V=0
+    self.Ct = 0.1087 # Constant of traction tabulated for V=0 
     self.Cp = 0.0477  # Constant of power tabulated for v=0
     self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
     self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
@@ -116,7 +116,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.35 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.3 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
     self.CdA = np.array([0.05, 0.05, 0.4]) #[kg/s] drag constant on linear aerodynamical drag model
@@ -242,9 +242,9 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(5., 2.) #[m/s]
-        self.VEst_ref = np_normal(5., 2.) #[m/s]
-        self.VDown_ref = np_normal(-5., 2.) #[m/s]
+        self.VNord_ref = np_normal(4., 1.1) #[m/s]
+        self.VEst_ref = np_normal(4., 1.1) #[m/s]
+        self.VDown_ref = np_normal(0., 4.) #[m/s]
 
       else:
         w_reset = 0. #[m/s]
@@ -420,7 +420,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.62 * action)
+      Thr = self.dTt * (1 + 0.9 * action)
 
       return Thr
 
