@@ -22,3 +22,7 @@ at creation, the dimension of the central electronics and the distance between b
 The Maximum RPM for the motor + prop are given for each diameter configuration as safety values; this value is used
 to evaluate the trim throttle to map actions into commands. this factor have to be taken into account in case of 
 real policy deployment.
+
+The value are stored in parameters arrays created in the __init__() method and then the component of the arrays
+used is changed at every reset. so the files are opened only at the initialization and the are not used anymore 
+since the building parameters are stored in appropriate arrays wit name: <parameter_name>_a

@@ -133,13 +133,8 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
-    
-    self.fileCount = 8 # this variable stores the prop diameter examined, at each reset this number is 
-    # incremented and represent the prop diameter/config for the specific training session. starts from
-    # 8 inches as the hummingbird by default but minimum value is 6 in to 20, in the simulator session 
-    # the configuration to simulate is asked before loading the environment
 
     # Constants to normalize state and reward
     
@@ -149,6 +144,49 @@ class QuadcoptEnv_6DOF(gym.Env):
     self.X_Pos_Goal = 10. #[m] goal x position
     self.Y_Pos_Goal = 15. #[m] goal y position
     self.Goal_Altitude = -35. #[m] altitude to achieve is 30 m
+
+    # construction build arrays initialization
+    self.Lx_a = []
+    self.Ly_a = []
+    self.motor_mass_a = []
+    self.body_mass_a = []
+    self.batt_payload_mass_a = []
+    self.Max_prop_RPM_a = []
+    self.prop_D_a = []
+    self.Prop_Ct_a = []
+    self.Prop_Cp_a = []
+
+    self.fileCount = 6 # this variable stores the prop diameter examined, at each reset this number is 
+    # incremented and represent the prop diameter/config for the specific training session. starts from
+    # 8 inches as the hummingbird by default but minimum value is 6 in to 20, in the simulator session 
+    # the configuration to simulate is asked before loading the environment
+
+    while self.fileCount<=20:
+
+      file2Open = "buildParamsFiles/D_" + str(self.fileCount)+"_in.txt"
+
+      self.fileCount += 1 # updates the counter for diameter and if 20 is overcome reset the variable to 6
+
+      with open(file2Open, "r") as input_file: # with open context
+        input_file_all = input_file.readlines() # crate an array of strings containing all the file lines
+        for line in input_file_all: # read line
+            line = line.split() # splits lines into 2 strings and set left = right, this suggest how to format the file
+            globals()[line[0]] = line[1]
+
+      self.Lx_a.append(float(Lx))
+      self.Ly_a.append(float(Ly))
+      self.motor_mass_a.append(float(motor_mass))
+      self.body_mass_a.append(float(body_mass))
+      self.batt_payload_mass_a.append(float(batt_payload_mass))
+      self.Max_prop_RPM_a.append(float(Max_prop_RPM))
+      self.prop_D_a.append(float(prop_D))
+      self.Prop_Ct_a.append(float(Prop_Ct))
+      self.Prop_Cp_a.append(float(Prop_Cp))
+
+      input_file.close() #close the file after reading
+
+    self.build_param_count = 0 # variable to be used in reset method to initialize the parameters using the correct value
+    # use the value 2 to initialize with 8 inch Hummingbird data
 
   def step(self, action):
 
@@ -211,23 +249,9 @@ class QuadcoptEnv_6DOF(gym.Env):
       Reset state and build parameters
       """
 
-      file2Open = "buildParamsFiles/D_" + str(self.fileCount)+"_in.txt"
-
-      self.fileCount += 1 # updates the counter for diameter and if 20 is overcome reset the variable to 6
-
-      if self.fileCount==21:
-        self.fileCount = 6
-      # at each reset the build parameters changes simulating multiple types of builds for the learning
-
-      with open(file2Open, "r") as input_file: # with open context
-        input_file_all = input_file.readlines() # crate an array of strings containing all the file lines
-        for line in input_file_all: # read line
-            line = line.split() # splits lines into 2 strings and set left = right, this suggest how to format the file
-            globals()[line[0]] = line[1]
-
       # Now initialization statements are repeated with updated values
-      self.Lx = float(Lx)   #[m] X body Length (squared x configuration)
-      self.Ly = float(Ly)   #[m] Y body Length
+      self.Lx = Lx_a[self.build_param_count]   #[m] X body Length (squared x configuration)
+      self.Ly = Ly_a[self.build_param_count]   #[m] Y body Length
       
       # Motors position vectors from CG
       self.rM1=np.array([self.Lx/2, 0., 0.]) 
@@ -240,10 +264,10 @@ class QuadcoptEnv_6DOF(gym.Env):
       self.g0 = 9.815  #[m/s^2] gravity acceleration
 
       # mass of components
-      self.motor_mass = float(motor_mass) #[kg] mass of one motor+prop
-      self.body_mass= float(body_mass) #[kg] mass of body frame + electronics (for inertia it is considered as 
+      self.motor_mass = motor_mass_a[self.build_param_count] #[kg] mass of one motor+prop
+      self.body_mass= body_mass_a[self.build_param_count] #[kg] mass of body frame + electronics (for inertia it is considered as 
       # uniformly distributed in a sphere centered in CG with radius 0.06m)
-      self.battery_mass = float(batt_payload_mass) #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
+      self.battery_mass = batt_payload_mass_a[self.build_param_count] #[kg] mass of battery, considered at a distance of 0.06m from CG aligned with it on zb
       self.mass = (4*self.motor_mass) + self.body_mass + self.battery_mass  #[kg] total mass of the vehicle
       
       self.Wned = np.array([0, 0, self.mass * self.g0]) # Weight vector in NED axes
@@ -267,12 +291,12 @@ class QuadcoptEnv_6DOF(gym.Env):
       ## The motors model is now assumed as reported on the notebook with thrust and torques dependant on 
       # a constant multiplied by the square of prop's rounds per sec:
       # F = Kt * n**2 where n[rounds/s] = Thr * nMax and nMax is evaluated as Kv*nominal_battery_voltage/60
-      self.nMax_motor = float(Max_prop_RPM) / 60 #[RPS]
+      self.nMax_motor = Max_prop_RPM_a[self.build_param_count] / 60 #[RPS]
 
       # Props Values
-      self.D_prop = float(prop_D) #[m] diameter for prop
-      self.Ct = float(Prop_Ct) # Constant of traction tabulated for V=0
-      self.Cp = float(Prop_Cp)  # Constant of power tabulated for v=0
+      self.D_prop = prop_D_a[self.build_param_count] #[m] diameter for prop
+      self.Ct = Prop_Ct_a[self.build_param_count] # Constant of traction tabulated for V=0
+      self.Cp = Prop_Cp_a[self.build_param_count] # Constant of power tabulated for v=0
       self.Prop_Kf = self.Ct * self.rho * (self.D_prop**4) #[kg m]==[N/RPS^2]
       self.Prop_Kq = self.Cp * self.rho * (self.D_prop**5)/(2*np.pi) #[kg m^2]
       # now force and torque are evaluated as:
@@ -282,6 +306,11 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       # Throttle constants for linear-cubic mapping, usage of linear mapping is preferred, see appropriate method
       self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover
+
+      self.build_param_count += 1
+
+      if self.build_param_count>self.Lx_a.__len__():
+        self.build_param_count=0
 
       if self.Random_reset:
         w_reset = np_normal(0., 0.025) #[m/s]
@@ -458,7 +487,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
         done = False
 
-      return done
+      return done      
 
 ## Control section: this section contains all the methods used to get commands and throttles from 
 # actions
