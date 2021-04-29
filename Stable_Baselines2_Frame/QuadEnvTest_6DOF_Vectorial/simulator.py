@@ -83,6 +83,10 @@ action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
+VN_ref = [env.VNord_ref]
+VE_ref = [env.VEst_ref]
+VD_ref = [env.VDown_ref]
+
 time=0.
 info_time=[time] # elapsed time vector
 
@@ -120,6 +124,10 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     action_memory = np.vstack([action_memory, action])
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
+
+    VN_ref.append(env.VNord_ref)
+    VE_ref.append(env.VEst_ref)
+    VD_ref.append(env.VDown_ref)
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -217,4 +225,10 @@ plt.title('Earth frame velocity')
 plt.legend(['V_Nord', 'V_Est', 'V_Down'])
 plt.savefig('SimulationResults/V_NED.jpg')
 
+simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z, info_V_N, info_V_E, info_V_D], axis=1)
 
+np.savetxt("simout.txt", simout_array)
+
+ref_array = np.stack([VN_ref, VE_ref, VD_ref], axis=1)
+
+np.savetxt("references.txt", ref_array)

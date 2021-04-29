@@ -131,7 +131,7 @@ class Hummingbird_6DOF(gym.Env):
     self.s1 = self.dTt - self.s2
 
     # Commands coefficients
-    self.Command_scaling_factor = 0.35 # Coefficient to scale commands when evaluating throttles of motors
+    self.Command_scaling_factor = 0.3 # Coefficient to scale commands when evaluating throttles of motors
     # given the control actions    
     
     self.CdA = np.array([0., 0., 0.]) #[kg/s] drag constant on linear aerodynamical drag model
@@ -148,7 +148,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -226,7 +226,7 @@ class Hummingbird_6DOF(gym.Env):
 
       done = self.isDone()
     
-      info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1}
+      info = {"u": u_1, "v": v_1, "w": w_1, "p": p_1, "q": q_1, "r": r_1, "q0": q0_1, "q1": q1_1, "q2": q2_1, "q3": q3_1, "X": X_1, "Y": Y_1, "Z": Z_1, "V_Nord": V_NED[0], "V_Est": V_NED[1], "V_Down": V_NED[2]}
 
       return obs, reward, done, info
 
@@ -435,7 +435,7 @@ class Hummingbird_6DOF(gym.Env):
       output: throttle value
       """
 
-      Thr = self.dTt * (1 + 0.62 * action)
+      Thr = self.dTt * (1 + 0.9 * action)
 
       return Thr
 

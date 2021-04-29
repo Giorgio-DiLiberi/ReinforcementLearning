@@ -33,7 +33,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Hummingbird/Hummingbird_env/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Hummingbird/Hummingbird_env_Vref/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
@@ -76,9 +76,16 @@ info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array 
 info_X = [env.state[10]]
 info_Y = [env.state[11]]
 info_Z = [env.state[12]]
+info_V_N = [0.]
+info_V_E = [0.]
+info_V_D = [0.]
 action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the simulation
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
+
+VN_ref = [env.VNord_ref]
+VE_ref = [env.VEst_ref]
+VD_ref = [env.VDown_ref]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -87,10 +94,15 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==1024:
-      env.X_Pos_Goal=8.
-      env.Y_Pos_Goal=10.
-      env.Goal_Altitude=-38.5
+    if i==350:
+      env.VNord_ref = -0.
+      env.VEst_ref = -0.
+      env.VDown_ref = 0.
+
+    if i==650:
+      env.VNord_ref = -2.
+      env.VEst_ref = -1.
+      env.VDown_ref = 1.2
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -106,9 +118,16 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
+    info_V_N.append(info["V_Nord"])
+    info_V_E.append(info["V_Est"])
+    info_V_D.append(info["V_Down"])
     action_memory = np.vstack([action_memory, action])
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
+
+    VN_ref.append(env.VNord_ref)
+    VE_ref.append(env.VEst_ref)
+    VD_ref.append(env.VDown_ref)
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -118,10 +137,10 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       # obs = env.reset()
       break
 
-X_Err = env.state[10] - env.X_Pos_Goal
-Y_Err = env.state[11] - env.Y_Pos_Goal
-Z_Err = env.state[12] - env.Goal_Altitude
-print("final Error [X, Y, Z]= ", [X_Err, Y_Err, Z_Err])
+    if i==450:
+      print("Mid V_NED [N, E, D]= ", [info["V_Nord"], info["V_Est"], info["V_Down"]])
+
+print("final V_NED [N, E, D]= ", [info["V_Nord"], info["V_Est"], info["V_Down"]])
 
 ## PLOT AND DISPLAY SECTION
 
@@ -199,24 +218,21 @@ plt.title('Actions in episode [-1, 1]')
 plt.legend(['Avg_thr', 'Ail', 'Ele', 'Rud'])
 plt.savefig('SimulationResults/action.jpg')
 
-info_H = -1 * np.array([info_Z])
-fig = plt.figure(7)
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
-#ax.xlabel('X')
-#ax.ylabel('Y')
-#ax.ylabel('H==-Z')
-#ax.title('Trajectory')
-plt.savefig('SimulationResults/trajectory.jpg')
+plt.figure(7)
+plt.plot(info_time, info_V_N)
+plt.plot(info_time, info_V_E)
+plt.plot(info_time, info_V_D)
+plt.xlabel('time')
+plt.ylabel('V_NED')
+plt.title('Earth frame velocity')
+plt.legend(['V_Nord', 'V_Est', 'V_Down'])
+plt.savefig('SimulationResults/V_NED.jpg')
 
+simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z, info_V_N, info_V_E, info_V_D], axis=1)
 
-# plt.figure(7)
-# plt.plot(info_time, Throttle_memory)
-# plt.xlabel('time')
-# plt.ylabel('Average throttle [0, 1]')
-# plt.title('Average throttle in episode')
-# plt.savefig('SimulationResults/Avg_thr.jpg')
+np.savetxt("simout.txt", simout_array)
 
-np.savetxt("simout_w_Z.txt", np.stack([info_w, info_Z], axis=1))
+ref_array = np.stack([VN_ref, VE_ref, VD_ref], axis=1)
 
+np.savetxt("references.txt", ref_array)
 

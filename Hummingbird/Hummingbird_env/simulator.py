@@ -80,6 +80,10 @@ action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
+X_ref = [env.X_Pos_Goal]
+Y_ref = [env.Y_Pos_Goal]
+Z_ref = [env.Goal_Altitude]
+
 time=0.
 info_time=[time] # elapsed time vector
 
@@ -109,6 +113,10 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     action_memory = np.vstack([action_memory, action])
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
+
+    X_ref.append(env.X_Pos_Goal)
+    Y_ref.append(env.Y_Pos_Goal)
+    Z_ref.append(env.Goal_Altitude)
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -209,14 +217,14 @@ ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
 #ax.title('Trajectory')
 plt.savefig('SimulationResults/trajectory.jpg')
 
+simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
 
-# plt.figure(7)
-# plt.plot(info_time, Throttle_memory)
-# plt.xlabel('time')
-# plt.ylabel('Average throttle [0, 1]')
-# plt.title('Average throttle in episode')
-# plt.savefig('SimulationResults/Avg_thr.jpg')
+np.savetxt("simout.txt", simout_array)
 
-np.savetxt("simout_w_Z.txt", np.stack([info_w, info_Z], axis=1))
+ref_array = np.stack([X_ref, Y_ref, Z_ref], axis=1)
+
+np.savetxt("references.txt", ref_array)
+
+
 
 
