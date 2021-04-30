@@ -14,26 +14,28 @@ print("Max_thrust= ", (env.Prop_Kf*(env.nMax_motor**2)))
 
 print("Trim_thr= ", env.dTt)
 
-file2Open = "buildParamsFiles/D_8_in.txt"
+# file2Open = "buildParamsFiles/D_8_in.txt"
 
-with open(file2Open, "r") as input_file: # with open context
-    input_file_all = input_file.readlines() # crate an array of strings containing all the file lines
-    for line in input_file_all: # read line
-        line = line.split() # splits lines into 2 strings and set left = right, this suggest how to format the file
-        globals()[line[0]] = line[1]
+# with open(file2Open, "r") as input_file: # with open context
+#     input_file_all = input_file.readlines() # crate an array of strings containing all the file lines
+#     for line in input_file_all: # read line
+#         line = line.split() # splits lines into 2 strings and set left = right, this suggest how to format the file
+#         globals()[line[0]] = line[1]
 
-print("Lx = ", Lx)
-print("Ly = ", Ly) 
-print("motor_M = ", motor_mass)
-print(float(body_mass))
-print(batt_payload_mass)
-print(Motor_KV)
-print(Batt_V_nom)
-print(prop_D)
-print(Prop_Ct)
-print(Prop_Cp)
-env.nMax_motor = env.Motor_Kv * env.V_batt_nom / 60 #[RPS]
-env.Prop_Kf = env.Ct * env.rho * (env.D_prop**4) #[kg m]==[N/RPS^2]
-env.Prop_Kq = env.Cp * env.rho * (env.D_prop**5)/(2*np.pi) #[kg m^2]
-env.dTt = (env.mass * env.g0 / (4*env.Prop_Kf)) / (env.nMax_motor**2) 
-print("Trim_thr= ", env.dTt)
+# print("Lx = ", Lx)
+# print("Ly = ", Ly) 
+# print("motor_M = ", motor_mass)
+# print(float(body_mass))
+# print(batt_payload_mass)
+# print(Motor_KV)
+# print(Batt_V_nom)
+# print(prop_D)
+# print(Prop_Ct)
+# print(Prop_Cp)
+# env.nMax_motor = env.Motor_Kv * env.V_batt_nom / 60 #[RPS]
+# env.Prop_Kf = env.Ct * env.rho * (env.D_prop**4) #[kg m]==[N/RPS^2]
+# env.Prop_Kq = env.Cp * env.rho * (env.D_prop**5)/(2*np.pi) #[kg m^2]
+# env.dTt = (env.mass * env.g0 / (4*env.Prop_Kf)) / (env.nMax_motor**2) 
+# print("Trim_thr= ", env.dTt)
+
+print(env.Lx_a)

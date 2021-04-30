@@ -1,0 +1,9 @@
+Lx                 0.80
+Ly                 0.80
+motor_mass         0.23
+body_mass          0.750
+batt_payload_mass  0.480
+Max_prop_RPM       7200
+prop_D             0.4064
+Prop_Ct            0.1087
+Prop_Cp            0.0477
