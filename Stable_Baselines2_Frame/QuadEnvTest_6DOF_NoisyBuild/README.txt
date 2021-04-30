@@ -25,4 +25,5 @@ real policy deployment.
 
 The value are stored in parameters arrays created in the __init__() method and then the component of the arrays
 used is changed at every reset. so the files are opened only at the initialization and the are not used anymore 
-since the building parameters are stored in appropriate arrays wit name: <parameter_name>_a
+since the building parameters are stored in appropriate arrays wit name: <parameter_name>_a, to better separate 
+parameters, the initialization variables' names are suffixed with "_i"
