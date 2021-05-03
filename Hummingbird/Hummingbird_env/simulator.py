@@ -48,6 +48,10 @@ elif Policy_loading_mode == "best":
 
   Policy2Load = "EvalClbkLogs/best_model.zip" # best policy name
 
+elif Policy_loading_mode == "lastbest":
+
+  Policy2Load = "EvalClbkLogs/best_model4.zip" # last best policy name
+
 else:
 
   Policy2Load  = input("enter the relative path of policy to load (check before if exists): ")
@@ -164,20 +168,20 @@ plt.legend(['X', 'Y', 'Z'])
 plt.savefig('SimulationResults/Position.jpg')
 
 ## CONVERSION OF THE QUATERNION INTO EULER ANGLES
-Euler_angles = np.zeros([np.size(info_quaternion, 0), 3])
+Euler_angles_rad = np.zeros([np.size(info_quaternion, 0), 3])
 
-for row in range(np.size(Euler_angles, 0)):
+for row in range(np.size(Euler_angles_rad, 0)):
   q0 = info_quaternion[row, 0]
   q1 = info_quaternion[row, 1]
   q2 = info_quaternion[row, 2]
   q3 = info_quaternion[row, 3]
 
-  Euler_angles[row, 0] = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
-  Euler_angles[row, 1] = np.arcsin(2*(q0*q2-q3*q1))
-  Euler_angles[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+  Euler_angles_rad[row, 0] = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
+  Euler_angles_rad[row, 1] = np.arcsin(2*(q0*q2-q3*q1))
+  Euler_angles_rad[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
 
 #Conversion to degrees from radians
-Euler_angles = Euler_angles * (180 / np.pi)
+Euler_angles = Euler_angles_rad * (180 / np.pi)
 
 plt.figure(4)
 plt.plot(info_time, Euler_angles[:, 0])
@@ -208,14 +212,47 @@ plt.legend(['Avg_thr', 'Ail', 'Ele', 'Rud'])
 plt.savefig('SimulationResults/action.jpg')
 
 info_H = -1 * np.array([info_Z])
-fig = plt.figure(7)
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
+
 #ax.xlabel('X')
 #ax.ylabel('Y')
 #ax.ylabel('H==-Z')
 #ax.title('Trajectory')
-plt.savefig('SimulationResults/trajectory.jpg')
+
+for count in range(64):
+
+  figCount = 7+count
+  
+  fig = plt.figure(figCount)
+  ax = fig.add_subplot(111, projection='3d')
+  ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
+
+  step_n = count * 32
+
+  Phi, Theta, Psi = Euler_angles_rad[step_n, :]
+
+  u_Xb = np.cos(Theta) * np.cos(Psi)
+  v_Xb = np.cos(Theta) * np.sin(Psi)
+  w_Xb = np.sin(Theta)
+
+  u_Yb = -np.cos(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+  v_Yb = np.cos(Phi) * np.cos(Psi) + np.sin(Phi) * np.sin(Theta) * np.sin(Psi)
+  w_Yb = -np.sin(Phi) * np.cos(Theta) 
+
+  u_Zb = np.sin(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+  v_Zb = -np.sin(Phi) * np.cos(Psi) + np.cos(Phi) * np.sin(Theta) * np.sin(Psi)
+  w_Zb = -np.cos(Phi) * np.cos(Theta)
+
+  x = info_X[step_n]
+  y = info_Y[step_n]
+  z = -info_Z[step_n]
+
+  ax.quiver(x, y, z, u_Xb, v_Xb, w_Xb, length=5., normalize=False, color="red") # X_b
+  ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
+  ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
+
+  fig2save = 'SimulationResults/Orientation/trajectory' + str(count) + '.jpg'
+
+  plt.savefig(fig2save)
 
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
 

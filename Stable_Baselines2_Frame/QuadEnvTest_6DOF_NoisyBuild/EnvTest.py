@@ -48,9 +48,9 @@ print(env.prop_D_a)
 print(env.Prop_Ct_a)
 print(env.Prop_Cp_a)
 
-env.reset()
-env.reset()
-env.reset()
+for i in range(env.Lx_a.__len__()+8):
+    env.reset()
+
 print(env.Lx)
 print(env.Ly)
 print(env.motor_mass)

@@ -200,7 +200,7 @@ class Hummingbird_6DOF(gym.Env):
       Y_error = self.state[11] - self.Y_Pos_Goal
       Z_error = self.state[12] - self.Goal_Altitude 
       obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
-      obs = obs_state / self.Obs_normalization_vector
+      obs = (obs_state / self.Obs_normalization_vector) + np_normal(0, 0.005, 13) # provides random noise with 5% variance on all states
 
       # REWARD evaluation and done condition definition (to be completed)
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = State_curr_step
