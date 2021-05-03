@@ -218,15 +218,15 @@ info_H = -1 * np.array([info_Z])
 #ax.ylabel('H==-Z')
 #ax.title('Trajectory')
 
-for count in range(64):
+for count in range(256):
 
   figCount = 7+count
-  
+
   fig = plt.figure(figCount)
   ax = fig.add_subplot(111, projection='3d')
   ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
 
-  step_n = count * 32
+  step_n = count * 8
 
   Phi, Theta, Psi = Euler_angles_rad[step_n, :]
 
