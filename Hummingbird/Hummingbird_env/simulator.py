@@ -95,10 +95,30 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==1024:
-      env.X_Pos_Goal=15.
+    if i==256:
+      env.X_Pos_Goal=2.5
+      env.Y_Pos_Goal=3.5
+      env.Goal_Altitude=-30.
+    
+    if i==512:
+      env.X_Pos_Goal=10.
       env.Y_Pos_Goal=10.
-      env.Goal_Altitude=-15.
+      env.Goal_Altitude=-30.
+
+    if i==738:
+      env.X_Pos_Goal=15.
+      env.Y_Pos_Goal=15.
+      env.Goal_Altitude=-30.
+
+    if i==1024:
+      env.X_Pos_Goal=8.5
+      env.Y_Pos_Goal=7.5
+      env.Goal_Altitude=-25.
+
+    if i==1300:
+      env.X_Pos_Goal=5.
+      env.Y_Pos_Goal=7.
+      env.Goal_Altitude=-25.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     

@@ -154,9 +154,9 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.X_Pos_Goal = 10. #[m] goal x position
-    self.Y_Pos_Goal = 15. #[m] goal y position
-    self.Goal_Altitude = -30. #[m] altitude to achieve is 30 m
+    self.X_Pos_Goal = 0. #[m] goal x position
+    self.Y_Pos_Goal = 0. #[m] goal y position
+    self.Goal_Altitude = -15. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
