@@ -95,30 +95,30 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==256:
-      env.X_Pos_Goal=2.5
-      env.Y_Pos_Goal=3.5
-      env.Goal_Altitude=-30.
-    
-    if i==512:
-      env.X_Pos_Goal=10.
-      env.Y_Pos_Goal=10.
+    if i==32:
+      env.X_Pos_Goal=0.
+      env.Y_Pos_Goal=0.
       env.Goal_Altitude=-30.
 
-    if i==738:
+    if i==860:
+      env.X_Pos_Goal=15.
+      env.Y_Pos_Goal=0.
+      env.Goal_Altitude=-30.
+    
+    if i==1250:
       env.X_Pos_Goal=15.
       env.Y_Pos_Goal=15.
       env.Goal_Altitude=-30.
 
-    if i==1024:
-      env.X_Pos_Goal=8.5
-      env.Y_Pos_Goal=7.5
-      env.Goal_Altitude=-25.
+    if i==1750:
+      env.X_Pos_Goal=0.
+      env.Y_Pos_Goal=0.
+      env.Goal_Altitude=-30.
 
-    if i==1300:
-      env.X_Pos_Goal=5.
-      env.Y_Pos_Goal=7.
-      env.Goal_Altitude=-25.
+    if i==2260:
+      env.X_Pos_Goal=0.
+      env.Y_Pos_Goal=0.
+      env.Goal_Altitude=-15.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -238,7 +238,7 @@ info_H = -1 * np.array([info_Z])
 #ax.ylabel('H==-Z')
 #ax.title('Trajectory')
 
-for count in range(256):
+for count in range(384):
 
   figCount = 7+count
 
@@ -269,6 +269,9 @@ for count in range(256):
   ax.quiver(x, y, z, u_Xb, v_Xb, w_Xb, length=5., normalize=False, color="red") # X_b
   ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
   ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
+
+  #plot the waypoint
+  ax.scatter(X_ref[step_n], Y_ref[step_n], -Z_ref[step_n], c="red", s=100.)
 
   fig2save = 'SimulationResults/Orientation/trajectory' + str(count) + '.jpg'
 

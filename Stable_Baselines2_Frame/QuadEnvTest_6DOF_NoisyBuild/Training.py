@@ -7,7 +7,8 @@ import numpy as np
 import time
 
 #from stable_baselines.bench import Monitor
-from stable_baselines.common.policies import MlpLstmPolicy
+from stable_baselines.common.policies import LstmPolicy
+from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines.common.callbacks import EvalCallback
@@ -15,6 +16,13 @@ from stable_baselines.common.callbacks import EvalCallback
 ## Importing linear function to define a variable cliprange and learning rate
 from custom_modules.learning_schedules import linear_schedule
 from quadcopt_6DOF import QuadcoptEnv_6DOF
+
+# custom Lstm Policy creation
+class CustomLSTMPolicy(LstmPolicy):
+    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm=16, reuse=False, **_kwargs):
+        super().__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm, reuse,
+                         net_arch=[64, 'lstm', dict(vf=[64], pi=[64])],
+                         layer_norm=True, feature_extraction="mlp", **_kwargs)
 
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
@@ -44,12 +52,12 @@ if __name__ == '__main__':
 
     eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=False)]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
-                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156*16,
+                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156*4,
                              deterministic=True, render=False)
 
-    model = PPO2(MlpLstmPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
+    model = PPO2(CustomLSTMPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
             cliprange=cliprange, tensorboard_log=None, nminibatches=1, gamma=0.9999,
-            noptepochs=16, n_steps=8156) #"./tensorboardLogs/"
+            noptepochs=3, n_steps=4096) #"./tensorboardLogs/"
 
     ################################################
     # Train the agent and take the time for learning
