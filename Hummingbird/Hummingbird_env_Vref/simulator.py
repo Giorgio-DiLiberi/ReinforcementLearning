@@ -101,20 +101,35 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==350:
+    if i==256:
       env.X_ref = -0.
       env.Y_ref = -0.
-      env.Z_ref = -40.
+      env.Z_ref = -17.
 
     if i==650:
       env.X_ref = 15.
       env.Y_ref = -0.
-      env.Z_ref = -40.
+      env.Z_ref = -17.
 
     if i==1024:
       env.X_ref = 15.
       env.Y_ref = 15.
-      env.Z_ref = -40.
+      env.Z_ref = -17.
+
+    if i==1350:
+      env.X_ref = 0.
+      env.Y_ref = 15.
+      env.Z_ref = -17.
+
+    if i==1750:
+      env.X_ref = 0.
+      env.Y_ref = 0.
+      env.Z_ref = -17.
+
+    if i==2256:
+      env.X_ref = 0.
+      env.Y_ref = 0.
+      env.Z_ref = -2.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -251,7 +266,7 @@ info_H = -1 * np.array([info_Z])
 #ax.ylabel('H==-Z')
 #ax.title('Trajectory')
 
-for count in range(256):
+for count in range(384):
 
   figCount = 8+count
 

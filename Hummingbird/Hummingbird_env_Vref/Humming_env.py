@@ -148,7 +148,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(12*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -159,7 +159,7 @@ class Hummingbird_6DOF(gym.Env):
     # biological neural networks)
     self.X_ref = 0.
     self.Y_ref = 0.
-    self.Z_ref = -25.
+    self.Z_ref = -2.
 
     # references on NED velocity are evaluated proportionally to posizion errors
     self.VNord_ref = 0. #[m] 
@@ -273,7 +273,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -25. #[m]
+        Z_reset = -2. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
