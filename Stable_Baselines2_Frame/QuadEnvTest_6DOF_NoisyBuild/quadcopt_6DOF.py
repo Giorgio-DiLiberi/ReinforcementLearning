@@ -13,10 +13,12 @@ class QuadcoptEnv_6DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, Random_reset=False, Process_perturbations=False, Lx_i=0.34, Ly_i=0.34, motor_mass_i=0.04, body_mass_i=0.484,
+  def __init__(self, Random_reset=False, Process_perturbations=False, Eval_env=False, Lx_i=0.34, Ly_i=0.34, motor_mass_i=0.04, body_mass_i=0.484,
               batt_payload_mass_i=0.186, prop_D_i=0.2032, Prop_Ct_i=0.1087, Prop_Cp_i=0.0477, Max_prop_RPM_i=8500):
     super(QuadcoptEnv_6DOF, self).__init__()
 
+    self.Eval_env = Eval_env # variable to tell if it is eval env, if True it gives an obs of shape [n_envs, N_obs] 
+    # where each array after row 0 is 0
 
     # Define action and observation space
     # They must be gym.spaces objects
@@ -38,9 +40,12 @@ class QuadcoptEnv_6DOF(gym.Env):
     ##full visibility on the states as given in the previous section.
     # instead of X_POS, Y_POS ans Z_POS error from the request is given as obs
     highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1])
+
+    if self.Eval_env:
+      highObsSpace = np.stack([highObsSpace, highObsSpace, highObsSpace, highObsSpace, highObsSpace, highObsSpace, highObsSpace, highObsSpace], axis=0)
+
     lowObsSpace = -highObsSpace
     
-
     self.observation_space = spaces.Box(lowObsSpace, highObsSpace, dtype=np.float32) # boundary is set 0.1 over to avoid AssertionError
 
     # A vector with max value for each state is defined to perform normalization of obs
@@ -232,6 +237,9 @@ class QuadcoptEnv_6DOF(gym.Env):
       obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
 
+      if self.Eval_env:
+        obs = np.stack([obs, np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13)], axis=0)
+
       # REWARD evaluation and done condition definition (to be completed)
       u_1, v_1, w_1, p_1, q_1, r_1, q0_1, q1_1, q2_1, q3_1, X_1, Y_1, Z_1 = State_curr_step
 
@@ -359,6 +367,9 @@ class QuadcoptEnv_6DOF(gym.Env):
       Z_error = self.state[12] - self.Goal_Altitude
       obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
+
+      if self.Eval_env:
+        obs = np.stack([obs, np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13)], axis=0)
 
       return obs  # produce an observation of the first state (xPosition) 
 

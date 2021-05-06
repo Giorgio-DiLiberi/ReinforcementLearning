@@ -8,7 +8,7 @@ import time
 
 #from stable_baselines.bench import Monitor
 from stable_baselines.common.policies import LstmPolicy
-from stable_baselines.common.policies import MlpPolicy
+from stable_baselines.common.policies import MlpLstmPolicy
 from stable_baselines import PPO2
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines.common.callbacks import EvalCallback
@@ -21,7 +21,7 @@ from quadcopt_6DOF import QuadcoptEnv_6DOF
 class CustomLSTMPolicy(LstmPolicy):
     def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm=16, reuse=False, **_kwargs):
         super().__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm, reuse,
-                         net_arch=[64, 'lstm', dict(vf=[64], pi=[64])],
+                         net_arch=['lstm', 64, dict(vf=[64], pi=[64])],
                          layer_norm=True, feature_extraction="mlp", **_kwargs)
 
 # Definition of Hyperparameters
@@ -46,18 +46,18 @@ if __name__ == '__main__':
     cpu = 8
 
     # Creating the environment parallelized to use all 4 threads
-    env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=False)])
+    env = SubprocVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
 
     ### AGENT MODEL AND CALLBACK DEFINITION
 
-    eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=False)]) # Definition of one evaluation environment
+    eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True, Eval_env=True)])
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
-                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156*4,
+                             log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156,
                              deterministic=True, render=False)
 
-    model = PPO2(CustomLSTMPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
-            cliprange=cliprange, tensorboard_log=None, nminibatches=1, gamma=0.9999,
-            noptepochs=3, n_steps=4096) #"./tensorboardLogs/"
+    model = PPO2(MlpLstmPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
+            cliprange=cliprange, tensorboard_log=None, nminibatches=cpu, gamma=0.9999,
+            noptepochs=8, n_steps=8156) #"./tensorboardLogs/"
 
     ################################################
     # Train the agent and take the time for learning
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     print("Learning process start...")
 
-    model.learn(total_timesteps=LearningTimeSteps, callback=eval_callback)
+    model.learn(total_timesteps=LearningTimeSteps)    #, callback=eval_callback)
 
     t = time.localtime()
     Learning_time_finish_sec= t[5]+ 60*t[4] + 3600*t[3]

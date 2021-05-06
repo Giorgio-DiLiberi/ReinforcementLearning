@@ -48,6 +48,10 @@ elif Policy_loading_mode == "best":
 
   Policy2Load = "EvalClbkLogs/best_model.zip" # best policy name
 
+elif Policy_loading_mode == "lastbest":
+
+  Policy2Load = "EvalClbkLogs/best_model5.zip"
+
 else:
 
   Policy2Load  = input("enter the relative path of policy to load (check before if exists): ")
@@ -83,6 +87,9 @@ action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
+X_ref = [env.X_ref]
+Y_ref = [env.Y_ref]
+Z_ref = [env.Z_ref]
 VN_ref = [env.VNord_ref]
 VE_ref = [env.VEst_ref]
 VD_ref = [env.VDown_ref]
@@ -95,14 +102,19 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==350:
-      env.VNord_ref = -0.
-      env.VEst_ref = -0.
-      env.VDown_ref = 0.
+      env.X_ref = -0.
+      env.Y_ref = -0.
+      env.Z_ref = -40.
 
     if i==650:
-      env.VNord_ref = -2.
-      env.VEst_ref = -1.
-      env.VDown_ref = 1.2
+      env.X_ref = 15.
+      env.Y_ref = -0.
+      env.Z_ref = -40.
+
+    if i==1024:
+      env.X_ref = 15.
+      env.Y_ref = 15.
+      env.Z_ref = -40.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -118,6 +130,10 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
+
+    X_ref.append(env.X_ref)
+    Y_ref.append(env.Y_ref)
+    Z_ref.append(env.Z_ref)
     info_V_N.append(info["V_Nord"])
     info_V_E.append(info["V_Est"])
     info_V_D.append(info["V_Down"])
@@ -175,20 +191,20 @@ plt.legend(['X', 'Y', 'Z'])
 plt.savefig('SimulationResults/Position.jpg')
 
 ## CONVERSION OF THE QUATERNION INTO EULER ANGLES
-Euler_angles = np.zeros([np.size(info_quaternion, 0), 3])
+Euler_angles_rad = np.zeros([np.size(info_quaternion, 0), 3])
 
-for row in range(np.size(Euler_angles, 0)):
+for row in range(np.size(Euler_angles_rad, 0)):
   q0 = info_quaternion[row, 0]
   q1 = info_quaternion[row, 1]
   q2 = info_quaternion[row, 2]
   q3 = info_quaternion[row, 3]
 
-  Euler_angles[row, 0] = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
-  Euler_angles[row, 1] = np.arcsin(2*(q0*q2-q3*q1))
-  Euler_angles[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+  Euler_angles_rad[row, 0] = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
+  Euler_angles_rad[row, 1] = np.arcsin(2*(q0*q2-q3*q1))
+  Euler_angles_rad[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
 
 #Conversion to degrees from radians
-Euler_angles = Euler_angles * (180 / np.pi)
+Euler_angles = Euler_angles_rad * (180 / np.pi)
 
 plt.figure(4)
 plt.plot(info_time, Euler_angles[:, 0])
@@ -228,11 +244,57 @@ plt.title('Earth frame velocity')
 plt.legend(['V_Nord', 'V_Est', 'V_Down'])
 plt.savefig('SimulationResults/V_NED.jpg')
 
+info_H = -1 * np.array([info_Z])
+
+#ax.xlabel('X')
+#ax.ylabel('Y')
+#ax.ylabel('H==-Z')
+#ax.title('Trajectory')
+
+for count in range(256):
+
+  figCount = 8+count
+
+  fig = plt.figure(figCount)
+  ax = fig.add_subplot(111, projection='3d')
+  ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
+
+  step_n = count * 8
+
+  Phi, Theta, Psi = Euler_angles_rad[step_n, :]
+
+  u_Xb = np.cos(Theta) * np.cos(Psi)
+  v_Xb = np.cos(Theta) * np.sin(Psi)
+  w_Xb = np.sin(Theta)
+
+  u_Yb = -np.cos(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+  v_Yb = np.cos(Phi) * np.cos(Psi) + np.sin(Phi) * np.sin(Theta) * np.sin(Psi)
+  w_Yb = -np.sin(Phi) * np.cos(Theta) 
+
+  u_Zb = np.sin(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+  v_Zb = -np.sin(Phi) * np.cos(Psi) + np.cos(Phi) * np.sin(Theta) * np.sin(Psi)
+  w_Zb = -np.cos(Phi) * np.cos(Theta)
+
+  x = info_X[step_n]
+  y = info_Y[step_n]
+  z = -info_Z[step_n]
+
+  ax.quiver(x, y, z, u_Xb, v_Xb, w_Xb, length=5., normalize=False, color="red") # X_b
+  ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
+  ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
+
+  #plot the waypoint
+  ax.scatter(X_ref[step_n], Y_ref[step_n], -Z_ref[step_n], c="red", s=100.)
+
+  fig2save = 'SimulationResults/Orientation/trajectory' + str(count) + '.jpg'
+
+  plt.savefig(fig2save)
+
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z, info_V_N, info_V_E, info_V_D], axis=1)
 
 np.savetxt("simout.txt", simout_array)
 
-ref_array = np.stack([VN_ref, VE_ref, VD_ref], axis=1)
+ref_array = np.stack([X_ref, Y_ref, Z_ref, VN_ref, VE_ref, VD_ref], axis=1)
 
 np.savetxt("references.txt", ref_array)
 

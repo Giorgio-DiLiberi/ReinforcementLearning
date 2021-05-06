@@ -148,7 +148,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -157,6 +157,11 @@ class Hummingbird_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
+    self.X_ref = 0.
+    self.Y_ref = 0.
+    self.Z_ref = -25.
+
+    # references on NED velocity are evaluated proportionally to posizion errors
     self.VNord_ref = 0. #[m] 
     self.VEst_ref = 0. #[m]
     self.VDown_ref = 0. #[m]
@@ -195,6 +200,11 @@ class Hummingbird_6DOF(gym.Env):
 
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
+
+      # evaluation of NED velocity references proportionally to position errors
+      self.VNord_ref = 0.2 * (self.X_ref - self.state[10])
+      self.VEst_ref = 0.2 * (self.Y_ref - self.state[11])
+      self.VDown_ref = 0.2 * (self.Z_ref - self.state[12])
 
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]
@@ -263,7 +273,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -28. #[m]
+        Z_reset = -25. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
