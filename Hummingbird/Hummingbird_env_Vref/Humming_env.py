@@ -202,9 +202,9 @@ class Hummingbird_6DOF(gym.Env):
       # with elementwise division
 
       # evaluation of NED velocity references proportionally to position errors
-      self.VNord_ref = 0.2 * (self.X_ref - self.state[10])
-      self.VEst_ref = 0.2 * (self.Y_ref - self.state[11])
-      self.VDown_ref = 0.2 * (self.Z_ref - self.state[12])
+      self.VNord_ref = 0.4 * (self.X_ref - self.state[10])
+      self.VEst_ref = 0.4 * (self.Y_ref - self.state[11])
+      self.VDown_ref = 0.4 * (self.Z_ref - self.state[12])
 
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]
