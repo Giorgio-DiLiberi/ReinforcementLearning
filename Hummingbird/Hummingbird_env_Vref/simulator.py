@@ -50,7 +50,7 @@ elif Policy_loading_mode == "best":
 
 elif Policy_loading_mode == "lastbest":
 
-  Policy2Load = "EvalClbkLogs/best_model5.zip"
+  Policy2Load = "EvalClbkLogs/best_model6.zip"
 
 else:
 
@@ -272,7 +272,9 @@ for count in range(384):
 
   fig = plt.figure(figCount)
   ax = fig.add_subplot(111, projection='3d')
-  ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), info_H)
+  ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), np.array([info_Z]))
+  ax.invert_xaxis()
+  ax.invert_zaxis()
 
   step_n = count * 8
 
@@ -280,26 +282,26 @@ for count in range(384):
 
   u_Xb = np.cos(Theta) * np.cos(Psi)
   v_Xb = np.cos(Theta) * np.sin(Psi)
-  w_Xb = np.sin(Theta)
+  w_Xb = -np.sin(Theta)
 
   u_Yb = -np.cos(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
   v_Yb = np.cos(Phi) * np.cos(Psi) + np.sin(Phi) * np.sin(Theta) * np.sin(Psi)
-  w_Yb = -np.sin(Phi) * np.cos(Theta) 
+  w_Yb = np.sin(Phi) * np.cos(Theta) 
 
   u_Zb = np.sin(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
   v_Zb = -np.sin(Phi) * np.cos(Psi) + np.cos(Phi) * np.sin(Theta) * np.sin(Psi)
-  w_Zb = -np.cos(Phi) * np.cos(Theta)
+  w_Zb = np.cos(Phi) * np.cos(Theta)
 
   x = info_X[step_n]
   y = info_Y[step_n]
-  z = -info_Z[step_n]
+  z = info_Z[step_n]
 
   ax.quiver(x, y, z, u_Xb, v_Xb, w_Xb, length=5., normalize=False, color="red") # X_b
   ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
   ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
 
   #plot the waypoint
-  ax.scatter(X_ref[step_n], Y_ref[step_n], -Z_ref[step_n], c="red", s=100.)
+  ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)
 
   fig2save = 'SimulationResults/Orientation/trajectory' + str(count) + '.jpg'
 

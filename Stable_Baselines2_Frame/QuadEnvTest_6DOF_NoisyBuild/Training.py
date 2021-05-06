@@ -4,6 +4,7 @@ warnings.filterwarnings("ignore")
 
 import gym
 import numpy as np
+import tensorflow as tf
 import time
 
 #from stable_baselines.bench import Monitor
@@ -21,7 +22,7 @@ from quadcopt_6DOF import QuadcoptEnv_6DOF
 class CustomLSTMPolicy(LstmPolicy):
     def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm=16, reuse=False, **_kwargs):
         super().__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, n_lstm, reuse,
-                         net_arch=['lstm', 64, dict(vf=[64], pi=[64])],
+                         net_arch=['lstm', 64, dict(vf=[64], pi=[64])], act_fun=tf.tanh,
                          layer_norm=True, feature_extraction="mlp", **_kwargs)
 
 # Definition of Hyperparameters
@@ -55,9 +56,9 @@ if __name__ == '__main__':
                              log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8156,
                              deterministic=True, render=False)
 
-    model = PPO2(MlpLstmPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
+    model = PPO2(CustomLSTMPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
             cliprange=cliprange, tensorboard_log=None, nminibatches=cpu, gamma=0.9999,
-            noptepochs=8, n_steps=8156) #"./tensorboardLogs/"
+            noptepochs=4, n_steps=4096) #"./tensorboardLogs/"
 
     ################################################
     # Train the agent and take the time for learning

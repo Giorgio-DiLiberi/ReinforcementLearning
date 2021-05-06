@@ -307,7 +307,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]
       p, q, r = self.state[3:6]
-      v = self.state[1]
+      #v = self.state[1]
 
       abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
@@ -327,11 +327,17 @@ class QuadcoptEnv_6DOF(gym.Env):
       VDown_error = V_NED[2] - self.VDown_ref
 
       V_error_Weight = 0.9
-      drift_weight = 0.8
+      #drift_weight = 0.8
       rate_weight = 0.6
 
-      R = 1. - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
-        - drift_weight * abs(v/30.) - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
+      # There should be sa fourth constraint to assign values at the dR controls, this constraint is to 
+      # maximize the q0 wich is maximum (=1) if the rotation between NED and body is null, since the 
+      # reference velocities are small and can be achieved with small attitude changes, requesting none rotation
+      # or maximum q0 is a simple way to impose that Xb stays pointed Northbound, the assumption is that the 
+      # policy will learn to pitch or roll slightly to acomplish the NED velocity required while keeping the 
+      # ultirotor with the node pointed North, this shows to work in the Position Reference model.
+      R = (1. * q0) - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
+        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
         reward = R
