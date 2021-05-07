@@ -326,6 +326,8 @@ for count in range(int(env.elapsed_time_steps/8)):
   ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
   ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
 
+  ax.set_xlim3d(7.5, -7.5)
+
   ax.set_xlabel("North")
   ax.set_ylabel("East")
   ax.set_zlabel("Down")
