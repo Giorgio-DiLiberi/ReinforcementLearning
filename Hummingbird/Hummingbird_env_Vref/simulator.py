@@ -97,40 +97,48 @@ VD_ref = [env.VDown_ref]
 time=0.
 info_time=[time] # elapsed time vector
 
+env.Position_reference = False
+
 # SIMULATION
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==256:
-      env.X_ref = -0.
-      env.Y_ref = -0.
-      env.Z_ref = -17.
+    # Waypoint navigation section (uncomment to realize wp nav)
+    # if i==256:
+    #   env.X_ref = -0.
+    #   env.Y_ref = -0.
+    #   env.Z_ref = -17.
 
-    if i==650:
-      env.X_ref = 15.
-      env.Y_ref = -0.
-      env.Z_ref = -17.
+    # if i==650:
+    #   env.X_ref = 15.
+    #   env.Y_ref = -0.
+    #   env.Z_ref = -17.
 
-    if i==1024:
-      env.X_ref = 15.
-      env.Y_ref = 15.
-      env.Z_ref = -17.
+    # if i==1024:
+    #   env.X_ref = 15.
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -17.
 
-    if i==1350:
-      env.X_ref = 0.
-      env.Y_ref = 15.
-      env.Z_ref = -17.
+    # if i==1350:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -17.
 
-    if i==1750:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -17.
+    # if i==1750:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -17.
 
-    if i==2256:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -2.
-    
+    # if i==2256:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -2.
+
+    # Vectorial navigation--> spiral movement each step references are updated with sin, cos and linear z
+    env.VNord_ref = 2 * np.cos(0.5 * env.elapsed_time_steps * 0.04)
+    env.VEst_ref = 2 * np.sin(0.5 * env.elapsed_time_steps * 0.04)
+    env.VDown_ref = - 1.5 * 10. / 40
+
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
     obs, reward, done, info = env.step(action) 
@@ -266,7 +274,7 @@ info_H = -1 * np.array([info_Z])
 #ax.ylabel('H==-Z')
 #ax.title('Trajectory')
 
-for count in range(384):
+for count in range(int(env.elapsed_time_steps/8)):
 
   figCount = 8+count
 
@@ -299,6 +307,10 @@ for count in range(384):
   ax.quiver(x, y, z, u_Xb, v_Xb, w_Xb, length=5., normalize=False, color="red") # X_b
   ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
   ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
+
+  ax.set_xlabel("North")
+  ax.set_ylabel("East")
+  ax.set_zlabel("Down")
 
   #plot the waypoint
   ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)

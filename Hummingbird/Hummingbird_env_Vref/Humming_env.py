@@ -16,7 +16,7 @@ class Hummingbird_6DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, Random_reset = False, Process_perturbations = False):
+  def __init__(self, Random_reset = False, Process_perturbations = False, Position_reference = True):
     super(Hummingbird_6DOF, self).__init__()
 
 
@@ -53,6 +53,7 @@ class Hummingbird_6DOF(gym.Env):
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
+    self.Position_reference = Position_reference
     
 
     # plus configuration
@@ -148,7 +149,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(12*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -201,10 +202,13 @@ class Hummingbird_6DOF(gym.Env):
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
 
-      # evaluation of NED velocity references proportionally to position errors
-      self.VNord_ref = 0.4 * (self.X_ref - self.state[10])
-      self.VEst_ref = 0.4 * (self.Y_ref - self.state[11])
-      self.VDown_ref = 0.4 * (self.Z_ref - self.state[12])
+      # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
+      if self.Position_reference:
+        self.VNord_ref = 0.4 * (self.X_ref - self.state[10])
+        self.VEst_ref = 0.4 * (self.Y_ref - self.state[11])
+        self.VDown_ref = 0.4 * (self.Z_ref - self.state[12])
+
+        #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
 
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]

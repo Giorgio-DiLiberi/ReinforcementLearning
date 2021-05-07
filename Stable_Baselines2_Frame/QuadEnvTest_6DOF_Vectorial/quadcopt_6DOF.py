@@ -37,7 +37,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
     # order is V_N_Err, V_E_Err, V_D_Err, v, p, q, r, q0, q1, q2, q3
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1])
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -46,7 +46,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 20., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -201,7 +201,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1]], self.state[3:10]))
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -233,9 +233,9 @@ class QuadcoptEnv_6DOF(gym.Env):
         q_reset = np_normal(0., 0.0175)
         r_reset = np_normal(0., 0.0175)
 
-        phi = np_normal(0., 0.44) #[rad]
-        theta = np_normal(0., 0.44) #[rad]
-        psi = np_normal(0., 0.175) #[rad]
+        phi = np_normal(0., 0.1) #[rad]
+        theta = np_normal(0., 0.1) #[rad]
+        psi = np_normal(0., 9 * 0.175) #[rad]
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
@@ -291,7 +291,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1]], self.state[3:10]))
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error], self.state[3:10]))  #, self.state[1]
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
