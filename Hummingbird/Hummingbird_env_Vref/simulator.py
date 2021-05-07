@@ -104,40 +104,58 @@ env.Position_reference = True
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # Waypoint navigation section (uncomment to realize wp nav)
-    if i==256:
-      env.X_ref = -0.
-      env.Y_ref = -0.
-      env.Z_ref = -17.
+    # if i==256:
+    #   env.X_ref = -0.
+    #   env.Y_ref = -0.
+    #   env.Z_ref = -17.
 
-    if i==650:
-      env.X_ref = 15.
-      env.Y_ref = -0.
-      env.Z_ref = -17.
+    # if i==650:
+    #   env.X_ref = 15.
+    #   env.Y_ref = -0.
+    #   env.Z_ref = -17.
 
-    if i==1024:
-      env.X_ref = 15.
-      env.Y_ref = 15.
-      env.Z_ref = -17.
+    # if i==1024:
+    #   env.X_ref = 15.
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -17.
 
-    if i==1350:
-      env.X_ref = 0.
-      env.Y_ref = 15.
-      env.Z_ref = -17.
+    # if i==1350:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -17.
 
-    if i==1750:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -17.
+    # if i==1750:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -17.
 
-    if i==2256:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -2.
+    # if i==2256:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -2.
 
     # # Vectorial navigation--> spiral movement each step references are updated with sin, cos and linear z
     # env.VNord_ref = 2 * np.cos(0.5 * env.elapsed_time_steps * 0.04)
     # env.VEst_ref = 2 * np.sin(0.5 * env.elapsed_time_steps * 0.04)
     # env.VDown_ref = - 1.4 * 10. / 40
+
+    # moving waypoint
+
+    if i==32:
+      env.Z_ref = -17.
+
+    if i>=256 and i<1750:
+      if i%4==0:
+        env.X_ref = 7.5 * np.sin(0.25 * env.elapsed_time_steps * 0.04)
+        env.Y_ref = 10 * env.elapsed_time_steps * 0.04 / 40
+
+    if i==1750:
+      env.X_ref = 0.0
+      env.Y_ref = 0.0
+
+    if i==2256:
+      env.Z_ref = 0.0
+      
 
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
