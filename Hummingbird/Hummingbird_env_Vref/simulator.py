@@ -145,9 +145,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.Z_ref = -17.
 
     if i>=256 and i<1750:
-      if i%16==0:
-        env.X_ref = 7.5 * np.sin(0.25 * env.elapsed_time_steps * 0.04)
-        env.Y_ref = 10 * env.elapsed_time_steps * 0.04 / 40
+      if i%32==0:
+        env.X_ref = 7.5 * np.sin(0.25 * (env.elapsed_time_steps-256) * 0.04)
+        env.Y_ref = 9.2 * env.elapsed_time_steps * 0.04 / 40
 
     if i==1750:
       env.X_ref = 0.0
