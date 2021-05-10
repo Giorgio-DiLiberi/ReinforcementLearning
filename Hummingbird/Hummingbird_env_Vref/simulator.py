@@ -232,7 +232,7 @@ plt.legend(['X', 'Y', 'Z'])
 plt.savefig('SimulationResults/Position.jpg')
 
 ## CONVERSION OF THE QUATERNION INTO EULER ANGLES
-Euler_angles_rad = np.zeros([np.size(info_quaternion, 0), 3])
+Euler_angles_rad = np.zeros([np.size(info_quaternion, 0), 3]) 
 
 for row in range(np.size(Euler_angles_rad, 0)):
   q0 = info_quaternion[row, 0]
@@ -326,7 +326,7 @@ for count in range(int(env.elapsed_time_steps/8)):
   ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
   ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
 
-  ax.set_xlim3d(7.5, -7.5)
+  #ax.set_xlim3d(7.5, -7.5)
 
   ax.set_xlabel("North")
   ax.set_ylabel("East")

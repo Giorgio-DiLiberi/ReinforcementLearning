@@ -156,7 +156,7 @@ class Hummingbird_6DOF(gym.Env):
     # biological neural networks)
     self.X_Pos_Goal = 0. #[m] goal x position
     self.Y_Pos_Goal = 0. #[m] goal y position
-    self.Goal_Altitude = -15. #[m] altitude to achieve is 30 m
+    self.Goal_Altitude = -2. #[m] altitude to achieve is 30 m
 
   def step(self, action):
 
@@ -245,7 +245,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -15. #[m]
+        Z_reset = -2. #[m]
         u_reset = 0. #[m/s]
         X_reset = -0. #[m]
         v_reset = 0. #[m/s]
