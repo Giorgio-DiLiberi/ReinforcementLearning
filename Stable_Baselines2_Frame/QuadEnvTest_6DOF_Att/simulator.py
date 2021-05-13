@@ -14,10 +14,10 @@ from mpl_toolkits.mplot3d import axes3d
 
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
-from quadcopt_1DOF import QuadcoptEnv_1DOF
+from quadcopt_6DOF import QuadcoptEnv_6DOF
 
 
-env = QuadcoptEnv_1DOF(Random_reset=False, Process_perturbations=True)
+env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=False)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -33,7 +33,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Stable_Baselines2_Frame/Trivial_problems/QuadEnvTest_1DOF_Att/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Stable_Baselines2_Frame/QuadEnvTest_6DOF_Att/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
@@ -76,11 +76,13 @@ info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array 
 info_X = [env.state[10]]
 info_Y = [env.state[11]]
 info_Z = [env.state[12]]
-action_memory = [0.] ## vector to store actions during the simulation
+action_memory = np.array([0., 0.]) ## vector to store actions during the simulation
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
 Phi_ref = [env.Phi_ref]
+Theta_ref = [env.Theta_ref]
+#Psi_ref = [env.Psi_ref]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -90,12 +92,18 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==512:
-      env.Phi_ref=30. * 0.0175
+      env.Phi_ref=15. * 0.0175
+      env.Theta_ref=-8. * 0.0175
 
-    # if i==1536:
-    #   env.X_Pos_Goal=0.
-    #   env.Y_Pos_Goal=11.1
-    #   env.Goal_Altitude=-28.
+    if i==750:
+      env.Phi_ref=0.
+      env.Theta_ref=0.
+
+    # if i==512:
+    #   env.Psi_ref=75 * 0.0175
+
+    # if i==720:
+    #   env.Psi_ref = 150 * 0.0175
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -111,11 +119,13 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
-    action_memory.append(action[0])
+    action_memory = np.vstack([action_memory, action])
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
 
     Phi_ref.append(env.Phi_ref)
+    Theta_ref.append(env.Theta_ref)
+    #Psi_ref.append(env.Psi_ref)
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -196,11 +206,12 @@ plt.title('Episode Reward')
 plt.savefig('SimulationResults/reward.jpg')
 
 plt.figure(6)
-plt.plot(info_time, action_memory)
+plt.plot(info_time, action_memory[:, 0])
+plt.plot(info_time, action_memory[:, 1])
 plt.xlabel('time')
-plt.ylabel('Action')
-plt.title('Action in episode [-1, 1]')
-plt.legend(['Ail'])
+plt.ylabel('Actions')
+plt.title('Actions in episode [-1, 1]')
+plt.legend(['Ail', 'Ele'])
 plt.savefig('SimulationResults/action.jpg')
 
 plt.figure(7)
@@ -212,6 +223,26 @@ plt.ylabel('Phi')
 plt.title('attitude step response')
 plt.legend(['Phi', 'Phi_ref'])
 plt.savefig('SimulationResults/Phi_PhiRef.jpg')
+
+plt.figure(8)
+Theta_ref_deg = np.array(Theta_ref) * 180 / np.pi
+plt.plot(info_time, Euler_angles[:, 1])
+plt.plot(info_time, Theta_ref_deg)
+plt.xlabel('time')
+plt.ylabel('Theta')
+plt.title('attitude step response')
+plt.legend(['Theta', 'Theta_ref'])
+plt.savefig('SimulationResults/Theta_ThetaRef.jpg')
+
+# plt.figure(9)
+# Psi_ref_deg = np.array(Psi_ref) * 180 / np.pi
+# plt.plot(info_time, Euler_angles[:, 2])
+# plt.plot(info_time, Psi_ref_deg)
+# plt.xlabel('time')
+# plt.ylabel('Psi')
+# plt.title('attitude step response')
+# plt.legend(['Psi', 'Psi_ref'])
+# plt.savefig('SimulationResults/Psi_PsiRef.jpg')
 
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
 

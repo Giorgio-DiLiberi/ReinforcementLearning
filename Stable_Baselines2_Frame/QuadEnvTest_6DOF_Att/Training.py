@@ -21,7 +21,7 @@ from quadcopt_6DOF import QuadcoptEnv_6DOF
 # see custom_modules or common  
 LearningTimeSteps = 45 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
 
-LearningRate_ini = 4.e-4 # LR initial value for linear interpolation
+LearningRate_ini = 5.e-5 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
 LearningRate = linear_schedule(LearningRate_ini)
 
@@ -38,11 +38,11 @@ if __name__ == '__main__':
     cpu = 8
 
     # Creating the environment parallelized to use all 4 threads
-    env = SubprocVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True) for num in range(cpu)], start_method='spawn')
+    env = SubprocVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=False) for num in range(cpu)], start_method='spawn')
 
     ### AGENT MODEL AND CALLBACK DEFINITION
 
-    eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)]) # Definition of one evaluation environment
+    eval_env = DummyVecEnv([lambda : QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=False)]) # Definition of one evaluation environment
     eval_callback = EvalCallback(eval_env, best_model_save_path='./EvalClbkLogs/',
                              log_path='./EvalClbkLogs/npyEvals/', n_eval_episodes=1, eval_freq= 8192,
                              deterministic=True, render=False)

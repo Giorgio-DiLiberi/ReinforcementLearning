@@ -32,9 +32,8 @@ class QuadcoptEnv_1DOF(gym.Env):
     # is adapted to the physical world in step function.
     # The normalization is performed using limits reported above
 
-    ##full visibility on the states as given in the previous section.
-    # instead of X_POS, Y_POS ans Z_POS error from the request is given as obs
-    highObsSpace = np.array([1.1 , 1.1 , 1.1 , 1.1 , 1.1])
+    ##visibilit is only on p, phi_error
+    highObsSpace = np.array([1.1 , 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -43,7 +42,7 @@ class QuadcoptEnv_1DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([50., 2 * np.pi]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -136,14 +135,14 @@ class QuadcoptEnv_1DOF(gym.Env):
 
     # Constants to normalize state and reward
     
-    self.Phi_ref = 0.
+    self.Theta_ref = 0.
 
   def step(self, action):
 
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
       
-      controls = np.array([0.1, action[0], 0., 0.]) ## This variable is used to make possible the separation of actions 
+      controls = np.array([0.1, 0., action[0], 0.]) ## This variable is used to make possible the separation of actions 
       # in this example actions represent pseudo controls
 
       Throttles = self.getThrsFromControls(controls) # commands are the actions given by the policy
@@ -174,18 +173,11 @@ class QuadcoptEnv_1DOF(gym.Env):
       # with elementwise division
 
       # as obs is given only the difference between desired quaternion components and actual
-      q0, q1, q2, q3 = self.state[6:10]
+      PHI = self.quat2Att()
 
-      phi_ref = self.Phi_ref
-      theta_ref = 0.
-      psi_ref = 0.
-
-      q0_err = cos(phi_ref/2)*cos(theta_ref/2)*cos(psi_ref/2) + sin(phi_ref/2)*sin(theta_ref/2)*sin(psi_ref/2) - q0
-      q1_err = sin(phi_ref/2)*cos(theta_ref/2)*cos(psi_ref/2) - cos(phi_ref/2)*sin(theta_ref/2)*sin(psi_ref/2) - q1
-      q2_err = cos(phi_ref/2)*sin(theta_ref/2)*cos(psi_ref/2) + sin(phi_ref/2)*cos(theta_ref/2)*sin(psi_ref/2) - q2
-      q3_err = cos(phi_ref/2)*cos(theta_ref/2)*sin(psi_ref/2) - sin(phi_ref/2)*sin(theta_ref/2)*cos(psi_ref/2) - q3
+      theta_err = self.Theta_ref - PHI[1]
       
-      obs_state = np.array([self.state[3], q0_err, q1_err, q2_err, q3_err])
+      obs_state = np.array([self.state[4], theta_err])
       #obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
 
@@ -218,8 +210,8 @@ class QuadcoptEnv_1DOF(gym.Env):
         q_reset = np_normal(0., 0.0175)
         r_reset = np_normal(0., 0.0175)
 
-        phi = np_normal(0., 0.44) #[rad]
-        theta = 0. #[rad]
+        phi = 0. #[rad]
+        theta = np_normal(0., 0.4) #[rad]
         psi = 0.
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
@@ -227,13 +219,13 @@ class QuadcoptEnv_1DOF(gym.Env):
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.Phi_ref = np_normal(0., 30. * 0.0175)
+        self.Theta_ref = np_normal(0., 30. * 0.0175)
 
-        if self.Phi_ref > 45. * 0.0175:
-          self.Phi_ref = 45. * 0.0175
+        if self.Theta_ref > 45. * 0.0175:
+          self.Theta_ref = 45. * 0.0175
 
-        elif self.Phi_ref < -45. * 0.0175:
-          self.Phi_ref = 45. * 0.0175
+        elif self.Theta_ref < -45. * 0.0175:
+          self.Theta_ref = -45. * 0.0175
 
       else:
         w_reset = 0. #[m/s]
@@ -256,18 +248,11 @@ class QuadcoptEnv_1DOF(gym.Env):
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
-      q0, q1, q2, q3 = self.state[6:10]
+      PHI = self.quat2Att()
 
-      phi_ref = self.Phi_ref
-      theta_ref = 0.
-      psi_ref = 0.
-
-      q0_err = cos(phi_ref/2)*cos(theta_ref/2)*cos(psi_ref/2) + sin(phi_ref/2)*sin(theta_ref/2)*sin(psi_ref/2) - q0
-      q1_err = sin(phi_ref/2)*cos(theta_ref/2)*cos(psi_ref/2) - cos(phi_ref/2)*sin(theta_ref/2)*sin(psi_ref/2) - q1
-      q2_err = cos(phi_ref/2)*sin(theta_ref/2)*cos(psi_ref/2) + sin(phi_ref/2)*cos(theta_ref/2)*sin(psi_ref/2) - q2
-      q3_err = cos(phi_ref/2)*cos(theta_ref/2)*sin(psi_ref/2) - sin(phi_ref/2)*sin(theta_ref/2)*cos(psi_ref/2) - q3
+      theta_err = self.Theta_ref - PHI[1]
       
-      obs_state = np.array([self.state[3], q0_err, q1_err, q2_err, q3_err])
+      obs_state = np.array([self.state[4], theta_err])
       #obs_state = np.array([self.state[0], self.state[1], self.state[2], self.state[3], self.state[4], self.state[5], self.state[6],  self.state[7], self.state[8], self.state[9], X_error, Y_error, Z_error])
       obs = obs_state / self.Obs_normalization_vector
 
@@ -281,15 +266,18 @@ class QuadcoptEnv_1DOF(gym.Env):
       output: reward, scalar value.
       """
 
-      q0, q1, q2, q3 = self.state[6:10]
-      phi = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
+      PHI = self.quat2Att()
 
-      Phi_err = self.Phi_ref - phi
+      theta_err = self.Theta_ref - PHI[1]
 
-      ang_err_norm = np.pi
+      q = self.state[4]
+
+      ang_err_norm = 2 * np.pi
       Phi_w = 0.6
 
-      R = 1. - Phi_w * abs(Phi_err/ang_err_norm)
+      rate_w = 0.6
+
+      R = 1. - Phi_w * abs(theta_err/ang_err_norm) - rate_w * abs(q/50.)
 
       if R >= 0:
         reward = R
@@ -427,6 +415,29 @@ class QuadcoptEnv_1DOF(gym.Env):
           Throttle_array[thr_count] = Throttle_array[thr_count]
 
       return Throttle_array
+
+## Conversion
+  def quat2Att(self):
+
+      """
+      Function to obtain Phi theta and psi from quaternion components
+      """
+
+      q0, q1, q2, q3 = self.state[6:10]
+
+      theta_arg = 2*(q0*q2-q3*q1)
+
+      if theta_arg>0.999999:
+        theta_arg = 0.999999
+
+      elif theta_arg<-0.999999:
+        theta_arg = -0.999999
+
+      Phi = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
+      Theta = np.arcsin(theta_arg)
+      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+
+      return Phi, Theta, Psi
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 

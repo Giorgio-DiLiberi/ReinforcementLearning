@@ -80,7 +80,7 @@ action_memory = [0.] ## vector to store actions during the simulation
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
-Phi_ref = [env.Phi_ref]
+Theta_ref = [env.Theta_ref]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -90,7 +90,7 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==512:
-      env.Phi_ref=30. * 0.0175
+      env.Theta_ref=30. * 0.0175
 
     # if i==1536:
     #   env.X_Pos_Goal=0.
@@ -115,7 +115,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
 
-    Phi_ref.append(env.Phi_ref)
+    Theta_ref.append(env.Theta_ref)
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -204,14 +204,14 @@ plt.legend(['Ail'])
 plt.savefig('SimulationResults/action.jpg')
 
 plt.figure(7)
-Phi_ref_deg = np.array(Phi_ref) * 180 / np.pi
-plt.plot(info_time, Euler_angles[:, 0])
+Phi_ref_deg = np.array(Theta_ref) * 180 / np.pi
+plt.plot(info_time, Euler_angles[:, 1])
 plt.plot(info_time, Phi_ref_deg)
 plt.xlabel('time')
-plt.ylabel('Phi')
+plt.ylabel('Theta')
 plt.title('attitude step response')
-plt.legend(['Phi', 'Phi_ref'])
-plt.savefig('SimulationResults/Phi_PhiRef.jpg')
+plt.legend(['Theta', 'Theta_ref'])
+plt.savefig('SimulationResults/Theta_PhiRef.jpg')
 
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
 

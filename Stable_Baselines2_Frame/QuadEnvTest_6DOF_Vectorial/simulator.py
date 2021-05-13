@@ -95,12 +95,12 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==350:
-      env.VNord_ref = -0.
-      env.VEst_ref = -0.
+      env.VNord_ref = 0.
+      env.VEst_ref = 0.
       env.VDown_ref = 0.
 
     if i==650:
-      env.VNord_ref = -2.
+      env.VNord_ref = 1.2
       env.VEst_ref = -1.
       env.VDown_ref = 1.2
     

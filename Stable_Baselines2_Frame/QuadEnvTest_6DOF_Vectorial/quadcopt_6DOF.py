@@ -36,8 +36,8 @@ class QuadcoptEnv_6DOF(gym.Env):
 
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
-    # order is V_N_Err, V_E_Err, V_D_Err, v, p, q, r, q0, q1, q2, q3
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1])
+    # order is V_N_Err, V_E_Err, V_D_Err, v, Psi_error, p, q, r, q0, q1, q2, q3
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -46,7 +46,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 10., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -201,7 +201,18 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error], self.state[3:10])) #, self.state[1] removed visibility over v
+      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
+
+      Psi_err = Psi - Psi_ref
+
+      if Psi_err>np.pi:
+        psi_err = - (2 * np.pi - Psi_err)
+
+      elif Psi_err<-np.pi:
+        psi_err = 2 * np.pi - Psi_err
+
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -242,8 +253,11 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(4., 1.1) #[m/s]
-        self.VEst_ref = np_normal(4., 1.1) #[m/s]
+        self.VNord_ref = np_normal(2., 1.) #[m/s]
+        if self.VNord_ref<0.:
+          self.VNord_ref = 0.
+
+        self.VEst_ref = np_normal(0., 2.) #[m/s]
         self.VDown_ref = np_normal(0., 4.) #[m/s]
 
       else:
@@ -291,7 +305,18 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error], self.state[3:10]))  #, self.state[1]
+      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
+
+      Psi_err = Psi - Psi_ref
+
+      if Psi_err>np.pi:
+        psi_err = - (2 * np.pi - Psi_err)
+
+      elif Psi_err<-np.pi:
+        psi_err = 2 * np.pi - Psi_err
+
+      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -307,7 +332,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       q0, q1, q2, q3 = self.state[6:10] # Quaternion
       Vb = self.state[0:3]
       p, q, r = self.state[3:6]
-      #v = self.state[1]
+      v = self.state[1]
 
       abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
@@ -326,8 +351,13 @@ class QuadcoptEnv_6DOF(gym.Env):
       VEst_error = V_NED[1] - self.VEst_ref
       VDown_error = V_NED[2] - self.VDown_ref
 
+      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
+
+      Psi_err = Psi - Psi_ref
+
       V_error_Weight = 0.9
-      #drift_weight = 0.8
+      drift_weight = 1.
       rate_weight = 0.6
 
       # There should be sa fourth constraint to assign values at the dR controls, this constraint is to 
@@ -337,7 +367,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       # policy will learn to pitch or roll slightly to acomplish the NED velocity required while keeping the 
       # ultirotor with the node pointed North, this shows to work in the Position Reference model.
       R = (1. * q0) - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
-        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
+        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/10.) + abs(Psi_err/2*np.pi))
 
       if R >= 0:
         reward = R
@@ -366,7 +396,7 @@ class QuadcoptEnv_6DOF(gym.Env):
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=20. :
+      elif abs(v_1)>=10. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
