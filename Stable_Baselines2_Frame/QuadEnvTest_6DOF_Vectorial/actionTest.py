@@ -9,19 +9,19 @@ env = QuadcoptEnv_6DOF()
 ## Testing some environments values
 print("Trim_thr= ", env.dTt)
 
-value = 0
+value = [0, 0, 0, -0.3]
 
-dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([value, 0., 0., 0.]))
+#dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([value, 0., 0., 0.]))
 
-print("action[0., 1, 1, 0]= ", dT1, dT2, dT3, dT4)
+#print("action[0., 1, 1, 0]= ", dT1, dT2, dT3, dT4)
 
-print("average throttle", 0.25 * (dT1+dT2+dT3+dT4))
+#print("average throttle", 0.25 * (dT1+dT2+dT3+dT4))
 
 ## RESET ENVIRONMENT
 obs = env.reset()
 
 #custom reset
-env.state[5] = 1.
+#env.state[5] = 1.
 
 # info vectors initialization for simulation history
 info_u=[env.state[0]]
@@ -44,9 +44,9 @@ info_time=[time] # elased time vector
 for i in range(100000):
 
     # Uncomment the action to test
-    action = np.array([0., 0., 0., 0.]) # Trim
+    #action = np.array([0., 0., 0., 0.]) # Trim
     #action = np.array([-1., 0., 0., 0.]) # Free-Fall
-    #action = np.array([value]) # variable
+    action = np.array(value) # variable
 
     ## ACTIONS tested 11/02/2021 with success generating torques and forces
 

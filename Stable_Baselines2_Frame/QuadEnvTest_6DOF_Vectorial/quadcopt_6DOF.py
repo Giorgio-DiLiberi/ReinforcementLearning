@@ -133,7 +133,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -204,13 +204,13 @@ class QuadcoptEnv_6DOF(gym.Env):
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
       Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
 
-      Psi_err = Psi - Psi_ref
+      Psi_err = Psi_ref - Psi
 
       if Psi_err>np.pi:
-        psi_err = - (2 * np.pi - Psi_err)
+        Psi_err = Psi_err - 2 * np.pi
 
       elif Psi_err<-np.pi:
-        psi_err = 2 * np.pi - Psi_err
+        Psi_err = Psi_err + 2 * np.pi
 
       obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
@@ -246,16 +246,16 @@ class QuadcoptEnv_6DOF(gym.Env):
 
         phi = np_normal(0., 0.1) #[rad]
         theta = np_normal(0., 0.1) #[rad]
-        psi = np_normal(0., 9 * 0.175) #[rad]
+        psi = np_normal(0., 100 * 0.175) #[rad]
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(2., 1.) #[m/s]
-        if self.VNord_ref<0.:
-          self.VNord_ref = 0.
+        self.VNord_ref = np_normal(0., 2.) #[m/s]
+        # if self.VNord_ref<0.:
+        #   self.VNord_ref = 0.
 
         self.VEst_ref = np_normal(0., 2.) #[m/s]
         self.VDown_ref = np_normal(0., 4.) #[m/s]
@@ -306,15 +306,22 @@ class QuadcoptEnv_6DOF(gym.Env):
       VDown_error = V_NED[2] - self.VDown_ref
 
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+      if Psi <= (-np.pi+0.02):
+        Psi = -np.pi
+
+      elif Psi >= (np.pi-0.02):
+        Psi = -np.pi
+
       Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
 
-      Psi_err = Psi - Psi_ref
+      Psi_err = Psi_ref - Psi 
 
-      if Psi_err>np.pi:
-        psi_err = - (2 * np.pi - Psi_err)
+      #lert right turn if boundary is passed
+      if Psi_err>=np.pi:
+        Psi_err = Psi_err - 2 * np.pi
 
-      elif Psi_err<-np.pi:
-        psi_err = 2 * np.pi - Psi_err
+      elif Psi_err<=-np.pi:
+        Psi_err = Psi_err + 2 * np.pi
 
       obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
@@ -354,7 +361,13 @@ class QuadcoptEnv_6DOF(gym.Env):
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
       Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
 
-      Psi_err = Psi - Psi_ref
+      Psi_err = Psi_ref - Psi
+
+      if Psi_err>np.pi:
+        psi_err = Psi_err - 2 * np.pi
+
+      elif Psi_err<-np.pi:
+        psi_err = Psi_err + 2 * np.pi
 
       V_error_Weight = 0.9
       drift_weight = 1.

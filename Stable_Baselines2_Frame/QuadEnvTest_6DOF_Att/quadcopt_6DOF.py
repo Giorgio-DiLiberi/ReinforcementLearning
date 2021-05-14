@@ -145,7 +145,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
       
-      controls = np.array([0.05, action[0], action[1], 0.]) ## This variable is used to make possible the separation of actions 
+      controls = np.array([0.05, action[0], action[1], action[2]]) ## This variable is used to make possible the separation of actions 
       # in this example actions represent pseudo controls
 
       Throttles = self.getThrsFromControls(controls) # commands are the actions given by the policy
@@ -182,11 +182,11 @@ class QuadcoptEnv_6DOF(gym.Env):
       theta_err = self.Theta_ref - PHI[1]
       psi_err = self.Psi_ref - PHI[2]
 
-      # if psi_err>np.pi:
-      #   psi_err = - (2 * np.pi - psi_err)
+      if psi_err>np.pi:
+        psi_err = - (2 * np.pi - psi_err)
 
-      # elif psi_err<-np.pi:
-      #   psi_err = 2 * np.pi - psi_err
+      elif psi_err<-np.pi:
+        psi_err = 2 * np.pi + psi_err
 
 
       obs_state = np.array([self.state[3], self.state[4], self.state[5], phi_err, theta_err, psi_err])
@@ -283,11 +283,11 @@ class QuadcoptEnv_6DOF(gym.Env):
       theta_err = self.Theta_ref - PHI[1]
       psi_err = self.Psi_ref - PHI[2]
 
-      # if psi_err>np.pi:
-      #   psi_err = - (2 * np.pi - psi_err)
+      if psi_err>np.pi:
+        psi_err = - (2 * np.pi - psi_err)
 
-      # elif psi_err<-np.pi:
-      #   psi_err = 2 * np.pi - psi_err
+      elif psi_err<-np.pi:
+        psi_err = 2 * np.pi + psi_err
 
 
       obs_state = np.array([self.state[3], self.state[4], self.state[5], phi_err, theta_err, psi_err])
@@ -305,20 +305,20 @@ class QuadcoptEnv_6DOF(gym.Env):
       """
 
       PHI = self.quat2Att()
-      p, q = self.state[3:5]
+      p, q, r = self.state[3:6]
 
       Phi_err = self.Phi_ref - PHI[0]
       Theta_err = self.Theta_ref - PHI[1]
-      #psi_err = self.Psi_ref - PHI[2]
+      psi_err = self.Psi_ref - PHI[2]
 
       ang_err_norm = 2*np.pi
       Phi_theta_w = 0.6
-      #Psi_w = 0.4
+      Psi_w = 0.6
       rate_w = 0.9
 
 
       R = 1. - Phi_theta_w * abs(Phi_err/ang_err_norm) - Phi_theta_w * abs(Theta_err/ang_err_norm)\
-        - rate_w * (abs(p/50.) + abs(q/50.))
+        - Psi_w * abs(psi_err/ang_err_norm)- rate_w * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
         reward = R

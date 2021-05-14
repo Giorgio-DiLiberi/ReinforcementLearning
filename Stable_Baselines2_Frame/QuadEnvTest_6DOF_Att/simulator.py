@@ -17,7 +17,7 @@ from stable_baselines import PPO2
 from quadcopt_6DOF import QuadcoptEnv_6DOF
 
 
-env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=False)
+env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -48,6 +48,10 @@ elif Policy_loading_mode == "best":
 
   Policy2Load = "EvalClbkLogs/best_model.zip" # best policy name
 
+elif Policy_loading_mode == "lastbest":
+
+  Policy2Load = "EvalClbkLogs/best_model1.zip" # best policy name
+
 else:
 
   Policy2Load  = input("enter the relative path of policy to load (check before if exists): ")
@@ -64,6 +68,7 @@ print("Policy ", Policy2Load, " loaded!")
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
 obs = env.reset()
+env.Theta_ref = 2.*0.0175
 
 # info vectors initialization for simulation history
 info_u = [env.state[0]]
@@ -76,13 +81,13 @@ info_quaternion = np.array([env.state[6:10]]) # quaternion stored in a np.array 
 info_X = [env.state[10]]
 info_Y = [env.state[11]]
 info_Z = [env.state[12]]
-action_memory = np.array([0., 0.]) ## vector to store actions during the simulation
+action_memory = np.array([0., 0., 0.]) ## vector to store actions during the simulation
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
 Phi_ref = [env.Phi_ref]
 Theta_ref = [env.Theta_ref]
-#Psi_ref = [env.Psi_ref]
+Psi_ref = [env.Psi_ref]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -91,13 +96,20 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==512:
-      env.Phi_ref=15. * 0.0175
-      env.Theta_ref=-8. * 0.0175
-
-    if i==750:
+    if i==256:
       env.Phi_ref=0.
-      env.Theta_ref=0.
+      env.Theta_ref=2. * 0.0175
+      env.Psi_ref=-120. * 0.0175
+
+    if i==512:
+      env.Phi_ref=0.
+      env.Theta_ref=2. * 0.0175
+      env.Psi_ref=-160. * 0.0175
+      
+    if i==756:
+      env.Phi_ref=0.
+      env.Theta_ref=2. * 0.0175
+      env.Psi_ref=170. * 0.0175
 
     # if i==512:
     #   env.Psi_ref=75 * 0.0175
@@ -125,7 +137,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     Phi_ref.append(env.Phi_ref)
     Theta_ref.append(env.Theta_ref)
-    #Psi_ref.append(env.Psi_ref)
+    Psi_ref.append(env.Psi_ref)
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -208,10 +220,11 @@ plt.savefig('SimulationResults/reward.jpg')
 plt.figure(6)
 plt.plot(info_time, action_memory[:, 0])
 plt.plot(info_time, action_memory[:, 1])
+plt.plot(info_time, action_memory[:, 2])
 plt.xlabel('time')
 plt.ylabel('Actions')
 plt.title('Actions in episode [-1, 1]')
-plt.legend(['Ail', 'Ele'])
+plt.legend(['Ail', 'Ele', 'Rud'])
 plt.savefig('SimulationResults/action.jpg')
 
 plt.figure(7)
@@ -234,15 +247,15 @@ plt.title('attitude step response')
 plt.legend(['Theta', 'Theta_ref'])
 plt.savefig('SimulationResults/Theta_ThetaRef.jpg')
 
-# plt.figure(9)
-# Psi_ref_deg = np.array(Psi_ref) * 180 / np.pi
-# plt.plot(info_time, Euler_angles[:, 2])
-# plt.plot(info_time, Psi_ref_deg)
-# plt.xlabel('time')
-# plt.ylabel('Psi')
-# plt.title('attitude step response')
-# plt.legend(['Psi', 'Psi_ref'])
-# plt.savefig('SimulationResults/Psi_PsiRef.jpg')
+plt.figure(9)
+Psi_ref_deg = np.array(Psi_ref) * 180 / np.pi
+plt.plot(info_time, Euler_angles[:, 2])
+plt.plot(info_time, Psi_ref_deg)
+plt.xlabel('time')
+plt.ylabel('Psi')
+plt.title('attitude step response')
+plt.legend(['Psi', 'Psi_ref'])
+plt.savefig('SimulationResults/Psi_PsiRef.jpg')
 
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
 
