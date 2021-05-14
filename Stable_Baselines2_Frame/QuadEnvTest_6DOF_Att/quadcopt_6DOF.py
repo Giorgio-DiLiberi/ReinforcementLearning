@@ -311,14 +311,15 @@ class QuadcoptEnv_6DOF(gym.Env):
       Theta_err = self.Theta_ref - PHI[1]
       psi_err = self.Psi_ref - PHI[2]
 
-      ang_err_norm = 2*np.pi
-      Phi_theta_w = 0.6
-      Psi_w = 0.6
+      PhiTh_err_norm = 1.5*np.pi
+      Psi_err_norm = 2.*np.pi
+      Phi_theta_w = 1.
+      Psi_w = 0.9 
       rate_w = 0.9
 
 
-      R = 1. - Phi_theta_w * abs(Phi_err/ang_err_norm) - Phi_theta_w * abs(Theta_err/ang_err_norm)\
-        - Psi_w * abs(psi_err/ang_err_norm)- rate_w * (abs(p/50.) + abs(q/50.) + abs(r/50.))
+      R = 1. - Phi_theta_w * abs(Phi_err/PhiTh_err_norm) - Phi_theta_w * abs(Theta_err/PhiTh_err_norm)\
+        - Psi_w * abs(psi_err/Psi_err_norm )- rate_w * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
         reward = R

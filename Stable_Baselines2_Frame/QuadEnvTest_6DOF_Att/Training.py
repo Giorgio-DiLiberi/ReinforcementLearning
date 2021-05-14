@@ -19,13 +19,13 @@ from quadcopt_6DOF import QuadcoptEnv_6DOF
 # Definition of Hyperparameters
 ## clip_range and learning rates are now variable, linear with learning progress:
 # see custom_modules or common  
-LearningTimeSteps = 45 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
+LearningTimeSteps = 35 * (10**5) ## Time step size for policy evaluation and deployment is 0.1 s
 
-LearningRate_ini = 5.e-5 # LR initial value for linear interpolation
+LearningRate_ini = 0.7e-4 # LR initial value for linear interpolation
 #LearningRate_fin = 1.0e-8 # LR final value for linear interpolation
 LearningRate = linear_schedule(LearningRate_ini)
 
-cliprange_ini = 0.3 # Clip initial value for linear interpolation
+cliprange_ini = 0.32 # Clip initial value for linear interpolation
 #clipRange_fin = 1.e-4 # LR final value for linear interpolation
 cliprange = linear_schedule(cliprange_ini)
 

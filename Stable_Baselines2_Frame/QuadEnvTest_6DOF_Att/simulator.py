@@ -50,7 +50,7 @@ elif Policy_loading_mode == "best":
 
 elif Policy_loading_mode == "lastbest":
 
-  Policy2Load = "EvalClbkLogs/best_model1.zip" # best policy name
+  Policy2Load = "EvalClbkLogs/best_model3.zip" # best policy name
 
 else:
 
@@ -68,7 +68,7 @@ print("Policy ", Policy2Load, " loaded!")
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
 obs = env.reset()
-env.Theta_ref = 2.*0.0175
+#env.Theta_ref = 2.*0.0175
 
 # info vectors initialization for simulation history
 info_u = [env.state[0]]
@@ -98,17 +98,17 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==256:
       env.Phi_ref=0.
-      env.Theta_ref=2. * 0.0175
+      env.Theta_ref=-2. * 0.0175
       env.Psi_ref=-120. * 0.0175
 
     if i==512:
       env.Phi_ref=0.
-      env.Theta_ref=2. * 0.0175
+      env.Theta_ref=0.  #2. * 0.0175
       env.Psi_ref=-160. * 0.0175
       
     if i==756:
       env.Phi_ref=0.
-      env.Theta_ref=2. * 0.0175
+      env.Theta_ref=-2. * 0.0175
       env.Psi_ref=170. * 0.0175
 
     # if i==512:

@@ -106,7 +106,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==1024:
       env.VNord_ref = -1.
-      env.VEst_ref = 0.8
+      env.VEst_ref = 1.
       env.VDown_ref = 0.0
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
@@ -187,7 +187,7 @@ for row in range(np.size(Euler_angles, 0)):
 
   Euler_angles[row, 0] = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
   Euler_angles[row, 1] = np.arcsin(2*(q0*q2-q3*q1))
-  Euler_angles[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+  Euler_angles[row, 2] = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2)) 
 
 #Conversion to degrees from radians
 Euler_angles = Euler_angles * (180 / np.pi)

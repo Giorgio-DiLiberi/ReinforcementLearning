@@ -133,7 +133,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -246,14 +246,14 @@ class QuadcoptEnv_6DOF(gym.Env):
 
         phi = np_normal(0., 0.1) #[rad]
         theta = np_normal(0., 0.1) #[rad]
-        psi = np_normal(0., 100 * 0.175) #[rad]
+        psi = np_normal(0., 100 * 0.0175) #[rad]
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(0., 2.) #[m/s]
+        self.VNord_ref = np_normal(-1., 2.) #[m/s]
         # if self.VNord_ref<0.:
         #   self.VNord_ref = 0.
 
@@ -635,15 +635,27 @@ class QuadcoptEnv_6DOF(gym.Env):
       Vb = State[0:3] # Subvector CG velocity [m/s]
       Omega = State[3:6] # Subvector angular velocity [rad/s]
 
-      #Performing quaternion normalization
+      #Performing quaternion normalization and bounding
       q0, q1, q2, q3 = State[6:10] # Quaternion
 
       abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
+      
       q0 = q0/abs_Q
+      if abs(q0)>1.:
+        q0 = 1.*np.sign(q0)
+
       q1 = q1/abs_Q
+      if abs(q1)>1.:
+        q1 = 1.*np.sign(q1)
+
       q2 = q2/abs_Q
+      if abs(q2)>1.:
+        q2 = 1.*np.sign(q2)
+
       q3 = q3/abs_Q
+      if abs(q3)>1.:
+        q3 = 1.*np.sign(q3)
 
       # Motors section (vectors are evaluated later in this method)
       dT1, dT2, dT3, dT4 = Throttles
