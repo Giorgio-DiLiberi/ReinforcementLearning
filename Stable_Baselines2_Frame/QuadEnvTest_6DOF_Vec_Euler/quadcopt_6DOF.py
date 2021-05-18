@@ -46,7 +46,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 10., 50., 50., 50., 2*np.pi, 2*np.pi, 2*np.pi]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 20., 50., 50., 50., 2*np.pi, 2*np.pi, 2*np.pi]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -418,7 +418,7 @@ class QuadcoptEnv_6DOF(gym.Env):
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=10. :
+      elif abs(v_1)>=20. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")

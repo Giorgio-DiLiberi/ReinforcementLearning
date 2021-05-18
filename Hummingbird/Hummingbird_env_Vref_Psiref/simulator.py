@@ -116,13 +116,13 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==1024:
       env.X_ref = 15.
-      env.Y_ref = 15.
+      env.Y_ref = 7.5
       env.Z_ref = -17.
 
-    # if i==1350:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 15.
-    #   env.Z_ref = -17.
+    if i==1350:
+      env.X_ref = 7.5
+      env.Y_ref = 15.
+      env.Z_ref = -17.
 
     # if i==1750:
     #   env.X_ref = 0.
