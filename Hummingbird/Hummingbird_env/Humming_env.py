@@ -3,6 +3,10 @@
 # so it will be good to simulate any quadcopter with 8 inches props in + config
 # because it tries to simulate only the physics of the model without any stack of 
 # control systems or stability augmentation systems. 
+
+# This model provides full state visibility to the policy and Error on the position from 
+# A reference waypoint which can change in policy deployment. This model implements 
+# Position control
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos

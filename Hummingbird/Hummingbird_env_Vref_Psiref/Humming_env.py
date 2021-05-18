@@ -2,10 +2,13 @@
 # like the hummigbird by Asc. Tech. This code tries to stay more generale as possible
 # so it will be good to simulate any quadcopter with 8 inches props in + config
 # because it tries to simulate only the physics of the model without any stack of 
-# control systems or stability augmentation systems. Goal is to control Velocity 
-# given a reference on V_Nord, V_Down, V_Est
-# and locking drift velocity v to 0 in the reward to mix rudder and aileron
-# this model takes as inputs the v and psi_ref
+# control systems or stability augmentation systems. 
+
+# This model is similar to the Vref one but here the goal of the policy is to follow a 
+# reference on the velocity error and also to rotate the Xb axis towards the direction of 
+# motion to maintain the heading = Psi. This model is in test and does not work properly for 
+# now when Psi overcome +-180°. This model can implements both a Vectorial control receiving 
+# V_NED ref components and a position control which evaluates V_NED references proportionally to position error. 
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos

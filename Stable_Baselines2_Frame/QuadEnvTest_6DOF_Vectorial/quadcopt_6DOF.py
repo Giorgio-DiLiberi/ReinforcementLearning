@@ -1,7 +1,8 @@
 # Code to generate a Quadcopter Environment to train an RL agent with stable baselines
 # this model include a mathematical rapresentation of the quadcopter in which controls are on
 # AvgThr, dA, dE, dR and goal is to control Velocity given a reference on V_Nord, V_Down, V_Est
-# and locking drift velocity v to 0 in the reward to mix rudder and aileron
+# and locking drift velocity v to 0 in the reward to mix rudder and aileron and also requesting 
+# 0 error on the psi angle
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos
@@ -244,9 +245,15 @@ class QuadcoptEnv_6DOF(gym.Env):
         q_reset = np_normal(0., 0.0175)
         r_reset = np_normal(0., 0.0175)
 
-        phi = np_normal(0., 0.1) #[rad]
-        theta = np_normal(0., 0.1) #[rad]
-        psi = np_normal(0., 100 * 0.0175) #[rad]
+        phi = np_normal(0., 0.08) #[rad]
+        theta = np_normal(0., 0.08) #[rad]
+        psi = np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
+
+        if psi > 179 * np.pi/180:
+          psi = 179 * np.pi/180
+
+        elif psi < -179 * np.pi/180:
+          psi = -179 * np.pi/180
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
@@ -257,8 +264,8 @@ class QuadcoptEnv_6DOF(gym.Env):
         # if self.VNord_ref<0.:
         #   self.VNord_ref = 0.
 
-        self.VEst_ref = np_normal(0., 2.) #[m/s]
-        self.VDown_ref = np_normal(0., 4.) #[m/s]
+        self.VEst_ref = np_normal(-1., 2.) #[m/s]
+        self.VDown_ref = np_normal(0., 2.) #[m/s]
 
       else:
         w_reset = 0. #[m/s]
@@ -306,12 +313,6 @@ class QuadcoptEnv_6DOF(gym.Env):
       VDown_error = V_NED[2] - self.VDown_ref
 
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-      if Psi <= (-np.pi+0.02):
-        Psi = -np.pi
-
-      elif Psi >= (np.pi-0.02):
-        Psi = -np.pi
-
       Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
 
       Psi_err = Psi_ref - Psi 
@@ -364,13 +365,13 @@ class QuadcoptEnv_6DOF(gym.Env):
       Psi_err = Psi_ref - Psi
 
       if Psi_err>np.pi:
-        psi_err = Psi_err - 2 * np.pi
+        Psi_err = Psi_err - 2 * np.pi
 
       elif Psi_err<-np.pi:
-        psi_err = Psi_err + 2 * np.pi
+        Psi_err = Psi_err + 2 * np.pi
 
       V_error_Weight = 0.9
-      drift_weight = 1.
+      drift_weight = 0.8
       rate_weight = 0.6
 
       # There should be sa fourth constraint to assign values at the dR controls, this constraint is to 
@@ -379,7 +380,14 @@ class QuadcoptEnv_6DOF(gym.Env):
       # or maximum q0 is a simple way to impose that Xb stays pointed Northbound, the assumption is that the 
       # policy will learn to pitch or roll slightly to acomplish the NED velocity required while keeping the 
       # ultirotor with the node pointed North, this shows to work in the Position Reference model.
-      R = (1. * q0) - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
+
+      # The second assmption about this fact is that the Xb axis stays pointed in the direction of motion 
+      # in this second case the reward is higher if the psi error is 0, psi error is evaluated calculating psi ref as
+      # the heading of the direction of motion (atan2(V_nord_ref / V_est_ref)), here is necessary to 
+      # remove the q0 from the reward since psi error can be null also in position of maximum psi = -pi
+      # where q0 = 0 (being psi and theta = 0); is good to give a visibility to the policy on all the  
+      # components of the reward.
+      R = (1. ) - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
         - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/10.) + abs(Psi_err/2*np.pi))
 
       if R >= 0:
@@ -548,8 +556,16 @@ class QuadcoptEnv_6DOF(gym.Env):
       q2 = Q[2]
       q3 = Q[3]
 
+      theta_arg = 2*(q0*q2-q3*q1)
+
+      if theta_arg>0.999999:
+        theta_arg = 0.999999
+
+      elif theta_arg<-0.999999:
+        theta_arg = -0.999999
+
       Phi = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
-      Theta = np.arcsin(2*(q0*q2-q3*q1))
+      Theta = np.arcsin(theta_arg)
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
 
       return Phi, Theta, Psi
@@ -642,19 +658,19 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       
       q0 = q0/abs_Q
-      if abs(q0)>1.:
+      if abs(q0)>=1.:
         q0 = 1.*np.sign(q0)
 
       q1 = q1/abs_Q
-      if abs(q1)>1.:
+      if abs(q1)>=1.:
         q1 = 1.*np.sign(q1)
 
       q2 = q2/abs_Q
-      if abs(q2)>1.:
+      if abs(q2)>=1.:
         q2 = 1.*np.sign(q2)
 
       q3 = q3/abs_Q
-      if abs(q3)>1.:
+      if abs(q3)>=1.:
         q3 = 1.*np.sign(q3)
 
       # Motors section (vectors are evaluated later in this method)

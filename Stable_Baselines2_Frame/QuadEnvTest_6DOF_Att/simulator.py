@@ -99,17 +99,17 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     if i==256:
       env.Phi_ref=0.
       env.Theta_ref=-2. * 0.0175
-      env.Psi_ref=-120. * 0.0175
+      env.Psi_ref=120. * 0.0175
 
     if i==512:
       env.Phi_ref=0.
       env.Theta_ref=0.  #2. * 0.0175
-      env.Psi_ref=-160. * 0.0175
+      env.Psi_ref=160. * 0.0175
       
     if i==756:
       env.Phi_ref=0.
       env.Theta_ref=-2. * 0.0175
-      env.Psi_ref=170. * 0.0175
+      env.Psi_ref=-170. * 0.0175
 
     # if i==512:
     #   env.Psi_ref=75 * 0.0175

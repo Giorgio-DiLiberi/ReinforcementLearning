@@ -2,9 +2,17 @@
 # like the hummigbird by Asc. Tech. This code tries to stay more generale as possible
 # so it will be good to simulate any quadcopter with 8 inches props in + config
 # because it tries to simulate only the physics of the model without any stack of 
-# control systems or stability augmentation systems. Goal is to control Velocity 
-# given a reference on V_Nord, V_Down, V_Est
-# and locking drift velocity v to 0 in the reward to mix rudder and aileron
+# control systems or stability augmentation systems. 
+
+# This model provides visibility on angular velocity, Quaternion components
+# and error on the NED velocity, so it impplements a vectorial control neural network:
+# the neural network replace a vectorial controller which tries to follow a reference
+# given as V_nord_ref, V_est_ref and V_down_ref. This model is trained with the 
+# Xb axis locked northbound so whatever is the requested direction of motion, the model
+# will stay rolled and pitched to minimize the Psi angle. The model can work as a vectorial controller
+# which receives references directly on V_NED components, or can be tested with a position control
+# where the model receives a reference in position and calculates the V_NED reference components 
+# proportionally to Position error (in the future integral capabilities can be introduced).
 import numpy as np
 from numpy.random import normal as np_normal
 from numpy import cos as cos
