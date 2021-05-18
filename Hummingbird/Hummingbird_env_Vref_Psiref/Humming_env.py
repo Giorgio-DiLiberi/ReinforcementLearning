@@ -246,7 +246,7 @@ class Hummingbird_6DOF(gym.Env):
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
       Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
 
-      if self.VNord_ref<=0.:
+      if abs(self.VNord_ref)<=0.5:
         Psi_ref = 0.
 
       Psi_err = Psi - Psi_ref        
