@@ -208,15 +208,7 @@ class Hummingbird_6DOF(gym.Env):
       if self.Position_reference:
 
         self.V_NED_ref[0] = 0.4 * (self.X_ref - self.state[10])
-
-        if abs(self.V_NED_ref[0])<=0.000001:
-          self.V_NED_ref[0] = 0.
-
         self.V_NED_ref[1] = 0.4 * (self.Y_ref - self.state[11])
-
-        if abs(self.V_NED_ref[1])<=0.000001:
-          self.V_NED_ref[1] = 0.
-
         self.V_NED_ref[2] = 0.4 * (self.Z_ref - self.state[12])
 
         #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
@@ -233,7 +225,7 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      if Pos_Error <= 1.: # checks if plane distance from target is less than a value the reference on psi is 0
+      if Pos_Error <= 1.2: # checks if plane distance from target is less than a value the reference on psi is 0
         Psi_ref = 0.
         # this function can be extended introducing a memory of psi ref which maintain the heading stable when near to the target
 
@@ -325,7 +317,7 @@ class Hummingbird_6DOF(gym.Env):
       #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
-      
+
       if Pos_Error <= 1.: # checks i distance from target is less than a value the reference on psi is 0
         Psi_ref = 0.
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
