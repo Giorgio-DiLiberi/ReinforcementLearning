@@ -109,27 +109,27 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.Y_ref = -0.
       env.Z_ref = -17.
 
-    if i==650:
-      env.X_ref = 15.
+    if i==750:
+      env.X_ref = 7.5
       env.Y_ref = 0.
       env.Z_ref = -17.
 
-    if i==1024:
+    if i==1156:
       env.X_ref = 15.
+      env.Y_ref = 7.5
+      env.Z_ref = -17.
+
+    if i==1512:
+      env.X_ref = 7.5
       env.Y_ref = 15.
       env.Z_ref = -17.
 
-    if i==1350:
+    if i==1946:
       env.X_ref = 0.
-      env.Y_ref = 15.
+      env.Y_ref = 7.5
       env.Z_ref = -17.
 
-    if i==1750:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -17.
-
-    if i==2256:
+    if i==2512:
       env.X_ref = 0.
       env.Y_ref = 0.
       env.Z_ref = -2.
