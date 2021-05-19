@@ -1,6 +1,8 @@
 # Code to simulate the environment wit given actions usable to test if env is correct
 import gym
 import numpy as np
+import matplotlib
+matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
 import matplotlib.pyplot as plt
 
 from quadcopt_6DOF import QuadcoptEnv_6DOF
@@ -9,7 +11,7 @@ env = QuadcoptEnv_6DOF()
 ## Testing some environments values
 print("Trim_thr= ", env.dTt)
 
-value = [0, 0, 0, -0.3]
+value = [0, 0.001, 0, 0.03]
 
 #dT1, dT2, dT3, dT4 = env.getThrsFromControls(np.array([value, 0., 0., 0.]))
 
@@ -124,8 +126,22 @@ plt.xlabel('time')
 plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
+plt.savefig('SimulationResults/Tests/Euler.jpg')
 
-plt.show()
+
+plt.figure(5)
+plt.plot(info_time, info_quaternion[:, 0])
+plt.plot(info_time, info_quaternion[:, 1])
+plt.plot(info_time, info_quaternion[:, 2])
+plt.plot(info_time, info_quaternion[:, 3])
+plt.xlabel('time')
+plt.ylabel('Quat')
+plt.title('Quaternion')
+plt.legend(['q0', 'q1', 'q2', 'q3'])
+plt.savefig('SimulationResults/Tests/Quaternion.jpg')
+
+
+
 
 ## saving on file 
 

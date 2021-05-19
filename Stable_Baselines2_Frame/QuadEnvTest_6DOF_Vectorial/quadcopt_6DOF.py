@@ -37,8 +37,8 @@ class QuadcoptEnv_6DOF(gym.Env):
 
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
-    # order is V_N_Err, V_E_Err, V_D_Err, v, Psi_error, p, q, r, q0, q1, q2, q3
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
+    # order is V_N_Err, V_E_Err, V_D_Err, Psi_error, p, q, r, q0, q1, q2, q3
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -47,7 +47,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 10., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -143,9 +143,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # Setting up a goal to reach affecting reward (it seems to work better with humans 
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
-    self.VNord_ref = 0. #[m] 
-    self.VEst_ref = 0. #[m]
-    self.VDown_ref = 0. #[m]
+    self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
 
   def step(self, action):
 
@@ -182,38 +180,19 @@ class QuadcoptEnv_6DOF(gym.Env):
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
 
-      q0, q1, q2, q3 = self.state[6:10] # Quaternion
-      Vb = self.state[0:3]
+      V_NED_Err, V_NED = self.getV_NED_error()
 
-      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+      PHI = self.quat2Att()    
+      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
+      Psi_err = Psi_ref - PHI[2]
 
-      q0 = q0/abs_Q
-      q1 = q1/abs_Q
-      q2 = q2/abs_Q
-      q3 = q3/abs_Q
-
-      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
-        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
-          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
-
-      V_NED = np.dot(LEB, Vb)
-
-      VNord_error = V_NED[0] - self.VNord_ref
-      VEst_error = V_NED[1] - self.VEst_ref
-      VDown_error = V_NED[2] - self.VDown_ref
-
-      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
-
-      Psi_err = Psi_ref - Psi
-
-      if Psi_err>np.pi:
-        Psi_err = Psi_err - 2 * np.pi
+      if Psi_err>=np.pi:
+        Psi_err = Psi_err - (2 * np.pi)
 
       elif Psi_err<-np.pi:
-        Psi_err = Psi_err + 2 * np.pi
+        Psi_err = Psi_err + (2 * np.pi)
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -245,27 +224,24 @@ class QuadcoptEnv_6DOF(gym.Env):
         q_reset = np_normal(0., 0.0175)
         r_reset = np_normal(0., 0.0175)
 
-        phi = np_normal(0., 0.08) #[rad]
-        theta = np_normal(0., 0.08) #[rad]
-        psi = np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
+        phi = np_normal(0., 0.05) #[rad]
+        theta = np_normal(0., 0.05) #[rad]
+        psi = np_normal(0., 1.75)    #np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
 
-        if psi > 179 * np.pi/180:
-          psi = 179 * np.pi/180
+        if psi >= np.pi - 0.0175:
+          psi = np.pi - 0.0175
 
-        elif psi < -179 * np.pi/180:
-          psi = -179 * np.pi/180
+        elif psi <= -np.pi + 0.035:
+          psi = -np.pi + 0.035
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(-1., 2.) #[m/s]
-        # if self.VNord_ref<0.:
-        #   self.VNord_ref = 0.
-
-        self.VEst_ref = np_normal(-1., 2.) #[m/s]
-        self.VDown_ref = np_normal(0., 2.) #[m/s]
+        self.V_NED_ref[0] = np_normal(0., 1.) #[m/s]
+        self.V_NED_ref[1] = np_normal(0., 1.) #[m/s]
+        self.V_NED_ref[2] = np_normal(0., 1.5) #[m/s]
 
       else:
         w_reset = 0. #[m/s]
@@ -284,47 +260,27 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.VNord_ref = 3. #[m/s]
-        self.VEst_ref = 4. #[m/s]
-        self.VDown_ref = -3. #[m/s]
+        self.VNord_ref = 1. #[m/s]
+        self.VEst_ref = 1.5 #[m/s]
+        self.VDown_ref = -1.5 #[m/s]
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
-      q0, q1, q2, q3 = self.state[6:10] # Quaternion
-      Vb = self.state[0:3]
+      V_NED_Err, V_NED = self.getV_NED_error()
 
-      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+      PHI = self.quat2Att()    
+      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
+      Psi_err = Psi_ref - PHI[2]
 
-      q0 = q0/abs_Q
-      q1 = q1/abs_Q
-      q2 = q2/abs_Q
-      q3 = q3/abs_Q
-
-      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
-        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
-          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
-
-      V_NED = np.dot(LEB, Vb)
-
-      VNord_error = V_NED[0] - self.VNord_ref
-      VEst_error = V_NED[1] - self.VEst_ref
-      VDown_error = V_NED[2] - self.VDown_ref
-
-      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
-
-      Psi_err = Psi_ref - Psi 
-
-      #lert right turn if boundary is passed
       if Psi_err>=np.pi:
-        Psi_err = Psi_err - 2 * np.pi
+        Psi_err = Psi_err - (2 * np.pi)
 
-      elif Psi_err<=-np.pi:
-        Psi_err = Psi_err + 2 * np.pi
+      elif Psi_err<-np.pi:
+        Psi_err = Psi_err + (2 * np.pi)
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -337,40 +293,22 @@ class QuadcoptEnv_6DOF(gym.Env):
       output: reward, scalar value.
       """
 
-      q0, q1, q2, q3 = self.state[6:10] # Quaternion
-      Vb = self.state[0:3]
+      V_NED_Err, V_NED = self.getV_NED_error()
+
       p, q, r = self.state[3:6]
       v = self.state[1]
 
-      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+      PHI = self.quat2Att()    
+      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
+      Psi_err = Psi_ref - PHI[2]
 
-      q0 = q0/abs_Q
-      q1 = q1/abs_Q
-      q2 = q2/abs_Q
-      q3 = q3/abs_Q
-
-      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
-        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
-          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
-
-      V_NED = np.dot(LEB, Vb)
-
-      VNord_error = V_NED[0] - self.VNord_ref
-      VEst_error = V_NED[1] - self.VEst_ref
-      VDown_error = V_NED[2] - self.VDown_ref
-
-      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
-
-      Psi_err = Psi_ref - Psi
-
-      if Psi_err>np.pi:
-        Psi_err = Psi_err - 2 * np.pi
+      if Psi_err>=np.pi:
+        Psi_err = Psi_err - (2 * np.pi)
 
       elif Psi_err<-np.pi:
-        Psi_err = Psi_err + 2 * np.pi
+        Psi_err = Psi_err + (2 * np.pi)
 
-      V_error_Weight = 0.9
+      V_error_Weight = 0.8
       drift_weight = 0.8
       rate_weight = 0.6
 
@@ -387,8 +325,8 @@ class QuadcoptEnv_6DOF(gym.Env):
       # remove the q0 from the reward since psi error can be null also in position of maximum psi = -pi
       # where q0 = 0 (being psi and theta = 0); is good to give a visibility to the policy on all the  
       # components of the reward.
-      R = (1. ) - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
-        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/10.) + abs(Psi_err/2*np.pi))
+      R = (1.) - V_error_Weight * (abs(V_NED_Err[0]/20.) + abs(V_NED_Err[1]/20.) + abs(V_NED_Err[2]/20.))\
+        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/8.) + abs(Psi_err/2*np.pi))
 
       if R >= 0:
         reward = R
@@ -417,7 +355,7 @@ class QuadcoptEnv_6DOF(gym.Env):
         done = True
         print("u outbound---> ", u_1, "   in ", self.elapsed_time_steps, " steps")
 
-      elif abs(v_1)>=10. :
+      elif abs(v_1)>=20. :
 
         done = True
         print("v outbound---> ", v_1, "   in ", self.elapsed_time_steps, " steps")
@@ -543,7 +481,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       return Throttle_array
 
 ## Conversion from quaternions to Phi_theta
-  def quat2Att(self, Q):
+  def quat2Att(self):
 
       """
       Function to convert from quaternion to attitude angles, for simplicity only phi and theta are the output
@@ -551,10 +489,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       Output: Phi, Theta 
       """
 
-      q0 = Q[0]
-      q1 = Q[1]
-      q2 = Q[2]
-      q3 = Q[3]
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
 
       theta_arg = 2*(q0*q2-q3*q1)
 
@@ -569,6 +504,34 @@ class QuadcoptEnv_6DOF(gym.Env):
       Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
 
       return Phi, Theta, Psi
+
+  def getV_NED_error(self):
+
+      """
+      Function which provides the array containing the errors on velocity in NED axis, takes self.state 
+      and self.V_NED_ref as input
+      output: np.array[V_Nord_err, V_Est_err, V_Down_err]
+      """
+
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
+      Vb = self.state[0:3]
+
+      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+
+      q0 = q0/abs_Q
+      q1 = q1/abs_Q
+      q2 = q2/abs_Q
+      q3 = q3/abs_Q
+
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+      V_NED = np.dot(LEB, Vb)
+
+      V_NED_Err = V_NED - self.V_NED_ref
+
+      return V_NED_Err, V_NED
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 

@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib
+matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
+import matplotlib.pyplot as plt
 
 x = np.array([0, 1, 2, 3, 4, 5, 6])
 
@@ -15,3 +18,17 @@ obs = np.stack([obs, np.zeros(13), np.zeros(13), np.zeros(13), np.zeros(13), np.
 print(obs.shape)
 
 print(np.arctan2(0.,-0.))
+
+
+
+
+def arguments():
+    arg1 = np.array([0, 1, 2])
+    arg2 = np.array([3, 4, 5])
+
+    return arg1, arg2
+
+primo, secondo = arguments()
+
+print(primo)
+print(secondo)

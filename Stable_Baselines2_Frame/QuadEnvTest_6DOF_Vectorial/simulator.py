@@ -17,7 +17,7 @@ from stable_baselines import PPO2
 from quadcopt_6DOF import QuadcoptEnv_6DOF
 
 
-env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=False)
+env = QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -83,9 +83,9 @@ action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the
 #Throttle_memory = [env.dTt]
 episode_reward = [env.getReward()]
 
-VN_ref = [env.VNord_ref]
-VE_ref = [env.VEst_ref]
-VD_ref = [env.VDown_ref]
+VN_ref = [env.V_NED_ref[0]]
+VE_ref = [env.V_NED_ref[1]]
+VD_ref = [env.V_NED_ref[2]]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -95,19 +95,14 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==350:
-      env.VNord_ref = 0.
-      env.VEst_ref = 0.
-      env.VDown_ref = 0.
+      env.V_NED_ref[0] = 0.
+      env.V_NED_ref[1] = 0.
+      env.V_NED_ref[2] = 0.
 
     if i==650:
-      env.VNord_ref = -1.2
-      env.VEst_ref = -1.
-      env.VDown_ref = 1.2
-
-    if i==1024:
-      env.VNord_ref = -1.
-      env.VEst_ref = 1.
-      env.VDown_ref = 0.0
+      env.V_NED_ref[0] = -1.
+      env.V_NED_ref[1] = -1.2
+      env.V_NED_ref[2] = -2.3
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -130,9 +125,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
 
-    VN_ref.append(env.VNord_ref)
-    VE_ref.append(env.VEst_ref)
-    VD_ref.append(env.VDown_ref)
+    VN_ref.append(env.V_NED_ref[0])
+    VE_ref.append(env.V_NED_ref[1])
+    VD_ref.append(env.V_NED_ref[2])
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)
