@@ -134,7 +134,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(6*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -184,7 +184,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       PHI = self.quat2Att()    
       Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
-      Psi_err = Psi_ref - PHI[2]
+      Psi_err = self.thnorm(Psi_ref - PHI[2])
 
       if Psi_err>=np.pi:
         Psi_err = Psi_err - (2 * np.pi)
@@ -272,7 +272,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       PHI = self.quat2Att()    
       Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
-      Psi_err = Psi_ref - PHI[2]
+      Psi_err = self.thnorm(Psi_ref - PHI[2])
 
       if Psi_err>=np.pi:
         Psi_err = Psi_err - (2 * np.pi)
@@ -300,7 +300,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       PHI = self.quat2Att()    
       Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
-      Psi_err = Psi_ref - PHI[2]
+      Psi_err = self.thnorm(Psi_ref - PHI[2])
 
       if Psi_err>=np.pi:
         Psi_err = Psi_err - (2 * np.pi)
@@ -532,6 +532,18 @@ class QuadcoptEnv_6DOF(gym.Env):
       V_NED_Err = V_NED - self.V_NED_ref
 
       return V_NED_Err, V_NED
+
+  def thnorm(self, X):
+
+      """
+      function which return a normalized value of the angle diven as argument
+      input: X angle in radians
+      outut: atan(sin(in), cos(in))
+      """
+
+      out = np.arctan2(np.sin(X), np.cos(X))
+
+      return out
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 

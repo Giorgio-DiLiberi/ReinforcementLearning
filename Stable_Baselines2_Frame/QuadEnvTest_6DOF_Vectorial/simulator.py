@@ -103,6 +103,11 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.V_NED_ref[0] = -1.
       env.V_NED_ref[1] = -1.2
       env.V_NED_ref[2] = -2.3
+
+    if i==1024:
+      env.V_NED_ref[0] = -1.
+      env.V_NED_ref[1] = 0.6
+      env.V_NED_ref[2] = 0.
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
