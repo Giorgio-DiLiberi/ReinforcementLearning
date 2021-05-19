@@ -17,7 +17,7 @@ from stable_baselines import PPO2
 from quadcopt_6DOF import QuadcoptEnv_6DOF
 
 
-env = QuadcoptEnv_6DOF(Random_reset=True, Process_perturbations=True)
+env = QuadcoptEnv_6DOF(Random_reset=False, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -47,6 +47,10 @@ if Policy_loading_mode == "last":
 elif Policy_loading_mode == "best":
 
   Policy2Load = "EvalClbkLogs/best_model.zip" # best policy name
+
+elif Policy_loading_mode == "lastbest":
+
+  Policy2Load = "EvalClbkLogs/best_model9.zip" # best policy name
 
 else:
 

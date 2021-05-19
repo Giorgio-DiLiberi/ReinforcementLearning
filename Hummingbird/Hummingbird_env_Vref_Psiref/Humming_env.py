@@ -44,7 +44,7 @@ class Hummingbird_6DOF(gym.Env):
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
     # order is V_N_Err, V_E_Err, V_D_Err, v, p, q, r, q0, q1, q2, q3
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -53,7 +53,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 10., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -167,9 +167,7 @@ class Hummingbird_6DOF(gym.Env):
     self.Z_ref = -2.
 
     # references on NED velocity are evaluated proportionally to posizion errors
-    self.VNord_ref = 0. #[m] 
-    self.VEst_ref = 0. #[m]
-    self.VDown_ref = 0. #[m]
+    self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
 
   def step(self, action):
 
@@ -209,49 +207,46 @@ class Hummingbird_6DOF(gym.Env):
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.VNord_ref = 0.4 * (self.X_ref - self.state[10])
+        self.V_NED_ref[0] = 0.4 * (self.X_ref - self.state[10])
 
-        if abs(self.VNord_ref)<=0.000001:
-          self.VNord_ref = 0.
+        if abs(self.V_NED_ref[0])<=0.000001:
+          self.V_NED_ref[0] = 0.
 
-        self.VEst_ref = 0.4 * (self.Y_ref - self.state[11])
+        self.V_NED_ref[1] = 0.4 * (self.Y_ref - self.state[11])
 
-        if abs(self.VEst_ref)<=0.000001:
-          self.VEst_ref = 0.
+        if abs(self.V_NED_ref[1])<=0.000001:
+          self.V_NED_ref[1] = 0.
 
-        self.VDown_ref = 0.4 * (self.Z_ref - self.state[12])
+        self.V_NED_ref[2] = 0.4 * (self.Z_ref - self.state[12])
 
         #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
 
-      q0, q1, q2, q3 = self.state[6:10] # Quaternion
-      Vb = self.state[0:3]
+      V_NED_Err, V_NED = self.getV_NED_error()
 
-      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+      PHI = self.quat2Att()    
+      
+      X_error = self.X_ref - self.state[10]
+      Y_error = self.Y_ref - self.state[11]
 
-      q0 = q0/abs_Q
-      q1 = q1/abs_Q
-      q2 = q2/abs_Q
-      q3 = q3/abs_Q
+      Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
+      #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
-      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
-        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
-          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+      Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      V_NED = np.dot(LEB, Vb)
-
-      VNord_error = V_NED[0] - self.VNord_ref
-      VEst_error = V_NED[1] - self.VEst_ref
-      VDown_error = V_NED[2] - self.VDown_ref
-
-      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
-
-      if abs(self.VNord_ref)<=0.5:
+      if Pos_Error <= 1.: # checks if plane distance from target is less than a value the reference on psi is 0
         Psi_ref = 0.
+        # this function can be extended introducing a memory of psi ref which maintain the heading stable when near to the target
 
-      Psi_err = Psi - Psi_ref        
+      #Psi_err = self.thnorm(Psi_ref - PHI[2])
+      Psi_err = Psi_ref - PHI[2]
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10]))
+      if Psi_err>np.pi:
+        Psi_err = Psi_err - (2 * np.pi)
+
+      elif Psi_err<-np.pi:
+        Psi_err = Psi_err + (2 * np.pi)
+
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -313,40 +308,37 @@ class Hummingbird_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.VNord_ref = 3. #[m/s]
-        self.VEst_ref = 4. #[m/s]
-        self.VDown_ref = -3. #[m/s]
+        self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
       self.elapsed_time_steps = 0 # reset for elapsed time steps
 
-      q0, q1, q2, q3 = self.state[6:10] # Quaternion
-      Vb = self.state[0:3]
+      V_NED_Err, V_NED = self.getV_NED_error()
 
-      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+      PHI = self.quat2Att()   
 
-      q0 = q0/abs_Q
-      q1 = q1/abs_Q
-      q2 = q2/abs_Q
-      q3 = q3/abs_Q
+      X_error = self.X_ref - self.state[10]
+      Y_error = self.Y_ref - self.state[11]
 
-      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
-        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
-          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+      Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
+      #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
-      V_NED = np.dot(LEB, Vb)
+      Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
+      
+      if Pos_Error <= 1.: # checks i distance from target is less than a value the reference on psi is 0
+        Psi_ref = 0.
+      #Psi_err = self.thnorm(Psi_ref - PHI[2])
+      Psi_err = Psi_ref - PHI[2]
 
-      VNord_error = V_NED[0] - self.VNord_ref
-      VEst_error = V_NED[1] - self.VEst_ref
-      VDown_error = V_NED[2] - self.VDown_ref
 
-      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
-      Psi_ref = np.arctan2(self.VEst_ref, self.VNord_ref)
+      if Psi_err>np.pi:
+        Psi_err = Psi_err - (2 * np.pi)
 
-      Psi_err = Psi - Psi_ref
+      elif Psi_err<-np.pi:
+        Psi_err = Psi_err + (2 * np.pi)
 
-      obs_state = np.concatenate(([VNord_error, VEst_error, VDown_error, self.state[1], Psi_err], self.state[3:10]))
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -359,33 +351,15 @@ class Hummingbird_6DOF(gym.Env):
       output: reward, scalar value.
       """
 
-      q0, q1, q2, q3 = self.state[6:10] # Quaternion
-      Vb = self.state[0:3]
+      V_NED_Err, V_NED = self.getV_NED_error()
       p, q, r = self.state[3:6]
       v = self.state[1]
-
-      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
-
-      q0 = q0/abs_Q
-      q1 = q1/abs_Q
-      q2 = q2/abs_Q
-      q3 = q3/abs_Q
-
-      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
-        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
-          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
-
-      V_NED = np.dot(LEB, Vb)
-
-      VNord_error = V_NED[0] - self.VNord_ref
-      VEst_error = V_NED[1] - self.VEst_ref
-      VDown_error = V_NED[2] - self.VDown_ref
 
       V_error_Weight = 0.9
       drift_weight = 0.8
       rate_weight = 0.6
 
-      R = 1. - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
+      R = 1. - V_error_Weight * (abs(V_NED_Err[0]/20.) + abs(V_NED_Err[1]/20.) + abs(V_NED_Err[2]/20.))\
         - drift_weight * abs(v/30.) - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.))
 
       if R >= 0:
@@ -539,6 +513,72 @@ class Hummingbird_6DOF(gym.Env):
           Throttle_array[thr_count] = Throttle_array[thr_count]
 
       return Throttle_array
+
+## Conversion from quaternions to Phi_theta
+  def quat2Att(self):
+
+      """
+      Function to convert from quaternion to attitude angles, for simplicity only phi and theta are the output
+      input: Q [array_like, quaternion]
+      Output: Phi, Theta 
+      """
+
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
+
+      theta_arg = 2*(q0*q2-q3*q1)
+
+      if theta_arg>0.999999:
+        theta_arg = 0.999999
+
+      elif theta_arg<-0.999999:
+        theta_arg = -0.999999
+
+      Phi = np.arctan2(2*(q0*q1 + q2*q3), 1-2*(q1**2+q2**2))
+      Theta = np.arcsin(theta_arg)
+      Psi = np.arctan2(2*(q0*q3+q1*q2), 1-2*(q2**2+q3**2))
+
+      return Phi, Theta, Psi
+
+  def getV_NED_error(self):
+
+      """
+      Function which provides the array containing the errors on velocity in NED axis, takes self.state 
+      and self.V_NED_ref as input
+      output: np.array[V_Nord_err, V_Est_err, V_Down_err]
+      """
+
+      q0, q1, q2, q3 = self.state[6:10] # Quaternion
+      Vb = self.state[0:3]
+
+      abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
+
+      q0 = q0/abs_Q
+      q1 = q1/abs_Q
+      q2 = q2/abs_Q
+      q3 = q3/abs_Q
+
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+      V_NED = np.dot(LEB, Vb)
+
+      V_NED_Err = V_NED - self.V_NED_ref
+
+      return V_NED_Err, V_NED
+
+  def thnorm(self, X):
+
+      """
+      function which return a normalized value of the angle diven as argument
+      input: X angle in radians
+      outut: atan(sin(in), cos(in))
+      """
+
+      out = np.arctan2(np.sin(X), np.cos(X))
+
+      return out
+
 
 ## In this sections are defined functions to evaluate forces and derivatives to make the step function easy to read
 

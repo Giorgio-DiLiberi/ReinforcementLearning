@@ -50,7 +50,7 @@ elif Policy_loading_mode == "best":
 
 elif Policy_loading_mode == "lastbest":
 
-  Policy2Load = "EvalClbkLogs/best_model8.zip"
+  Policy2Load = "EvalClbkLogs/best_model9.zip"
 
 else:
 
@@ -90,9 +90,9 @@ episode_reward = [env.getReward()]
 X_ref = [env.X_ref]
 Y_ref = [env.Y_ref]
 Z_ref = [env.Z_ref]
-VN_ref = [env.VNord_ref]
-VE_ref = [env.VEst_ref]
-VD_ref = [env.VDown_ref]
+VN_ref = [env.V_NED_ref[0]]
+VE_ref = [env.V_NED_ref[1]]
+VD_ref = [env.V_NED_ref[2]]
 
 time=0.
 info_time=[time] # elapsed time vector
@@ -182,9 +182,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     #Throttle_memory.append(env.linearAct2ThrMap(action[0]))
     episode_reward.append(reward) # save the reward for all the episode
 
-    VN_ref.append(env.VNord_ref)
-    VE_ref.append(env.VEst_ref)
-    VD_ref.append(env.VDown_ref)
+    VN_ref.append(env.V_NED_ref[0])
+    VE_ref.append(env.V_NED_ref[1])
+    VD_ref.append(env.V_NED_ref[2])
 
     time=time + env.timeStep # elapsed time since simulation start
     info_time.append(time)

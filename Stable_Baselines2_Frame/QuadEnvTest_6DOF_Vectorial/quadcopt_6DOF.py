@@ -145,6 +145,10 @@ class QuadcoptEnv_6DOF(gym.Env):
     # biological neural networks)
     self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
 
+    ## Heading reference angle is evaluated separately and independently from the other parameters
+    # so to let the orientation command being independent
+    self.psi_ref = 0. #[rad] interval (-pi, pi]
+
   def step(self, action):
 
       # State-action variables assignment
@@ -182,11 +186,13 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       V_NED_Err, V_NED = self.getV_NED_error()
 
-      PHI = self.quat2Att()    
-      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
-      Psi_err = self.thnorm(Psi_ref - PHI[2])
+      PHI = self.quat2Att() 
 
-      if Psi_err>=np.pi:
+      Psi_ref = self.psi_ref # psi ref is taken at the reset
+      #Psi_err = self.thnorm(Psi_ref - PHI[2])
+      Psi_err = Psi_ref - PHI[2]
+
+      if Psi_err>np.pi:
         Psi_err = Psi_err - (2 * np.pi)
 
       elif Psi_err<-np.pi:
@@ -243,6 +249,14 @@ class QuadcoptEnv_6DOF(gym.Env):
         self.V_NED_ref[1] = np_normal(0., 1.) #[m/s]
         self.V_NED_ref[2] = np_normal(0., 1.5) #[m/s]
 
+        self.psi_ref = np_normal(0., 0.75 * np.pi)
+
+        if self.psi_ref >= np.pi - 0.0175:
+          self.psi_ref = np.pi - 0.0175
+
+        elif self.psi_ref <= - np.pi + 0.035:
+          self.psi_ref = - np.pi + 0.035
+
       else:
         w_reset = 0. #[m/s]
         Z_reset = -28. #[m]
@@ -260,9 +274,11 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.VNord_ref = 1. #[m/s]
-        self.VEst_ref = 1.5 #[m/s]
+        self.VNord_ref = 0. #[m/s]
+        self.VEst_ref = 0 #[m/s]
         self.VDown_ref = -1.5 #[m/s]
+
+        self.psi_ref = 0.
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
@@ -270,11 +286,14 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       V_NED_Err, V_NED = self.getV_NED_error()
 
-      PHI = self.quat2Att()    
-      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
-      Psi_err = self.thnorm(Psi_ref - PHI[2])
+      PHI = self.quat2Att()  
 
-      if Psi_err>=np.pi:
+      Psi_ref = self.psi_ref
+      #Psi_err = self.thnorm(Psi_ref - PHI[2])
+      Psi_err = Psi_ref - PHI[2]
+
+
+      if Psi_err>np.pi:
         Psi_err = Psi_err - (2 * np.pi)
 
       elif Psi_err<-np.pi:
@@ -299,8 +318,9 @@ class QuadcoptEnv_6DOF(gym.Env):
       v = self.state[1]
 
       PHI = self.quat2Att()    
-      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0])
-      Psi_err = self.thnorm(Psi_ref - PHI[2])
+      Psi_ref = self.psi_ref
+      #Psi_err = self.thnorm(Psi_ref - PHI[2])
+      Psi_err = Psi_ref - PHI[2]
 
       if Psi_err>=np.pi:
         Psi_err = Psi_err - (2 * np.pi)
