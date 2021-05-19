@@ -153,7 +153,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(12*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -168,6 +168,8 @@ class Hummingbird_6DOF(gym.Env):
 
     # references on NED velocity are evaluated proportionally to posizion errors
     self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
+
+    self.psi_ref_mem = 0. # memory of psi ref to maintain the last value
 
   def step(self, action):
 
@@ -225,8 +227,12 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
+      if Pos_Error >=5.:
+        self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
+        # updated to keep the orientation as it was when far from the target
+
       if Pos_Error <= 1.2: # checks if plane distance from target is less than a value the reference on psi is 0
-        Psi_ref = 0.
+        Psi_ref = self.psi_ref_mem
         # this function can be extended introducing a memory of psi ref which maintain the heading stable when near to the target
 
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
