@@ -227,11 +227,11 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      if Pos_Error >=2.:
+      if Pos_Error >= 5.5:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         # updated to keep the orientation as it was when far from the target
 
-      if Pos_Error <= 2.: # checks if plane distance from target is less than a value the reference on psi is 0
+      if Pos_Error <= 5.5: # checks if plane distance from target is less than a value the reference on psi is 0
         Psi_ref = self.psi_ref_mem
         # this function can be extended introducing a memory of psi ref which maintain the heading stable when near to the target
 
