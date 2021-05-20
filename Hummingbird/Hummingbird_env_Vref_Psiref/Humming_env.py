@@ -53,7 +53,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 1*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -163,8 +163,12 @@ class Hummingbird_6DOF(gym.Env):
     # rather than forcing them to stay in their original position, and humans are
     # biological neural networks)
     self.X_ref = 0.
+    self.X_ref_mem = 0. # introduced to keep memory of the x reference 
     self.Y_ref = 0.
+    self.Y_ref_mem = 0. # introduced to keep memory of the y reference 
     self.Z_ref = -2.
+    # when x and Y ref changes so the psi reference is changed
+
 
     # references on NED velocity are evaluated proportionally to posizion errors
     self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
@@ -218,16 +222,16 @@ class Hummingbird_6DOF(gym.Env):
       V_NED_Err, V_NED = self.getV_NED_error()
 
       PHI = self.quat2Att()    
-      
-      X_error = self.X_ref - self.state[10]
+
       Y_error = self.Y_ref - self.state[11]
+      X_error = self.X_ref - self.state[10]
 
       Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
       #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      if Pos_Error >= 2.5:
+      if Pos_Error >= 1.5:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         # updated to keep the orientation as it was when far from the target
 

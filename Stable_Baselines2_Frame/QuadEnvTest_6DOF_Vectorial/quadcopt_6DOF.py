@@ -232,7 +232,7 @@ class QuadcoptEnv_6DOF(gym.Env):
 
         phi = np_normal(0., 0.05) #[rad]
         theta = np_normal(0., 0.05) #[rad]
-        psi = np_normal(0., 1.75)    #np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
+        psi = np_normal(120.*0.0175, 50.*0.0175)    #np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
 
         if psi >= np.pi - 0.0175:
           psi = np.pi - 0.0175
@@ -249,7 +249,7 @@ class QuadcoptEnv_6DOF(gym.Env):
         self.V_NED_ref[1] = np_normal(0., 1.) #[m/s]
         self.V_NED_ref[2] = np_normal(0., 1.5) #[m/s]
 
-        self.psi_ref = np_normal(0., 0.75 * np.pi)
+        self.psi_ref = np_normal(-150.*0.0175, 20.*0.0175)
 
         if self.psi_ref >= np.pi - 0.0175:
           self.psi_ref = np.pi - 0.0175
