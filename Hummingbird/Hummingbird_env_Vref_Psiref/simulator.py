@@ -105,34 +105,34 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # Waypoint navigation section (uncomment to realize wp nav)
     if i==256:
-      env.X_ref = -0.
-      env.Y_ref = -0.
+      env.X_ref = 0.
+      env.Y_ref = 0.
       env.Z_ref = -17.
 
     if i==750:
-      env.X_ref = 6.
-      env.Y_ref = 2.
+      env.X_ref = 15
+      env.Y_ref = 0.
       env.Z_ref = -17.
 
     if i==1156:
       env.X_ref = 15.
-      env.Y_ref = 7.5
+      env.Y_ref = 15.
       env.Z_ref = -17.
 
     if i==1512:
-      env.X_ref = 15
-      env.Y_ref = 13
+      env.X_ref = 0.
+      env.Y_ref = 15.
       env.Z_ref = -17.
 
     if i==1946:
-      env.X_ref = 10.
-      env.Y_ref = 15.
+      env.X_ref = 0.
+      env.Y_ref = 0.
       env.Z_ref = -17.
 
     if i==2512:
       env.X_ref = 0.
-      env.Y_ref = 10.
-      env.Z_ref = -17.
+      env.Y_ref = 0.
+      env.Z_ref = -2.
 
     if i==2756:
       env.X_ref = 0.
