@@ -118,16 +118,19 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.X_ref = 15.
       env.Y_ref = 15.
       env.Z_ref = -17.
+      #env.psi_ref_mem = 0.  #90.*0.0175
 
     if i==1512:
       env.X_ref = 0.
       env.Y_ref = 15.
       env.Z_ref = -17.
+      #env.psi_ref_mem = 0.  #175.*0.0175
 
     if i==1946:
       env.X_ref = 0.
       env.Y_ref = 0.
       env.Z_ref = -17.
+      #env.psi_ref_mem = 0.   #-90.*0.0175
 
     if i==2512:
       env.X_ref = 0.

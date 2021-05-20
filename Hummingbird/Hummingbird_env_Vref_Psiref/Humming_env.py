@@ -213,9 +213,9 @@ class Hummingbird_6DOF(gym.Env):
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 0.3 * (self.X_ref - self.state[10])
-        self.V_NED_ref[1] = 0.3 * (self.Y_ref - self.state[11])
-        self.V_NED_ref[2] = 0.3 * (self.Z_ref - self.state[12])
+        self.V_NED_ref[0] = 0.35 * (self.X_ref - self.state[10])
+        self.V_NED_ref[1] = 0.35 * (self.Y_ref - self.state[11])
+        self.V_NED_ref[2] = 0.35 * (self.Z_ref - self.state[12])
 
         #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
 
@@ -226,12 +226,12 @@ class Hummingbird_6DOF(gym.Env):
       Y_error = self.Y_ref - self.state[11]
       X_error = self.X_ref - self.state[10]
 
-      Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
-      #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
+      #Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
+      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      if Pos_Error >= 2.5:
+      if Pos_Error >= 3.:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         # updated to keep the orientation as it was when far from the target
 
