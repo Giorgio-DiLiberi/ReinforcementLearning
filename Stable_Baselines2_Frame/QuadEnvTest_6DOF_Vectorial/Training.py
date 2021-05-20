@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     model = PPO2(MlpPolicy, env, verbose=1, learning_rate=LearningRate, ent_coef=5e-8, lam=0.99,
             cliprange=cliprange, tensorboard_log="./tensorboardLogs/", nminibatches=cpu, gamma=0.9999,
-            noptepochs=32, n_steps=8192, n_cpu_tf_sess=cpu)
+            noptepochs=16, n_steps=8192, n_cpu_tf_sess=cpu)
 
     ################################################
     # Train the agent and take the time for learning
