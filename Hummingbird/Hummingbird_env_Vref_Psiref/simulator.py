@@ -33,7 +33,7 @@ Policy_loading_mode = input("Insert loading mode\nlast: loads last policy saved\
 
 if Policy_loading_mode == "last":
   for i in range(100, 0, -1): ## function look for the last policy evaluated.
-    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Hummingbird/Hummingbird_env_Vref/Policies/PPO_Quad_" + str(i) + ".zip"
+    fileName_toFind = "/home/ghost/giorgio_diliberi/ReinforcementLearning/Hummingbird/Hummingbird_env_Vref_Psiref/Policies/PPO_Quad_" + str(i) + ".zip"
 
     if os.path.exists(fileName_toFind):
       print("last policy found is PPO_Quad_", i)
