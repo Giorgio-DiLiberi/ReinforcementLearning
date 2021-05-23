@@ -37,7 +37,9 @@ class QuadcoptEnv_6DOF(gym.Env):
 
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
-    # order is V_N_Err, V_E_Err, V_D_Err, Psi_error, p, q, r, q0, q1, q2, q3
+    # order is V_N_Err, V_E_Err, V_D_Err, q3_error, p, q, r, q0, q1, q2, q3
+    # q0 error is the first component of the error quaternion q_err = q_des * q_mes(coml_conj)
+    # q0_error is used only to establish the reward 
     highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
@@ -47,7 +49,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 1., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -186,19 +188,21 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       V_NED_Err, V_NED = self.getV_NED_error()
 
-      PHI = self.quat2Att() 
-
       Psi_ref = self.psi_ref # psi ref is taken at the reset
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
-      Psi_err = Psi_ref - PHI[2]
 
-      if Psi_err>np.pi:
-        Psi_err = Psi_err - (2 * np.pi)
+      q0_ref = cos(Psi_ref/2)
+      q0 = self.state[6]
+      q3_ref = sin(Psi_ref/2)
+      q3 = -self.state[9] #(coml_conj)
 
-      elif Psi_err<-np.pi:
-        Psi_err = Psi_err + (2 * np.pi)
+      q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + q3 * q0_ref
 
-      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      if q0_err<=0.:
+        q3_err = -q3_err
+
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -230,15 +234,15 @@ class QuadcoptEnv_6DOF(gym.Env):
         q_reset = np_normal(0., 0.0175)
         r_reset = np_normal(0., 0.0175)
 
-        phi = np_normal(0., 0.05) #[rad]
-        theta = np_normal(0., 0.05) #[rad]
-        psi = np_normal(0., 175.*0.0175)    #np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
+        phi = np_normal(0., 0.0005) #[rad]
+        theta = np_normal(0., 0.0005) #[rad]
+        psi = np_normal(0., 178.*0.0175)    #np_normal(120. * 0.0175, 20 * 0.0175) #[rad]
 
-        if psi >= np.pi - 0.0175:
-          psi = np.pi - 0.0175
+        # if psi > np.pi - 0.0175:
+        #   psi = np.pi - 0.0175
 
-        elif psi <= -np.pi + 0.035:
-          psi = -np.pi + 0.035
+        # elif psi < -np.pi + 0.0175:
+        #   psi = -np.pi + 0.0175
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
@@ -249,13 +253,13 @@ class QuadcoptEnv_6DOF(gym.Env):
         self.V_NED_ref[1] = np_normal(0., 1.) #[m/s]
         self.V_NED_ref[2] = np_normal(0., 1.5) #[m/s]
 
-        self.psi_ref = np_normal(0., 175.*0.0175)
+        self.psi_ref = np_normal(0., 178.*0.0175)
 
-        if self.psi_ref >= np.pi - 0.0175:
-          self.psi_ref = np.pi - 0.0175
+        # if self.psi_ref > np.pi - 0.0175:
+        #   self.psi_ref = np.pi - 0.0175
 
-        elif self.psi_ref <= - np.pi + 0.035:
-          self.psi_ref = - np.pi + 0.035
+        # elif self.psi_ref < - np.pi + 0.035:
+        #   self.psi_ref = - np.pi + 0.035
 
       else:
         w_reset = 0. #[m/s]
@@ -286,20 +290,22 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       V_NED_Err, V_NED = self.getV_NED_error()
 
-      PHI = self.quat2Att()  
-
       Psi_ref = self.psi_ref
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
-      Psi_err = Psi_ref - PHI[2]
+      q0_ref = cos(Psi_ref/2)
+      q0 = self.state[6]
+      q3_ref = sin(Psi_ref/2)
+      q3 = -self.state[9] #(coml_conj)
 
+      q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + q3 * q0_ref
+      # so the reference quaternion will never be acomplished totally but phi and theta are small
+      # while is worth to keep the psi relative rotation 0
 
-      if Psi_err>np.pi:
-        Psi_err = Psi_err - (2 * np.pi)
+      if q0_err<=0.:
+        q3_err = -q3_err
 
-      elif Psi_err<-np.pi:
-        Psi_err = Psi_err + (2 * np.pi)
-
-      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -317,20 +323,23 @@ class QuadcoptEnv_6DOF(gym.Env):
       p, q, r = self.state[3:6]
       v = self.state[1]
 
-      PHI = self.quat2Att()    
       Psi_ref = self.psi_ref
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
-      Psi_err = Psi_ref - PHI[2]
+      q0_ref = cos(Psi_ref/2)
+      q0 = self.state[6]
+      q3_ref = sin(Psi_ref/2)
+      q3 = -self.state[9]
 
-      if Psi_err>=np.pi:
-        Psi_err = Psi_err - (2 * np.pi)
+      #q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + q3 * q0_ref
 
-      elif Psi_err<-np.pi:
-        Psi_err = Psi_err + (2 * np.pi)
+      # if q0_err<=0.:
+      #   q3_err = -q3_err
 
       V_error_Weight = 0.8
       drift_weight = 0.8
-      rate_weight = 0.6
+      rate_weight = 0.7
+      q3_W = 0.9
 
       # There should be sa fourth constraint to assign values at the dR controls, this constraint is to 
       # maximize the q0 wich is maximum (=1) if the rotation between NED and body is null, since the 
@@ -345,8 +354,11 @@ class QuadcoptEnv_6DOF(gym.Env):
       # remove the q0 from the reward since psi error can be null also in position of maximum psi = -pi
       # where q0 = 0 (being psi and theta = 0); is good to give a visibility to the policy on all the  
       # components of the reward.
-      R = (1.) - V_error_Weight * (abs(V_NED_Err[0]/20.) + abs(V_NED_Err[1]/20.) + abs(V_NED_Err[2]/20.))\
-        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/8.) + abs(Psi_err/2*np.pi))
+
+      # To minimize the rotation rror around psi is requested to maximize the q0 component of the error quaternion
+      # obtained q_err = q_des * q_mes(coml_conj)
+      R = 1. - V_error_Weight * (abs(V_NED_Err[0]/20.) + abs(V_NED_Err[1]/20.) + abs(V_NED_Err[2]/20.))\
+        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/10.)) - q3_W * abs(q3_err)
 
       if R >= 0:
         reward = R

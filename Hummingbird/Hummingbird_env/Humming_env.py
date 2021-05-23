@@ -50,7 +50,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 30., 30., 30.]) # normalization constants
+    self.Obs_normalization_vector = np.array([30., 30., 30., 50., 50., 50., 1., 1., 1., 1., 25., 25., 25.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -149,7 +149,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(12*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -223,19 +223,33 @@ class Hummingbird_6DOF(gym.Env):
       Reset state 
       """
       if self.Random_reset:
-        w_reset = np_normal(0., 0.1) #[m/s]
-        Z_reset = np_normal(-20., 1.) #[m]
-        u_reset = np_normal(0., 0.1) #[m/s]
-        X_reset = np_normal(0., 1.) #[m]
-        v_reset = np_normal(0., 0.1) #[m/s]
-        Y_reset = np_normal(0., 1.) #[m]
+        
+        # Random position on a circumference with Ray = 10m
+        angle = np_normal(0., 178. * 0.0175) #[rad] angle
+        X_reset = 10. * cos(angle) #[m]
+        Y_reset = 10. * sin(angle) #[m]
+        Z_reset = -2. #[m]
 
+        w_reset = np_normal(0., 0.1) #[m/s]
+        u_reset = np_normal(0., 0.1) #[m/s]
+        v_reset = np_normal(0., 0.1) #[m/s]
+        
         p_reset = np_normal(0., 0.0175)
         q_reset = np_normal(0., 0.0175)
         r_reset = np_normal(0., 0.0175)
 
         phi = np_normal(0., 0.44) #[rad]
+        if phi>0.5:
+          phi = 0.5
+        elif phi<-0.5:
+          phi = -0.5 
+
         theta = np_normal(0., 0.44) #[rad]
+        if theta>0.5:
+          theta = 0.5
+        elif theta<-0.5:
+          theta = -0.5
+
         psi = 0.
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
@@ -243,9 +257,9 @@ class Hummingbird_6DOF(gym.Env):
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.X_Pos_Goal = np_normal(0., 10.) #[m] goal x position
-        self.Y_Pos_Goal = np_normal(0., 10.) #[m] goal y position
-        self.Goal_Altitude = np_normal(-45., 10.) #[m] altitude to achieve is 30 m
+        self.X_Pos_Goal = 0. #[m] goal x position
+        self.Y_Pos_Goal = 0. #[m] goal y position
+        self.Goal_Altitude = -5. #[m] altitude to achieve is 30 m
 
       else:
         w_reset = 0. #[m/s]

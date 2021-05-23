@@ -53,7 +53,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 2*np.pi, 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 1., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -226,27 +226,30 @@ class Hummingbird_6DOF(gym.Env):
       Y_error = self.Y_ref - self.state[11]
       X_error = self.X_ref - self.state[10]
 
-      #Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
-      Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
+      Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
+      #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      if Pos_Error >= 3.:
+      if Pos_Error >= 5.:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         # updated to keep the orientation as it was when far from the target
 
       Psi_ref = self.psi_ref_mem
       
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
-      Psi_err = Psi_ref - PHI[2]
+      q0_ref = cos(Psi_ref/2)
+      q0 = self.state[6]
+      q3_ref = sin(Psi_ref/2)
+      q3 = -self.state[9] #(coml_conj)
 
-      if Psi_err>np.pi:
-        Psi_err = Psi_err - (2 * np.pi)
+      q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + q3 * q0_ref
 
-      elif Psi_err<-np.pi:
-        Psi_err = Psi_err + (2 * np.pi)
+      if q0_err<=0.:
+        q3_err = -q3_err
 
-      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -329,16 +332,18 @@ class Hummingbird_6DOF(gym.Env):
       if Pos_Error <= 1.: # checks i distance from target is less than a value the reference on psi is 0
         Psi_ref = 0.
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
-      Psi_err = Psi_ref - PHI[2]
+      q0_ref = cos(Psi_ref/2)
+      q0 = self.state[6]
+      q3_ref = sin(Psi_ref/2)
+      q3 = -self.state[9] #(coml_conj)
 
+      q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + q3 * q0_ref
 
-      if Psi_err>np.pi:
-        Psi_err = Psi_err - (2 * np.pi)
+      if q0_err<=0.:
+        q3_err = -q3_err
 
-      elif Psi_err<-np.pi:
-        Psi_err = Psi_err + (2 * np.pi)
-
-      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], Psi_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:10])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
