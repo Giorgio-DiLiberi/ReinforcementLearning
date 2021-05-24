@@ -259,7 +259,7 @@ class Hummingbird_6DOF(gym.Env):
 
         self.X_Pos_Goal = 0. #[m] goal x position
         self.Y_Pos_Goal = 0. #[m] goal y position
-        self.Goal_Altitude = -5. #[m] altitude to achieve is 30 m
+        self.Goal_Altitude = -10. #[m] altitude to achieve is 30 m
 
       else:
         w_reset = 0. #[m/s]

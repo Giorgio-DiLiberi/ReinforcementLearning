@@ -232,9 +232,9 @@ class Hummingbird_6DOF(gym.Env):
       Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
       #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
 
-      Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
+      Pos_Error = np.sqrt((X_error**2) + (Y_error**2))
 
-      if Pos_Error >= 1.:
+      if Pos_Error >= 2.:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         #updated to keep the orientation as it was when far from the target
 

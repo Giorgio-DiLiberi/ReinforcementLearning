@@ -126,7 +126,7 @@ class QuadcoptEnv_6DOF(gym.Env):
     # linear aerodynamics considered self.Sn = np.array([0.02, 0.02, 0.05]) #[m^2] Vector of normal surfaces to main body axes to calculate drag
     # Zb normal surface is greater than othe two  
 
-    self.C_DR = np.array([0.02, 0.02, 0.005]) # [kg m^2/s] coefficients are evaluated with aid of the 
+    self.C_DR = np.array([0.02, 0.02, 0.0005]) # [kg m^2/s] coefficients are evaluated with aid of the 
     # Arena and apoleoni thesis
     
 

@@ -72,7 +72,12 @@ N_trials = 25 #Number of MC trials
 
 SS_dist = [] # list to store the finl distance of each trial (is the final value of the distance from the wp)
 
-distance_mem_matrix = np.zeros(1025)
+distance_mem_matrix = np.zeros(1025) # each row is the array of distance over time in one specific simulation
+
+# Prepare some matrices to store the trajectories
+X_mem = np.zeros(1025) # each row is the coordinate over time in one specific simulation
+Y_mem = np.zeros(1025)
+Z_mem = np.zeros(1025)
 
 for count1 in range(N_trials): # for 25 simulations
 
@@ -157,6 +162,10 @@ for count1 in range(N_trials): # for 25 simulations
   SS_dist.append(final_distance)
 
   distance_mem_matrix = np.vstack([distance_mem_matrix, np.array(dist_mem)])
+
+  X_mem = np.vstack([X_mem, np.array(info_X)])
+  Y_mem = np.vstack([Y_mem, np.array(info_Y)])
+  Z_mem = np.vstack([Z_mem, np.array(info_Z)])
 
   print("final Error [m]= ", final_distance)
 
@@ -264,6 +273,7 @@ info_H = -1 * np.array([info_Z])
 #ax.title('Trajectory')
 
 
+## saving of results
 
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
 
@@ -273,9 +283,18 @@ ref_array = np.stack([X_ref, Y_ref, Z_ref], axis=1)
 
 np.savetxt("references.txt", ref_array)
 
+np.savetxt("time.txt", np.array(info_time))
+
 np.savetxt("SS_distance_array.txt", SS_dist)
 
 np.savetxt("Distance_mem_matrix.txt", distance_mem_matrix)
+
+np.savetxt("X_mem.txt", X_mem)
+
+np.savetxt("Y.mem.txt", Y_mem)
+
+np.savetxt("Z.mem.txt", Z_mem)
+
 
 
 
