@@ -214,9 +214,9 @@ class Hummingbird_6DOF(gym.Env):
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 0.35 * (self.X_ref - self.state[10])
-        self.V_NED_ref[1] = 0.35 * (self.Y_ref - self.state[11])
-        self.V_NED_ref[2] = 0.35 * (self.Z_ref - self.state[12])
+        self.V_NED_ref[0] = 0.45 * (self.X_ref - self.state[10])
+        self.V_NED_ref[1] = 0.45 * (self.Y_ref - self.state[11])
+        self.V_NED_ref[2] = 0.45 * (self.Z_ref - self.state[12])
 
         #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
 
