@@ -11,7 +11,7 @@
 # V_NED ref components and a position control which evaluates V_NED references proportionally to position error. 
 import numpy as np
 from numpy.random import normal as np_normal
-from numpy import cos as cos
+from numpy import cos as cos, sign
 from numpy import sin as sin
 import gym
 from gym import spaces
@@ -174,6 +174,7 @@ class Hummingbird_6DOF(gym.Env):
     self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
 
     self.psi_ref_mem = 0. # memory of psi ref to maintain the last value
+    self.NewWP = False
 
   def step(self, action):
 
@@ -223,6 +224,8 @@ class Hummingbird_6DOF(gym.Env):
 
       PHI = self.quat2Att()    
 
+      
+      
       Y_error = self.Y_ref - self.state[11]
       X_error = self.X_ref - self.state[10]
 
@@ -231,9 +234,9 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((self.X_ref - self.state[10])**2 + (self.Y_ref - self.state[11])**2)
 
-      if Pos_Error >= 5.:
+      if Pos_Error >= 1.:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
-        # updated to keep the orientation as it was when far from the target
+        #updated to keep the orientation as it was when far from the target
 
       Psi_ref = self.psi_ref_mem
       
@@ -719,9 +722,20 @@ class Hummingbird_6DOF(gym.Env):
       abs_Q = (q0**2 + q1**2 + q2**2 + q3**2)
 
       q0 = q0/abs_Q
+      if abs(q0)>1.:
+        q0 = sign(q0) * 1
+
       q1 = q1/abs_Q
+      if abs(q1)>1.:
+        q1 = sign(q1) * 1
+
       q2 = q2/abs_Q
+      if abs(q2)>1.:
+        q2 = sign(q2) * 1
+
       q3 = q3/abs_Q
+      if abs(q3)>1.:
+        q3 = sign(q3) * 1
 
       # Motors section (vectors are evaluated later in this method)
       dT1, dT2, dT3, dT4 = Throttles

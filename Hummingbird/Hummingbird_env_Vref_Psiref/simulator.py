@@ -103,44 +103,49 @@ env.Position_reference = True
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    # Waypoint navigation section (uncomment to realize wp nav)
-    if i==256:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -17.
+    # # Waypoint navigation section (uncomment to realize wp nav)
+    # if i==256:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -17.
 
-    if i==750:
-      env.X_ref = 7.5
-      env.Y_ref = 0.
-      env.Z_ref = -17.
+    # if i==750:
+    #   env.X_ref = 7.5
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -17.
 
-    if i==1156:
-      env.X_ref = 15.
-      env.Y_ref = 7.5
-      env.Z_ref = -17.
-      #env.psi_ref_mem = 0.  #90.*0.0175
+    # if i==1156:
+    #   env.X_ref = 15.
+    #   env.Y_ref = 7.5
+    #   env.Z_ref = -17.
+    #   #env.NewWP = True
+    #   #env.psi_ref_mem = 0.  #90.*0.0175
 
-    if i==1512:
-      env.X_ref = 7.5
-      env.Y_ref = 15.
-      env.Z_ref = -17.
-      #env.psi_ref_mem = 0.  #175.*0.0175
+    # if i==1512:
+    #   env.X_ref = 7.5
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -17.
+    #   #.NewWP = True
+    #   #env.psi_ref_mem = 0.  #175.*0.0175
 
-    if i==1946:
-      env.X_ref = 0.
-      env.Y_ref = 7.5
-      env.Z_ref = -17.
-      #env.psi_ref_mem = 0.   #-90.*0.0175
+    # if i==1946:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 7.5
+    #   env.Z_ref = -17.
+    #   #env.NewWP = True
+    #   #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
 
-    if i==2512:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -17.
+    # if i==2512:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -17.
+    #   #env.NewWP = True
+    #   #env.psi_ref_mem = -90. * 0.0175
 
-    if i==2756:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -2.
+    # if i==2756:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -2.
 
     # # Vectorial navigation--> spiral movement each step references are updated with sin, cos and linear z
     # env.VNord_ref = 2 * np.cos(0.5 * env.elapsed_time_steps * 0.04)
@@ -149,20 +154,20 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # moving waypoint
 
-    # if i==32:
-    #   env.Z_ref = -17.
+    if i==32:
+      env.Z_ref = -17.
 
-    # if i>=256 and i<1750:
-    #   if i%32==0:
-    #     env.X_ref = 7.5 * np.sin(0.25 * (env.elapsed_time_steps-256) * 0.04)
-    #     env.Y_ref = 9.2 * env.elapsed_time_steps * 0.04 / 40
+    if i>=256 and i<1750:
+      if i%32==0:
+        env.X_ref = 7.5 * np.sin(0.25 * (env.elapsed_time_steps-256) * 0.04)
+        env.Y_ref = 9.2 * env.elapsed_time_steps * 0.04 / 40
 
-    # if i==1750:
-    #   env.X_ref = 0.0
-    #   env.Y_ref = 0.0
+    if i==1750:
+      env.X_ref = 0.0
+      env.Y_ref = 0.0
 
-    # if i==2125:
-    #   env.Z_ref = 0.0
+    if i==2125:
+      env.Z_ref = -2.0
       
 
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
