@@ -79,6 +79,8 @@ X_mem = np.zeros(1025) # each row is the coordinate over time in one specific si
 Y_mem = np.zeros(1025)
 Z_mem = np.zeros(1025)
 
+Init_state_mem = np.zeros(13) # memory for the initial states over the monteCarlo
+
 for count1 in range(N_trials): # for 25 simulations
 
   obs = env.reset()
@@ -112,6 +114,9 @@ for count1 in range(N_trials): # for 25 simulations
 
   time=0.
   info_time=[time] # elapsed time vector
+
+  # save the initial state
+  Init_state_mem = np.vstack([Init_state_mem, env.state])
 
   # SIMULATION
 
@@ -294,6 +299,8 @@ np.savetxt("X_mem.txt", X_mem)
 np.savetxt("Y.mem.txt", Y_mem)
 
 np.savetxt("Z.mem.txt", Z_mem)
+
+np.savetxt("InitialStates.txt", Init_state_mem)
 
 
 

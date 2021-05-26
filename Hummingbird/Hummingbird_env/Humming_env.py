@@ -230,13 +230,13 @@ class Hummingbird_6DOF(gym.Env):
         Y_reset = 10. * sin(angle) #[m]
         Z_reset = -2. #[m]
 
-        w_reset = np_normal(0., 0.1) #[m/s]
-        u_reset = np_normal(0., 0.1) #[m/s]
-        v_reset = np_normal(0., 0.1) #[m/s]
+        w_reset = np_normal(0., 1.5) #[m/s]
+        u_reset = np_normal(0., 1.5) #[m/s]
+        v_reset = np_normal(0., 1.5) #[m/s]
         
-        p_reset = np_normal(0., 0.0175)
-        q_reset = np_normal(0., 0.0175)
-        r_reset = np_normal(0., 0.0175)
+        p_reset = np_normal(0., 0.035)
+        q_reset = np_normal(0., 0.035)
+        r_reset = np_normal(0., 0.035)
 
         phi = np_normal(0., 0.44) #[rad]
         if phi>0.5:
@@ -259,7 +259,7 @@ class Hummingbird_6DOF(gym.Env):
 
         self.X_Pos_Goal = 0. #[m] goal x position
         self.Y_Pos_Goal = 0. #[m] goal y position
-        self.Goal_Altitude = -10. #[m] altitude to achieve is 30 m
+        self.Goal_Altitude = -12. #[m] altitude to achieve is 30 m
 
       else:
         w_reset = 0. #[m/s]

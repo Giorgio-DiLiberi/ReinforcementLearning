@@ -40,6 +40,11 @@ for count2 in range(25):
     Z_ini = -2.
     ax.scatter(X_ini, Y_ini, Z_ini, c="blue", s=20.)
 
+    X_fin = X_mem[int(count2+1), 1024]
+    Y_fin = Y_mem[int(count2+1), 1024]
+    Z_fin = Z_mem[int(count2+1), 1024]
+    ax.scatter(X_fin, Y_fin, Z_fin, c="green", s=15.)
+
 ax.invert_xaxis()
 ax.invert_zaxis()
 
@@ -47,6 +52,6 @@ ax.set_xlabel("North")
 ax.set_ylabel("East")
 ax.set_zlabel("Down")
 
-ax.scatter(0., 0., -10., c="red", s=60.)
+ax.scatter(0., 0., -12., c="red", s=60.)
 
 plt.savefig("SimulationResults/Trajectories.jpg")
