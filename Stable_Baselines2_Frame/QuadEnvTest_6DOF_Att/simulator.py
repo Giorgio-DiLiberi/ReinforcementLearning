@@ -50,7 +50,7 @@ elif Policy_loading_mode == "best":
 
 elif Policy_loading_mode == "lastbest":
 
-  Policy2Load = "EvalClbkLogs/best_model3.zip" # best policy name
+  Policy2Load = "EvalClbkLogs/best_model4.zip" # best policy name
 
 else:
 
@@ -98,7 +98,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==256:
       env.Phi_ref=0.
-      env.Theta_ref=-2. * 0.0175
+      env.Theta_ref=-0. * 0.0175
       env.Psi_ref=120. * 0.0175
 
     if i==512:
@@ -108,7 +108,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       
     if i==756:
       env.Phi_ref=0.
-      env.Theta_ref=-2. * 0.0175
+      env.Theta_ref=-0. * 0.0175
       env.Psi_ref=-170. * 0.0175
 
     # if i==512:
@@ -261,7 +261,7 @@ simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_a
 
 np.savetxt("simout.txt", simout_array)
 
-ref_array = Phi_ref_deg
+ref_array = np.stack([Phi_ref_deg, Theta_ref_deg, Psi_ref_deg])
 
 np.savetxt("references.txt", ref_array)
 

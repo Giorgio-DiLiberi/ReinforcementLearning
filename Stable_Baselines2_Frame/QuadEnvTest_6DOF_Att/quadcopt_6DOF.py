@@ -145,7 +145,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
       
-      controls = np.array([0.05, action[0], action[1], action[2]]) ## This variable is used to make possible the separation of actions 
+      controls = np.array([0.6, action[0], action[1], action[2]]) ## This variable is used to make possible the separation of actions 
       # in this example actions represent pseudo controls
 
       Throttles = self.getThrsFromControls(controls) # commands are the actions given by the policy
@@ -178,8 +178,8 @@ class QuadcoptEnv_6DOF(gym.Env):
       # as obs is given only the difference between desired quaternion components and actual
       PHI = self.quat2Att()
 
-      phi_err = self.Phi_ref - PHI[0]
-      theta_err = self.Theta_ref - PHI[1]
+      phi_err = self.Phi_ref - PHI[0] - 0.1 * 0.0175
+      theta_err = self.Theta_ref - PHI[1] - 0.25 * 0.0175
       psi_err = self.Psi_ref - PHI[2]
 
       if psi_err>np.pi:
