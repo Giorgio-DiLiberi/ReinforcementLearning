@@ -1,7 +1,10 @@
 # Code to simulate the environment wit given actions usable to test if env is correct
 import gym
 import numpy as np
+import matplotlib
+matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
 import matplotlib.pyplot as plt
+
 
 from quadcopt_6DOF import QuadcoptEnv_6DOF
 
@@ -21,7 +24,7 @@ print("average throttle", 0.25 * (dT1+dT2+dT3+dT4))
 obs = env.reset()
 
 #custom reset
-env.state[5] = 1.
+env.state[5] = 0.0175
 
 # info vectors initialization for simulation history
 info_u=[env.state[0]]
@@ -34,6 +37,7 @@ info_quaternion=np.array([env.state[6:10]]) # quaternion stored in a np.array ma
 info_X=[env.state[10]]
 info_Y=[env.state[11]]
 info_Z=[env.state[12]]
+action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the simulation
 
 time=0.
 info_time=[time] # elased time vector
@@ -62,6 +66,8 @@ for i in range(100000):
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
+    action_memory = np.vstack([action_memory, action])
+    
 
     time=time+env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -81,6 +87,7 @@ plt.xlabel('time')
 plt.ylabel('Angular velocity [rad/s]')
 plt.title('p,q and r')
 plt.legend(['p', 'q', 'r'])
+plt.savefig("SimulationResults/Tests/Angular_velocities.jpg")
 
 plt.figure(2)
 plt.plot(info_time, info_u)
@@ -90,6 +97,7 @@ plt.xlabel('time')
 plt.ylabel('Linear velocity [m/s]')
 plt.title('u,v and w')
 plt.legend(['u', 'v', 'w'])
+plt.savefig("SimulationResults/Tests/Velocity.jpg")
 
 plt.figure(3)
 plt.plot(info_time, info_X)
@@ -99,6 +107,7 @@ plt.xlabel('time')
 plt.ylabel('Position NED [m]')
 plt.title('X,Y and Z')
 plt.legend(['X', 'Y', 'Z'])
+plt.savefig("SimulationResults/Tests/Position.jpg")
 
 ## CONVERSION OF THE QUATERNION INTO EULER ANGLES
 Euler_angles = np.zeros([np.size(info_quaternion, 0), 3])
@@ -124,9 +133,12 @@ plt.xlabel('time')
 plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
-
-plt.show()
+plt.savefig("SimulationResults/Tests/Euler.jpg")
 
 ## saving on file 
 
-np.savetxt("simout_r_Psi.txt", np.stack([info_r, Euler_angles[:, 2]], axis=1))
+simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
+
+np.savetxt("SimulationResults/Tests/simout.txt", simout_array)
+
+np.savetxt("SimulationResults/Tests/action.txt", action_memory)

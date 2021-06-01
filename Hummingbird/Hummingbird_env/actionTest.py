@@ -1,6 +1,8 @@
 # Code to simulate the environment wit given actions usable to test if env is correct
 import gym
 import numpy as np
+import matplotlib
+matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
 import matplotlib.pyplot as plt
 
 from Humming_env import Hummingbird_6DOF
@@ -11,7 +13,7 @@ print("Trim_thr= ", env.dTt)
 
 ## RESET ENVIRONMENT
 obs = env.reset()
-env.state[5] = 0.175
+env.state[5] = 0.0175
 
 # info vectors initialization for simulation history
 info_u=[env.state[0]]
@@ -24,6 +26,8 @@ info_quaternion=np.array([env.state[6:10]]) # quaternion stored in a np.array ma
 info_X=[env.state[10]]
 info_Y=[env.state[11]]
 info_Z=[env.state[12]]
+action_memory = np.array([0., 0., 0., 0.]) ## vector to store actions during the simulation
+  
 
 time=0.
 info_time=[time] # elased time vector
@@ -51,6 +55,8 @@ for i in range(100000):
     info_X.append(info["X"])
     info_Y.append(info["Y"])
     info_Z.append(info["Z"])
+    action_memory = np.vstack([action_memory, action])
+      
 
     time=time+env.timeStep # elapsed time since simulation start
     info_time.append(time)
@@ -70,6 +76,7 @@ plt.xlabel('time')
 plt.ylabel('Angular velocity [rad/s]')
 plt.title('p,q and r')
 plt.legend(['p', 'q', 'r'])
+plt.savefig("SimulationResults/tests/Angular_velocities.jpg")
 
 plt.figure(2)
 plt.plot(info_time, info_u)
@@ -79,6 +86,7 @@ plt.xlabel('time')
 plt.ylabel('Linear velocity [m/s]')
 plt.title('u,v and w')
 plt.legend(['u', 'v', 'w'])
+plt.savefig("SimulationResults/tests/Velocities.jpg")
 
 plt.figure(3)
 plt.plot(info_time, info_X)
@@ -88,6 +96,7 @@ plt.xlabel('time')
 plt.ylabel('Position NED [m]')
 plt.title('X,Y and Z')
 plt.legend(['X', 'Y', 'Z'])
+plt.savefig("SimulationResults/tests/Position.jpg")
 
 ## CONVERSION OF THE QUATERNION INTO EULER ANGLES
 Euler_angles = np.zeros([np.size(info_quaternion, 0), 3])
@@ -113,5 +122,21 @@ plt.xlabel('time')
 plt.ylabel('Angles [deg]')
 plt.title('Euler Angles')
 plt.legend(['Phi', 'Theta', 'Psi'])
+plt.savefig("SimulationResults/tests/Euler.jpg")
 
-plt.show()
+plt.figure(5)
+plt.plot(info_time, action_memory[:, 0])
+plt.plot(info_time, action_memory[:, 1])
+plt.plot(info_time, action_memory[:, 2])
+plt.plot(info_time, action_memory[:, 3])
+plt.xlabel('time [s]')
+plt.ylabel('Actions')
+plt.title('Actions in episode [-1, 1]')
+plt.legend(['Avg_thr', 'Ail', 'Ele', 'Rud'])
+plt.savefig('SimulationResults/tests/action.jpg')
+
+simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z], axis=1)
+
+np.savetxt("SimulationResults/tests/simout.txt", simout_array)
+
+np.savetxt("SimulationResults/tests/action.txt", action_memory)

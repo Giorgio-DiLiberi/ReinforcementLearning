@@ -263,7 +263,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -2. #[m]
+        Z_reset = -20. #[m]
         u_reset = 0. #[m/s]
         X_reset = -0. #[m]
         v_reset = 0. #[m/s]
