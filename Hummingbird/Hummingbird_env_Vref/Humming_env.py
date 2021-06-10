@@ -130,7 +130,7 @@ class Hummingbird_6DOF(gym.Env):
 
     # induced velocity in hovering due to momentum theory (no profile drag accounted) is
     # vh = sqrt(T hovering / (2rho Ad))
-    self.vh = np.sqrt(0.25 * self.g0 * self.mass / (0.25 * np.pi * (self.D_prop**2))) # [m/s] 
+    self.vh = np.sqrt(0.25 * self.g0 * self.mass / (self.rho * 0.5 * np.pi * (self.D_prop**2))) # [m/s] 
 
     # Throttle constants for mapping (mapping is linear, see the linearact2Thr() method)
     self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover
@@ -648,6 +648,7 @@ class Hummingbird_6DOF(gym.Env):
       if self.Process_perturbations:
         Acc_disturbance = np_normal(0, 0.01, 3) #[m/s^2]
         Omega_dot_dist = np_normal(0, 0.00175, 3) #[rad/s^2]
+        sinusGusts = np.array([self.Gusts * sin(0.2 * 2 * np.pi * self.elapsed_time_steps * self.timeStep), 0., 0.]) # array of sinusoidal gusts
         Vw_NED = self.WindVel + np_normal(0., self.Gusts, 3) # total wind in NED frame as stable wind plus gusts
 
       else:

@@ -254,21 +254,13 @@ plt.legend(['Avg_thr', 'Ail', 'Ele', 'Rud'])
 plt.savefig('SimulationResults/action.jpg')
 
 plt.figure(7)
-plt.plot(info_time, distance_mem_matrix[1, :])
-plt.plot(info_time, distance_mem_matrix[3, :])
-plt.plot(info_time, distance_mem_matrix[5, :])
-plt.plot(info_time, distance_mem_matrix[7, :])
-plt.plot(info_time, distance_mem_matrix[9, :])
-plt.plot(info_time, distance_mem_matrix[11, :])
-plt.plot(info_time, distance_mem_matrix[13, :])
-plt.plot(info_time, distance_mem_matrix[15, :])
-plt.plot(info_time, distance_mem_matrix[17, :])
-plt.plot(info_time, distance_mem_matrix[21, :])
+for i2 in range(N_trials):
+  plt.plot(info_time, distance_mem_matrix[i2+1, :])
+
 plt.xlabel('time [s]')
 plt.ylabel('Target Dist [m]')
 plt.title('Distance from Target [m]')
-plt.legend(['Sim 1', 'Sim 2', 'Sim 3', 'Sim 4', 'Sim 5', 'Sim 6', 'Sim 7', 'Sim 8', 'Sim 9', 'Sim 10'])
-plt.savefig('SimulationResults/Distaces.jpg')
+plt.savefig('SimulationResults/Distances.jpg')
 
 info_H = -1 * np.array([info_Z])
 

@@ -396,7 +396,7 @@ for count in range(int(env.elapsed_time_steps/8)):
   y = info_Y[step_n]
   z = info_Z[step_n]
 
-  ax.quiver(x, y, z, u_M1, v_M1, w_M1, length=5., normalize=False, color="red") # r_M1
+  ax.quiver(x, y, z, u_M1, v_M1, w_M1, length=5., normalize=False, color="green") # r_M1
   ax.quiver(x, y, z, u_M2, v_M2, w_M2, length=5., normalize=False, color="blue") # r_M1
   ax.quiver(x, y, z, u_M3, v_M3, w_M3, length=5., normalize=False, color="red") # r_M1
   ax.quiver(x, y, z, u_M4, v_M4, w_M4, length=5., normalize=False, color="blue") # r_M1

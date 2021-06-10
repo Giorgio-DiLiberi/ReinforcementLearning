@@ -126,7 +126,7 @@ class Hummingbird_6DOF(gym.Env):
 
     # induced velocity in hovering due to momentum theory (no profile drag accounted) is
     # vh = sqrt(T hovering / (2rho Ad))
-    self.vh = np.sqrt(0.25 * self.g0 * self.mass / (0.25 * np.pi * (self.D_prop**2))) # [m/s] 
+    self.vh = np.sqrt(0.25 * self.g0 * self.mass / (self.rho * 0.5 * np.pi * (self.D_prop**2))) # [m/s] 
 
     # Throttle constants for mapping (mapping is linear, see the linearact2Thr() method)
     self.dTt = (self.mass * self.g0 / (4*self.Prop_Kf)) / (self.nMax_motor**2) # trim throttle to hover

@@ -13,11 +13,12 @@ env = Hummingbird_6DOF()
 print("Kf= ", env.Prop_Kf)
 print("Kq= ", env.Prop_Kq)
 print("Max_thrustper motor= ", (env.Prop_Kf*(env.nMax_motor**2)))
+print("vH = ", env.vh)
 
 print("Trim_thr= ", env.dTt)
 
 RPS = 4500 / 60
-wm = -20.
+wm = -10.
 vi = wm/2 + np.sqrt(((0.5*wm)**2) + (env.vh**2))
 
 Delta_Thrust = env.rho * np.pi * (2*np.pi*RPS) * env.prop_mean_chord * ((env.D_prop**2)/4) * (- vi + wm + env.vh)

@@ -69,7 +69,7 @@ print("Policy ", Policy2Load, " loaded!")
 
 obs = env.reset()
 env.WindVel = np.array([9., -10.7, 0.])
-env.Gusts = 6.
+env.Gusts = 4.
 
 # info vectors initialization for simulation history
 info_u = [env.state[0]]
@@ -382,7 +382,7 @@ for count in range(int(env.elapsed_time_steps/8)):
   y = info_Y[step_n]
   z = info_Z[step_n]
 
-  ax.quiver(x, y, z, u_M1, v_M1, w_M1, length=5., normalize=False, color="red") # r_M1
+  ax.quiver(x, y, z, u_M1, v_M1, w_M1, length=5., normalize=False, color="green") # r_M1
   ax.quiver(x, y, z, u_M2, v_M2, w_M2, length=5., normalize=False, color="blue") # r_M1
   ax.quiver(x, y, z, u_M3, v_M3, w_M3, length=5., normalize=False, color="red") # r_M1
   ax.quiver(x, y, z, u_M4, v_M4, w_M4, length=5., normalize=False, color="blue") # r_M1

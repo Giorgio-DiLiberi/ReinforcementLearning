@@ -13,7 +13,7 @@ print("Trim_thr= ", env.dTt)
 
 ## RESET ENVIRONMENT
 obs = env.reset()
-env.state[5] = 0.0175
+env.state[2] = 1.
 
 # info vectors initialization for simulation history
 info_u=[env.state[0]]
