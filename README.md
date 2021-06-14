@@ -50,6 +50,8 @@ In root/Stable_Baselines2_Frame is possible to find some sub directory such as .
 
 * Directory QuadEnvTest_6DOF: it is a complete model with observability on all the states and control over all the 4 pseudo commands: Average throttle, Aileron, Elevator and Rudder.
 
+* Directory /QuadEnvTest_6DOF_NoisyBuild contains a model in which LSTM is trained to handle waypoint nav with different classes of quads from 6 inch prop to 20; this directory contains a model in wich the parameters are initialized in the init method with default parameters of 8 inch Hummingbird by Ascending Technologies (LSTM does not work).
+
 * Directory Trivial_problems contains some test models in which the commands are unpacked EG.: the policy can control only the average thrust or the pitching torque and other controls can be decided directly by the programmer; the models are equals to the others except for this change on action space.
 
 * Directory Trajectory_gen is a simple 2D environment to train a simple policy for obstacle avoidance and waypoint navigation, this model does not include dynamics and rotation.
@@ -57,11 +59,11 @@ In root/Stable_Baselines2_Frame is possible to find some sub directory such as .
 All thhose directories contains a simple model of the dynamics if the quadrotor and are used to learn the basics of RL applied to such a continous-acion-observation-space MIMO poblem.
 The directory /Hummingbird contains the codes to simulate a more specific model of "+ config", 08*3.8 inch propeller quadcopter; this code is made specifically to deploy the trained policy on the GMBH Hummingbird quadcopter or any other of this class. In particular:
 
-* Directory /Hummingbird/Hummingbird_6DOF contains a model to train a policy to control all four control parameters with visibility on all the states and position errors from a waypoin, the goal of the policy is to reach the given waypoints and maintain the position starting from any attitude initial condition.
+* Directory /Hummingbird/Hummingbird_env contains a model to train a policy to control all four control parameters with visibility on all the states and position errors from a waypoin, the goal of the policy is to reach the given waypoints and maintain the position starting from any attitude initial condition.
 
-* Directory /Hummingbird/Hummingbird_PhiThetaRref contains a model to train a policy to reac and maintain certain pitch/roll reference angles and r rate that can be pilot inputs; in this case the obs space is only on the errors between the actual pitch and roll angles and r rates and reference values, while the action space is supposed to control only Aileron, Elevator and Rudder.
+* Directory /Hummingbird/Hummingbird_env_Vref contains a model to train a policy to reach and maintain certain V NED references; in this case the obs space is only on the errors between the actual V NED and reference values, while the action space is supposed to control all the 4 controls.
 
-* Directory /QuadEnvTest_6DOF_NoisyBuild contains a model in which LSTM is trained to handle waypoint nav with different classes of quads from 6 inch prop to 20; this directory contains a model in wich the parameters are initialized in the init method with default parameters of 8 inch Hummingbird by Ascending Technologies.
+* Directory /Hummingbird/Hummingbird_env_Vref_Psiref contains a model to train a policy to reach and maintain certain V NED references and heading angle; in this case the obs space is on the errors between the actual V NED and reference values, angular velocities and attitude quaternion, while the action space is supposed to control all the 4 controls.
 
 ## Usage of a QuadEnv directory
 

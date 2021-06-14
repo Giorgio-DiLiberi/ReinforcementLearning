@@ -215,8 +215,16 @@ class Hummingbird_6DOF(gym.Env):
       if self.Position_reference:
 
         self.V_NED_ref[0] = 0.45 * (self.X_ref - self.state[10])
+        if abs(self.V_NED_ref[0])>2.:
+          self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
+
         self.V_NED_ref[1] = 0.45 * (self.Y_ref - self.state[11])
+        if abs(self.V_NED_ref[1])>2.:
+          self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
+
         self.V_NED_ref[2] = 0.45 * (self.Z_ref - self.state[12])
+        if abs(self.V_NED_ref[2])>2.:
+          self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
 
         #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
 
@@ -299,7 +307,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -2. #[m]
+        Z_reset = -20. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]

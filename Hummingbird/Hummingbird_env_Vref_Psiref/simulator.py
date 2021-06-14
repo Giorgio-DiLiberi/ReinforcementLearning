@@ -107,45 +107,45 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     if i==256:
       env.X_ref = 0.
       env.Y_ref = 0.
-      env.Z_ref = -17.
+      env.Z_ref = -20.
 
-    if i==750:
-      env.X_ref = 7.5
-      env.Y_ref = 0.
-      env.Z_ref = -17.
-
-    if i==1156:
+    if i==720:
       env.X_ref = 15.
-      env.Y_ref = 7.5
-      env.Z_ref = -17.
+      env.Y_ref = 0.
+      env.Z_ref = -20.
+
+    if i==1000:
+      env.X_ref = 15.
+      env.Y_ref = 15.
+      env.Z_ref = -20.
       #env.NewWP = True
       #env.psi_ref_mem = 0.  #90.*0.0175
 
     if i==1512:
-      env.X_ref = 7.5
+      env.X_ref = 0.
       env.Y_ref = 15.
-      env.Z_ref = -17.
+      env.Z_ref = -20.
       #.NewWP = True
       #env.psi_ref_mem = 0.  #175.*0.0175
 
     if i==1946:
       env.X_ref = 0.
-      env.Y_ref = 7.5
-      env.Z_ref = -17.
+      env.Y_ref = 0.
+      env.Z_ref = -20.
       #env.NewWP = True
       #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
 
-    if i==2512:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -17.
-      #env.NewWP = True
-      #env.psi_ref_mem = -90. * 0.0175
+    # if i==2512:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -17.
+    #   #env.NewWP = True
+    #   #env.psi_ref_mem = -90. * 0.0175
 
-    if i==2756:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -2.
+    # if i==2756:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -2.
 
     # # Vectorial navigation--> spiral movement each step references are updated with sin, cos and linear z
     # env.VNord_ref = 2 * np.cos(0.5 * env.elapsed_time_steps * 0.04)

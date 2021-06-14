@@ -68,7 +68,7 @@ print("Policy ", Policy2Load, " loaded!")
  
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
-N_trials = 25 #Number of MC trials
+N_trials = 50 #Number of MC trials
 
 SS_dist = [] # list to store the finl distance of each trial (is the final value of the distance from the wp)
 
