@@ -104,31 +104,31 @@ env.Position_reference = True
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # # Waypoint navigation section (uncomment to realize wp nav)
-    if i==256:
+    if i==350:
       env.X_ref = 0.
       env.Y_ref = 0.
       env.Z_ref = -20.
 
-    if i==720:
+    if i==700:
       env.X_ref = 15.
       env.Y_ref = 0.
       env.Z_ref = -20.
 
-    if i==1000:
+    if i==1150:
       env.X_ref = 15.
       env.Y_ref = 15.
       env.Z_ref = -20.
       #env.NewWP = True
       #env.psi_ref_mem = 0.  #90.*0.0175
 
-    if i==1512:
+    if i==1500:
       env.X_ref = 0.
       env.Y_ref = 15.
       env.Z_ref = -20.
       #.NewWP = True
       #env.psi_ref_mem = 0.  #175.*0.0175
 
-    if i==1946:
+    if i==1850:
       env.X_ref = 0.
       env.Y_ref = 0.
       env.Z_ref = -20.

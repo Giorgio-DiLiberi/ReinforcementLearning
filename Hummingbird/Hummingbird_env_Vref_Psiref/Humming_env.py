@@ -166,7 +166,7 @@ class Hummingbird_6DOF(gym.Env):
     self.X_ref_mem = 0. # introduced to keep memory of the x reference 
     self.Y_ref = 0.
     self.Y_ref_mem = 0. # introduced to keep memory of the y reference 
-    self.Z_ref = -2.
+    self.Z_ref = -20.
     # when x and Y ref changes so the psi reference is changed
 
 
@@ -307,7 +307,7 @@ class Hummingbird_6DOF(gym.Env):
 
       else:
         w_reset = 0. #[m/s]
-        Z_reset = -20. #[m]
+        Z_reset = -5. #[m]
         u_reset = 0. #[m/s]
         X_reset = 0. #[m]
         v_reset = 0. #[m/s]
@@ -714,8 +714,8 @@ class Hummingbird_6DOF(gym.Env):
 
       # Random process noise on linear accelerations
       if self.Process_perturbations:
-        Acc_disturbance = np_normal(0, 0.01, 3) #[m/s^2]
-        Omega_dot_dist = np_normal(0, 0.00175, 3) #[rad/s^2]
+        Acc_disturbance = np_normal(0, 0.05, 3) #[m/s^2]
+        Omega_dot_dist = np_normal(0, 5*0.00175, 3) #[rad/s^2]
 
       else:
         Acc_disturbance = np.zeros(3) #[m/s^2]
