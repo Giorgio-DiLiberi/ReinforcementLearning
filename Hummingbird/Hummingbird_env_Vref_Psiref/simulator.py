@@ -109,26 +109,26 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.Y_ref = 0.
       env.Z_ref = -20.
 
-    if i==700:
+    if i==750:
       env.X_ref = 15.
       env.Y_ref = 0.
       env.Z_ref = -20.
 
-    if i==1150:
+    if i==1200:
       env.X_ref = 15.
       env.Y_ref = 15.
       env.Z_ref = -20.
       #env.NewWP = True
       #env.psi_ref_mem = 0.  #90.*0.0175
 
-    if i==1500:
+    if i==1600:
       env.X_ref = 0.
       env.Y_ref = 15.
       env.Z_ref = -20.
       #.NewWP = True
       #env.psi_ref_mem = 0.  #175.*0.0175
 
-    if i==1850:
+    if i==2000:
       env.X_ref = 0.
       env.Y_ref = 0.
       env.Z_ref = -20.
