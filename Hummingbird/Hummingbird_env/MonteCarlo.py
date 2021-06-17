@@ -68,7 +68,7 @@ print("Policy ", Policy2Load, " loaded!")
  
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
-N_trials = 50 #Number of MC trials
+N_trials = 25 #Number of MC trials
 
 SS_dist = [] # list to store the finl distance of each trial (is the final value of the distance from the wp)
 
@@ -263,6 +263,69 @@ plt.title('Distance from Target [m]')
 plt.savefig('SimulationResults/Distances.jpg')
 
 info_H = -1 * np.array([info_Z])
+
+fig = plt.figure(8)
+
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), np.array([info_Z]))
+ax.invert_xaxis()
+ax.invert_zaxis()
+
+for count in range(int(env.elapsed_time_steps/32)):
+
+  step_n = count * 32
+
+  Phi, Theta, Psi = Euler_angles_rad[step_n, :]
+
+  u_Xb = np.cos(Theta) * np.cos(Psi)
+  v_Xb = np.cos(Theta) * np.sin(Psi)
+  w_Xb = -np.sin(Theta)
+
+  u_Yb = -np.cos(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+  v_Yb = np.cos(Phi) * np.cos(Psi) + np.sin(Phi) * np.sin(Theta) * np.sin(Psi)
+  w_Yb = np.sin(Phi) * np.cos(Theta) 
+
+  u_Zb = np.sin(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+  v_Zb = -np.sin(Phi) * np.cos(Psi) + np.cos(Phi) * np.sin(Theta) * np.sin(Psi)
+  w_Zb = np.cos(Phi) * np.cos(Theta)
+
+  x = info_X[step_n]
+  y = info_Y[step_n]
+  z = info_Z[step_n]
+
+  ax.quiver(x, y, z, u_Xb, v_Xb, w_Xb, length=5., normalize=False, color="red") # X_b
+  ax.quiver(x, y, z, u_Yb, v_Yb, w_Yb, length=5., normalize=False, color="blue") #Y_b
+  ax.quiver(x, y, z, u_Zb, v_Zb, w_Zb, length=5., normalize=False, color="green") #Z_b
+
+  ax.set_xlabel("North")
+  ax.set_ylabel("East")
+  ax.set_zlabel("Down")
+
+  if count>=512/32:
+    break
+
+X_ini = info_X[0]
+Y_ini = info_Y[0]
+Z_ini = -2.
+ax.scatter(X_ini, Y_ini, Z_ini, c="blue", s=20.)
+
+X_fin = info_X[1023]
+Y_fin = info_Y[1023]
+Z_fin = info_Z[1023]
+ax.scatter(X_fin, Y_fin, Z_fin, c="green", s=15.)
+
+ax.scatter(10, 0, 0, c="black", s=1.)
+ax.scatter(-10, 0, 0, c="black", s=1.)
+ax.scatter(0, 10, 0, c="black", s=1.)
+ax.scatter(0, -10, 0, c="black", s=1.)
+ax.scatter(0, 0, -20, c="black", s=1.)
+
+ax.scatter(0, 0, -12, c="red", s=30.)
+
+  
+fig2save = 'SimulationResults/LastTraj.jpg'
+
+plt.savefig(fig2save)
 
 #ax.xlabel('X')
 #ax.ylabel('Y')

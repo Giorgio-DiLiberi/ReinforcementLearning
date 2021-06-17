@@ -358,7 +358,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       # To minimize the rotation rror around psi is requested to maximize the q0 component of the error quaternion
       # obtained q_err = q_des * q_mes(coml_conj)
       R = 1. - V_error_Weight * (abs(V_NED_Err[0]/20.) + abs(V_NED_Err[1]/20.) + abs(V_NED_Err[2]/20.))\
-        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/10.)) - q3_W * abs(q3_err)
+        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - q3_W * abs(q3_err)
 
       if R >= 0:
         reward = R

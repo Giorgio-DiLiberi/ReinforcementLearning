@@ -43,7 +43,7 @@ class Hummingbird_6DOF(gym.Env):
 
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
-    # order is V_N_Err, V_E_Err, V_D_Err, v, p, q, r, q0, q1, q2, q3
+    # order is V_N_Err, V_E_Err, V_D_Err, q3_err, p, q, r, q0, q1, q2, q3
     highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
     lowObsSpace = -highObsSpace
     
@@ -214,15 +214,15 @@ class Hummingbird_6DOF(gym.Env):
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 0.45 * (self.X_ref - self.state[10])
+        self.V_NED_ref[0] = 0.5 * (self.X_ref - self.state[10])
         if abs(self.V_NED_ref[0])>2.:
           self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
 
-        self.V_NED_ref[1] = 0.45 * (self.Y_ref - self.state[11])
+        self.V_NED_ref[1] = 0.5 * (self.Y_ref - self.state[11])
         if abs(self.V_NED_ref[1])>2.:
           self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
 
-        self.V_NED_ref[2] = 0.45 * (self.Z_ref - self.state[12])
+        self.V_NED_ref[2] = 0.5 * (self.Z_ref - self.state[12])
         if abs(self.V_NED_ref[2])>2.:
           self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
 

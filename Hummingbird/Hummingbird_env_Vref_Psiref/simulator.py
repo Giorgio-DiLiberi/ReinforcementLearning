@@ -135,10 +135,10 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       #env.NewWP = True
       #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
 
-    # if i==2512:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 0.
-    #   env.Z_ref = -17.
+    if i==2512:
+      env.X_ref = 0.
+      env.Y_ref = 0.
+      env.Z_ref = -5.
     #   #env.NewWP = True
     #   #env.psi_ref_mem = -90. * 0.0175
 
@@ -168,8 +168,8 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # if i==2125:
     #   env.Z_ref = -2.0
-      
 
+    
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
     obs, reward, done, info = env.step(action) 
@@ -345,6 +345,11 @@ for count in range(int(env.elapsed_time_steps/8)):
   ax.set_xlabel("North")
   ax.set_ylabel("East")
   ax.set_zlabel("Down")
+
+  ax.scatter(0, 0, -5, c="black", s=1.)
+  ax.scatter(15, 0, 0, c="black", s=1.)
+  ax.scatter(0, 15, 0, c="black", s=1.)
+  ax.scatter(0, 0, -20, c="black", s=1.)
 
   #plot the waypoint
   ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)
