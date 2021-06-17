@@ -169,6 +169,10 @@ class Hummingbird_6DOF(gym.Env):
     self.Z_ref = -20.
     # when x and Y ref changes so the psi reference is changed
 
+    # variable to store memory of error and implement an integral action
+    self.Int_X = 0.
+    self.Int_Y = 0.
+    self.Int_Z = 0.
 
     # references on NED velocity are evaluated proportionally to posizion errors
     self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
@@ -211,31 +215,38 @@ class Hummingbird_6DOF(gym.Env):
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
 
+      X_error = self.X_ref - self.state[10]
+      Y_error = self.Y_ref - self.state[11]
+      Z_error = self.Z_ref - self.state[12]
+
+      Int_X = 0.01 * 0.04 * X_error + self.Int_X
+      Int_Y = 0.01 * 0.04 * Y_error + self.Int_Y
+      Int_Z = 0.01 * 0.04 * Z_error + self.Int_Z
+      
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 1.2 * (self.X_ref - self.state[10])
+        self.V_NED_ref[0] = 0.6 * (X_error) + Int_X
         if abs(self.V_NED_ref[0])>2.:
           self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
 
-        self.V_NED_ref[1] = 1.2 * (self.Y_ref - self.state[11])
+        self.V_NED_ref[1] = 0.6 * (Y_error) + Int_Y
         if abs(self.V_NED_ref[1])>2.:
           self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
 
-        self.V_NED_ref[2] = 1.2 * (self.Z_ref - self.state[12])
+        self.V_NED_ref[2] = 0.6 * (Z_error) + Int_Z
         if abs(self.V_NED_ref[2])>2.:
           self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
+
+        self.Int_X = Int_X
+        self.Int_Y = Int_Y
+        self.Int_Z = Int_Z
 
         #if Position_reference == False the user must provide references for NED velocity manually, default values are 0
 
       V_NED_Err, V_NED = self.getV_NED_error()
 
       PHI = self.quat2Att()    
-
-      
-      
-      Y_error = self.Y_ref - self.state[11]
-      X_error = self.X_ref - self.state[10]
 
       Psi_ref = np.arctan2(Y_error, X_error) ##Evaluates Psi ref as direction to the waypoint
       #Psi_ref = np.arctan2(self.V_NED_ref[1], self.V_NED_ref[0]) ## Evaluate Psi ref as heading desired due to velocity components
