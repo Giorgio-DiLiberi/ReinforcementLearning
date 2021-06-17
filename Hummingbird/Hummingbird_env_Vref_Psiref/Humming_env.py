@@ -214,15 +214,15 @@ class Hummingbird_6DOF(gym.Env):
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 0.5 * (self.X_ref - self.state[10])
+        self.V_NED_ref[0] = 1.2 * (self.X_ref - self.state[10])
         if abs(self.V_NED_ref[0])>2.:
           self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
 
-        self.V_NED_ref[1] = 0.5 * (self.Y_ref - self.state[11])
+        self.V_NED_ref[1] = 1.2 * (self.Y_ref - self.state[11])
         if abs(self.V_NED_ref[1])>2.:
           self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
 
-        self.V_NED_ref[2] = 0.5 * (self.Z_ref - self.state[12])
+        self.V_NED_ref[2] = 1.2 * (self.Z_ref - self.state[12])
         if abs(self.V_NED_ref[2])>2.:
           self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
 
@@ -281,29 +281,41 @@ class Hummingbird_6DOF(gym.Env):
       """
 
       if self.Random_reset:
-        w_reset = 0. #[m/s]
-        Z_reset = -30. #[m]
-        u_reset = 0. #[m/s]
-        X_reset = 0. #[m]
-        v_reset = 0. #[m/s]
-        Y_reset = 0. #[m]
+        angle = np_normal(0., 178. * 0.0175) #[rad] angle
+        X_reset = 10. * cos(angle) #[m]
+        Y_reset = 10. * sin(angle) #[m]
+        Z_reset = -2. #[m]
 
-        p_reset = np_normal(0., 0.0175)
-        q_reset = np_normal(0., 0.0175)
-        r_reset = np_normal(0., 0.0175)
+        w_reset = np_normal(0., 1.5) #[m/s]
+        u_reset = np_normal(0., 1.5) #[m/s]
+        v_reset = np_normal(0., 1.5) #[m/s]
+        
+        p_reset = np_normal(0., 0.035)
+        q_reset = np_normal(0., 0.035)
+        r_reset = np_normal(0., 0.035)
 
         phi = np_normal(0., 0.44) #[rad]
+        if phi>0.5:
+          phi = 0.5
+        elif phi<-0.5:
+          phi = -0.5 
+
         theta = np_normal(0., 0.44) #[rad]
-        psi = np_normal(0., 0.175) #[rad]
+        if theta>0.5:
+          theta = 0.5
+        elif theta<-0.5:
+          theta = -0.5
+
+        psi = 0.
 
         q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
         q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.VNord_ref = np_normal(5., 2.) #[m/s]
-        self.VEst_ref = np_normal(5., 2.) #[m/s]
-        self.VDown_ref = np_normal(-5., 2.) #[m/s]
+        self.X_ref = 0. #[m] goal x position
+        self.Y_ref = 0. #[m] goal y position
+        self.Z_ref = -12. #[m] altitude to achieve is 30 m
 
       else:
         w_reset = 0. #[m/s]

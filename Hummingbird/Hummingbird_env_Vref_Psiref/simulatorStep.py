@@ -68,6 +68,7 @@ print("Policy ", Policy2Load, " loaded!")
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
 obs = env.reset()
+env.max_Episode_time_steps=int(10.24/env.timeStep)
 
 # info vectors initialization for simulation history
 info_u = [env.state[0]]
@@ -97,79 +98,14 @@ VD_ref = [env.V_NED_ref[2]]
 time=0.
 info_time=[time] # elapsed time vector
 
-env.Position_reference = True
+env.Position_reference = False
 
 # SIMULATION
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    # # Waypoint navigation section (uncomment to realize wp nav)
-    if i==350:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -20.
-
-    if i==700:
-      env.X_ref = 15.
-      env.Y_ref = 0.
-      env.Z_ref = -20.
-
-    if i==1150:
-      env.X_ref = 15.
-      env.Y_ref = 15.
-      env.Z_ref = -20.
-      #env.NewWP = True
-      #env.psi_ref_mem = 0.  #90.*0.0175
-
-    if i==1500:
-      env.X_ref = 0.
-      env.Y_ref = 15.
-      env.Z_ref = -20.
-      #.NewWP = True
-      #env.psi_ref_mem = 0.  #175.*0.0175
-
-    if i==1850:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -20.
-      #env.NewWP = True
-      #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
-
-    if i==2512:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -5.
-    #   #env.NewWP = True
-    #   #env.psi_ref_mem = -90. * 0.0175
-
-    # if i==2756:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 0.
-    #   env.Z_ref = -2.
-
-    # # Vectorial navigation--> spiral movement each step references are updated with sin, cos and linear z
-    # env.VNord_ref = 2 * np.cos(0.5 * env.elapsed_time_steps * 0.04)
-    # env.VEst_ref = 2 * np.sin(0.5 * env.elapsed_time_steps * 0.04)
-    # env.VDown_ref = - 1.4 * 10. / 40
-
-    # moving waypoint
-
-    # if i==32:
-    #   env.Z_ref = -17.
-
-    # if i>=256 and i<1750:
-    #   if i%32==0:
-    #     env.X_ref = 7.5 * np.sin(0.25 * (env.elapsed_time_steps-256) * 0.04)
-    #     env.Y_ref = 9.2 * env.elapsed_time_steps * 0.04 / 40
-
-    # if i==1750:
-    #   env.X_ref = 0.0
-    #   env.Y_ref = 0.0
-
-    # if i==2125:
-    #   env.Z_ref = -2.0
-
     
+
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
     obs, reward, done, info = env.step(action) 

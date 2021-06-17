@@ -318,7 +318,7 @@ ax.scatter(10, 0, 0, c="black", s=1.)
 ax.scatter(-10, 0, 0, c="black", s=1.)
 ax.scatter(0, 10, 0, c="black", s=1.)
 ax.scatter(0, -10, 0, c="black", s=1.)
-ax.scatter(0, 0, -20, c="black", s=1.)
+ax.scatter(0, 0, -12.5, c="black", s=1.)
 
 ax.scatter(0, 0, -12, c="red", s=30.)
 
