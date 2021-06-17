@@ -219,22 +219,22 @@ class Hummingbird_6DOF(gym.Env):
       Y_error = self.Y_ref - self.state[11]
       Z_error = self.Z_ref - self.state[12]
 
-      Int_X = 0.015 * 0.04 * X_error + self.Int_X
-      Int_Y = 0.015 * 0.04 * Y_error + self.Int_Y
-      Int_Z = 0.015 * 0.04 * Z_error + self.Int_Z
+      Int_X = 0.007 * 0.04 * X_error + self.Int_X
+      Int_Y = 0.007 * 0.04 * Y_error + self.Int_Y
+      Int_Z = 0.007 * 0.04 * Z_error + self.Int_Z
       
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 0.85 * (X_error) + Int_X
+        self.V_NED_ref[0] = 0.9 * (X_error) + Int_X
         if abs(self.V_NED_ref[0])>2.:
           self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
 
-        self.V_NED_ref[1] = 0.85 * (Y_error) + Int_Y
+        self.V_NED_ref[1] = 0.9 * (Y_error) + Int_Y
         if abs(self.V_NED_ref[1])>2.:
           self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
 
-        self.V_NED_ref[2] = 0.85 * (Z_error) + Int_Z
+        self.V_NED_ref[2] = 0.9 * (Z_error) + Int_Z
         if abs(self.V_NED_ref[2])>2.:
           self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
 
@@ -253,7 +253,7 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((X_error**2) + (Y_error**2))
 
-      if Pos_Error >= 2.:
+      if Pos_Error >= 3.5:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         #updated to keep the orientation as it was when far from the target
 
