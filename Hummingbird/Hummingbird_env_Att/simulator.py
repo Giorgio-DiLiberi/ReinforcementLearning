@@ -16,6 +16,9 @@ from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 from Humming_env import Hummingbird_6DOF
 
+## seed setting
+np.random.seed(10)
+
 
 env = Hummingbird_6DOF(Random_reset=False, Process_perturbations=True)
 
@@ -67,6 +70,7 @@ print("Policy ", Policy2Load, " loaded!")
  
 #model = PPO2.load("Policies/PPO_Quad_1")  # uncomment this line to load a specific policy instead of the last one
 
+env.max_Episode_time_steps = int(10.24/env.timeStep)
 obs = env.reset()
 
 # info vectors initialization for simulation history
@@ -95,11 +99,11 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==128:
-      env.Psi_ref = 150. * 0.0175
+    if i==(int(2/env.timeStep)-1): ## select seconds after simulation start and impose step
+      env.Theta_ref = 5. * 0.0175
 
-    if i==512:
-      env.Psi_ref = -150. * 0.0175
+    # if i==512:
+    #   env.Psi_ref = -150. * 0.0175
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     

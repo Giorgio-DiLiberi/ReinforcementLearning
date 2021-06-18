@@ -163,7 +163,7 @@ class Hummingbird_6DOF(gym.Env):
       # State-action variables assignment
       State_curr_step = self.state # self.state is initialized as np.array, this temporary variable is used than in next step computation 
       
-      controls = np.array([0., action[0], action[1], action[2]]) ## This variable is used to make possible the separation of actions 
+      controls = np.array([0.1, action[0], action[1], action[2]]) ## This variable is used to make possible the separation of actions 
       # in this example actions represent pseudo controls
 
       Throttles = self.getThrsFromControls(controls) # commands are the actions given by the policy
@@ -609,7 +609,7 @@ class Hummingbird_6DOF(gym.Env):
       # Random process noise on linear accelerations
       if self.Process_perturbations:
         Acc_disturbance = np_normal(0, 0.1, 3) #[m/s^2]
-        Omega_dot_dist = np_normal(0, 5*0.0175, 3) #[rad/s^2]
+        Omega_dot_dist = np_normal(0, 5*0.00175, 3) #[rad/s^2]
 
       else:
         Acc_disturbance = np.zeros(3) #[m/s^2]

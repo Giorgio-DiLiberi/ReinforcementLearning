@@ -79,6 +79,8 @@ X_mem = np.zeros(1025) # each row is the coordinate over time in one specific si
 Y_mem = np.zeros(1025)
 Z_mem = np.zeros(1025)
 
+env.max_Episode_time_steps = 1024
+
 Init_state_mem = np.zeros(13) # memory for the initial states over the monteCarlo
 
 for count1 in range(N_trials): # for 25 simulations
