@@ -27,6 +27,12 @@ for i in range(3073):
 
 plt.figure(1)
 plt.plot(time, distance)
+plt.scatter(0.04 * 0.00, 0, c="red", s=5.)
+plt.scatter(0.04 * 750, 0, c="red", s=5.)
+plt.scatter(0.04 * 1200, 0, c="red", s=5.)
+plt.scatter(0.04 * 1600, 0, c="red", s=5.)
+plt.scatter(0.04 * 2000, 0, c="red", s=5.)
+plt.scatter(0.04 * 2512, 0, c="red", s=5.)
 plt.xlabel('time [s]')
 plt.ylabel('Distance [m]')
 plt.title('Distance in sim')

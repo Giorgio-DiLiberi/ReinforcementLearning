@@ -608,8 +608,8 @@ class Hummingbird_6DOF(gym.Env):
 
       # Random process noise on linear accelerations
       if self.Process_perturbations:
-        Acc_disturbance = np_normal(0, 0.1, 3) #[m/s^2]
-        Omega_dot_dist = np_normal(0, 5*0.00175, 3) #[rad/s^2]
+        Force_disturbance = self.mass * np_normal(0, 0.005, 3) #[m/s^2]
+        Torque_disturbance = self.InVec * np_normal(0, 5*0.00175, 3) #[rad/s^2]
 
       else:
         Acc_disturbance = np.zeros(3) #[m/s^2]
@@ -668,7 +668,7 @@ class Hummingbird_6DOF(gym.Env):
       Mtot = np.cross(self.rM1, F1) + np.cross(self.rM2, F2)\
          + np.cross(self.rM3, F3) + np.cross(self.rM4, F4)\
             + np.array([0., 0., (M1_Torque + M3_Torque - M2_Torque - M4_Torque)])\
-              + self.dragTorque(Omega)
+              + self.dragTorque(Omega) + Torque_disturbance
 
       # WEIGHT [N] in body axes
       WB = np.dot(LBE, self.Wned) # weight in body axes
@@ -677,13 +677,13 @@ class Hummingbird_6DOF(gym.Env):
       DB = self.Drag(Vb)
       
       # TOTAL FORCES in body axes divided by mass [N/kg = m/s^2]
-      Ftot_m = (DB + WB + F1 + F2 + F3 + F4) / self.mass 
+      Ftot_m = (DB + WB + F1 + F2 + F3 + F4 + Force_disturbance) / self.mass 
 
       # Evaluation of LINEAR ACCELERATION components [m/s^2]
-      Vb_dot = - np.cross(Omega, Vb) + Ftot_m + Acc_disturbance
+      Vb_dot = - np.cross(Omega, Vb) + Ftot_m
 
       # Evaluation of ANGULAR ACCELERATION [rad/s^2] components in body axes
-      Omega_dot = ((Mtot - np.cross(Omega, np.dot(self.InTen, Omega))) / self.InVec) + Omega_dot_dist
+      Omega_dot = ((Mtot - np.cross(Omega, np.dot(self.InTen, Omega))) / self.InVec) 
       
       # Evaluation of the cynematic linear velocities in NED axes [m/s]
       # The matrix LEB is written in the equivalent from quaternions components
