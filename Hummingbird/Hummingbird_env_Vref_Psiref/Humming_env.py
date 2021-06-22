@@ -43,8 +43,8 @@ class Hummingbird_6DOF(gym.Env):
 
     ##full visibility on the states as given in the previous section.
     # velocity is given as V_Nord , V_est and V_down errors and v to be set to 0
-    # order is V_N_Err, V_E_Err, V_D_Err, q3_err, p, q, r, q0, q1, q2, q3
-    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1])
+    # order is V_N_Err, V_E_Err, V_D_Err, q3_error, p, q, r, LEB all the
+    highObsSpace = np.array([1.1 , 1.1, 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1 , 1.1, 1.1, 1.1, 1.1 , 1.1, 1.1 , 1.1 , 1.1])
     lowObsSpace = -highObsSpace
     
 
@@ -53,7 +53,7 @@ class Hummingbird_6DOF(gym.Env):
     # A vector with max value for each state is defined to perform normalization of obs
     # so to have obs vector components between -1,1. The max values are taken acording to 
     # previous comment
-    self.Obs_normalization_vector = np.array([20., 20., 20., 1., 50., 50., 50., 1., 1., 1., 1.]) # normalization constants
+    self.Obs_normalization_vector = np.array([20., 20., 20., 1., 50., 50., 50., 1., 1., 1., 1., 1., 1., 1., 1., 1.]) # normalization constants
     # Random funcs
     self.Random_reset = Random_reset # true to have random reset
     self.Process_perturbations = Process_perturbations # to have random accelerations due to wind
@@ -256,7 +256,7 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((X_error**2) + (Y_error**2))
 
-      if Pos_Error >= 2. and self.Psi_ref_ass:
+      if Pos_Error >= 0.5 and self.Psi_ref_ass:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         #updated to keep the orientation as it was when far from the target
 
@@ -264,17 +264,22 @@ class Hummingbird_6DOF(gym.Env):
       
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
       q0_ref = cos(Psi_ref/2)
-      q0 = self.state[6]
       q3_ref = sin(Psi_ref/2)
-      q3 = -self.state[9] #(coml_conj)
+      q0, q1, q2, q3 = self.state[6:10] 
 
-      q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
-      q3_err = q0 * q3_ref + q3 * q0_ref
+      q0_err = q0 * q0_ref - (-q3) * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + (-q3) * q0_ref # q3 compl conj
 
       if q0_err<=0.:
         q3_err = -q3_err
 
-      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+      ## make an attempt giving all the elements of LEB as Obs
+
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:6], LEB[0], LEB[1], LEB[2])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       # REWARD evaluation and done condition definition (to be completed)
@@ -348,7 +353,7 @@ class Hummingbird_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.X_ref = 0.
+        self.X_ref = 7.5
         self.Y_ref = 0.
         self.Z_ref = -20.
 
@@ -373,18 +378,24 @@ class Hummingbird_6DOF(gym.Env):
       if Pos_Error <= 1.: # checks i distance from target is less than a value the reference on psi is 0
         Psi_ref = 0.
       #Psi_err = self.thnorm(Psi_ref - PHI[2])
-      q0_ref = cos(Psi_ref/2)
-      q0 = self.state[6]
-      q3_ref = sin(Psi_ref/2)
-      q3 = -self.state[9] #(coml_conj)
 
-      q0_err = q0 * q0_ref - q3 * q3_ref # reference quaternion is considered with phi and theta =0
-      q3_err = q0 * q3_ref + q3 * q0_ref
+      q0_ref = cos(Psi_ref/2)
+      q3_ref = sin(Psi_ref/2)
+      q0, q1, q2, q3 = self.state[6:10] 
+
+      q0_err = q0 * q0_ref - (-q3) * q3_ref # reference quaternion is considered with phi and theta =0
+      q3_err = q0 * q3_ref + (-q3) * q0_ref # q3 compl conj
 
       if q0_err<=0.:
         q3_err = -q3_err
 
-      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:10])) #, self.state[1] removed visibility over v
+      LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+        [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+          [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+      ## make an attempt giving all the elements of LEB as Obs
+
+      obs_state = np.concatenate(([V_NED_Err[0], V_NED_Err[1], V_NED_Err[2], q3_err], self.state[3:6], LEB[0], LEB[1], LEB[2])) #, self.state[1] removed visibility over v
       obs = obs_state / self.Obs_normalization_vector
 
       return obs  # produce an observation of the first state (xPosition) 
@@ -609,7 +620,7 @@ class Hummingbird_6DOF(gym.Env):
 
       V_NED = np.dot(LEB, Vb)
 
-      V_NED_Err = V_NED - self.V_NED_ref + np.array([-0.5, 0., +0.5])
+      V_NED_Err = V_NED - self.V_NED_ref #+ np.array([-0.5, 0., +0.5])
 
       return V_NED_Err, V_NED
 
