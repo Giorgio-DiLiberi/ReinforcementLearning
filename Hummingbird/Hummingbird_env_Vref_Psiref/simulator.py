@@ -159,8 +159,8 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     # if i==32:
     #   env.Z_ref = -17.
 
-    if i>=256 and i<3072 and i%32==0:
-      angle = 0.05 * (env.elapsed_time_steps-256) * 0.04
+    if i>=25 and i<3072 and i%32==0:
+      angle = 0.05 * (env.elapsed_time_steps-25) * 0.04
       env.psi_ref_mem = angle + np.pi * 0.5
 
       env.X_ref = 7.5 * np.cos(angle)
@@ -373,62 +373,62 @@ for count in range(int(env.elapsed_time_steps/8)):
 ## Sction to plot orientation with arrows to represent the miniquad figure
 # so for arrow to represent arms and a dot to represent body
 
-for count in range(int(env.elapsed_time_steps/8)):
+# for count in range(int(env.elapsed_time_steps/8)):
 
-  figCount = 9 + n_fig + count
+#   figCount = 9 + n_fig + count
 
-  fig = plt.figure(figCount)
-  ax = fig.add_subplot(111, projection='3d')
-  ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), np.array([info_Z]))
-  ax.invert_xaxis()
-  ax.invert_zaxis()
+#   fig = plt.figure(figCount)
+#   ax = fig.add_subplot(111, projection='3d')
+#   ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), np.array([info_Z]))
+#   ax.invert_xaxis()
+#   ax.invert_zaxis()
 
-  step_n = count * 8
+#   step_n = count * 8
 
-  Phi, Theta, Psi = Euler_angles_rad[step_n, :]
+#   Phi, Theta, Psi = Euler_angles_rad[step_n, :]
 
-  ## Components of arm 1
-  u_M1 = np.cos(Theta) * np.cos(Psi)
-  v_M1 = np.cos(Theta) * np.sin(Psi)
-  w_M1 = -np.sin(Theta)
+#   ## Components of arm 1
+#   u_M1 = np.cos(Theta) * np.cos(Psi)
+#   v_M1 = np.cos(Theta) * np.sin(Psi)
+#   w_M1 = -np.sin(Theta)
 
-  ## Components of arm 2
-  u_M2 = -np.cos(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
-  v_M2 = np.cos(Phi) * np.cos(Psi) + np.sin(Phi) * np.sin(Theta) * np.sin(Psi)
-  w_M2 = np.sin(Phi) * np.cos(Theta) 
+#   ## Components of arm 2
+#   u_M2 = -np.cos(Phi) * np.sin(Psi) + np.sin(Phi) * np.sin(Theta) * np.cos(Psi)
+#   v_M2 = np.cos(Phi) * np.cos(Psi) + np.sin(Phi) * np.sin(Theta) * np.sin(Psi)
+#   w_M2 = np.sin(Phi) * np.cos(Theta) 
 
-  ## Components of arm 3 = -1*arm1
-  u_M3 = -u_M1
-  v_M3 = -v_M1
-  w_M3 = -w_M1
+#   ## Components of arm 3 = -1*arm1
+#   u_M3 = -u_M1
+#   v_M3 = -v_M1
+#   w_M3 = -w_M1
 
-  ## Components of arm 4 = -1*arm2
-  u_M4 = -u_M2
-  v_M4 = -v_M2
-  w_M4 = -w_M2
+#   ## Components of arm 4 = -1*arm2
+#   u_M4 = -u_M2
+#   v_M4 = -v_M2
+#   w_M4 = -w_M2
 
-  x = info_X[step_n]
-  y = info_Y[step_n]
-  z = info_Z[step_n]
+#   x = info_X[step_n]
+#   y = info_Y[step_n]
+#   z = info_Z[step_n]
 
-  ax.quiver(x, y, z, u_M1, v_M1, w_M1, length=5., normalize=False, color="green") # r_M1
-  ax.quiver(x, y, z, u_M2, v_M2, w_M2, length=5., normalize=False, color="blue") # r_M1
-  ax.quiver(x, y, z, u_M3, v_M3, w_M3, length=5., normalize=False, color="red") # r_M1
-  ax.quiver(x, y, z, u_M4, v_M4, w_M4, length=5., normalize=False, color="blue") # r_M1
-  ax.scatter(x, y, z, c="blue", s=65.) # dot for the body
+#   ax.quiver(x, y, z, u_M1, v_M1, w_M1, length=5., normalize=False, color="green") # r_M1
+#   ax.quiver(x, y, z, u_M2, v_M2, w_M2, length=5., normalize=False, color="blue") # r_M1
+#   ax.quiver(x, y, z, u_M3, v_M3, w_M3, length=5., normalize=False, color="red") # r_M1
+#   ax.quiver(x, y, z, u_M4, v_M4, w_M4, length=5., normalize=False, color="blue") # r_M1
+#   ax.scatter(x, y, z, c="blue", s=65.) # dot for the body
 
-  #ax.set_xlim3d(7.5, -7.5)
+#   #ax.set_xlim3d(7.5, -7.5)
 
-  ax.set_xlabel("North")
-  ax.set_ylabel("East")
-  ax.set_zlabel("Down")
+#   ax.set_xlabel("North")
+#   ax.set_ylabel("East")
+#   ax.set_zlabel("Down")
 
-  #plot the waypoint
-  ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)
+#   #plot the waypoint
+#   ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)
 
-  fig2save = 'SimulationResults/Orient_quad/trajectory' + str(count) + '.jpg'
+#   fig2save = 'SimulationResults/Orient_quad/trajectory' + str(count) + '.jpg'
 
-  plt.savefig(fig2save)
+#   plt.savefig(fig2save)
 
 simout_array = np.stack([info_u, info_v, info_w, info_p, info_q, info_r, Euler_angles[:, 0], Euler_angles[:, 1], Euler_angles[:, 2], info_X, info_Y, info_Z, info_V_N, info_V_E, info_V_D], axis=1)
 
