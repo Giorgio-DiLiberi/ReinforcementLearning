@@ -32,3 +32,6 @@ primo, secondo = arguments()
 
 print(primo)
 print(secondo)
+
+LEB = np.array([[1, 2] , [3, 4]])
+print(LEB[1])

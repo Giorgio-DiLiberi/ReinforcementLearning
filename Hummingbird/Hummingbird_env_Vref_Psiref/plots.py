@@ -104,11 +104,33 @@ fig = plt.figure(8)
 ax = fig.add_subplot(111, projection='3d')
 ax.invert_xaxis()
 ax.invert_zaxis()
+
 ax.scatter(0., 0., -5., c="red", s=80.)
 ax.scatter(0., 0., -20., c="red", s=80.)
 ax.scatter(15., 0., -20., c="red", s=80.)
 ax.scatter(15., 15., -20., c="red", s=80.)
 ax.scatter(0., 15., -20., c="red", s=80.)
+
+# plot arrows to show waypoints sequence
+ax.quiver(0, 0, -5, 0, 0, -1, length=7.5, normalize=False, color="green") # first waypoint
+ax.quiver(0, 0, -12.5, 0, 0, -1, length=7.5, normalize=False, color="green") # first waypoint
+
+ax.quiver(0, 0, -20, 1, 0, 0, length=7.5, normalize=False, color="green") # first waypoint
+ax.quiver(7.5, 0, -20, 1, 0, 0, length=7.5, normalize=False, color="green") # first waypoint
+
+ax.quiver(15, 0, -20, 0, 1, 0, length=7.5, normalize=False, color="green") # first waypoint
+ax.quiver(15, 7.5, -20, 0, 1, 0, length=7.5, normalize=False, color="green") # first waypoint
+
+ax.quiver(15, 15, -20, -1, 0, 0, length=7.5, normalize=False, color="green") # first waypoint
+ax.quiver(7.5, 15, -20, -1, 0, 0, length=7.5, normalize=False, color="green") # first waypoint
+
+ax.quiver(0, 15, -20, 0, -1, 0, length=7.5, normalize=False, color="green") # first waypoint
+ax.quiver(0, 7.5, -20, 0, -1, 0, length=7.5, normalize=False, color="green") # first waypoint
+
+ax.quiver(0, 0.2, -20, 0, 0, 1, length=7.5, normalize=False, color="blue") # first waypoint
+ax.quiver(0, 0.2, -12.5, 0, 0, 1, length=7.5, normalize=False, color="blue") # first waypoint
+
+
 ax.set_xlabel("North")
 ax.set_ylabel("East")
 ax.set_zlabel("Down")
