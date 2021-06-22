@@ -151,6 +151,8 @@ class Hummingbird_6DOF(gym.Env):
     self.max_Episode_time_steps = int(4*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
+    self.Force_dist_mem = None
+    self.Torque_dist_mem = None
 
     # Constants to normalize state and reward
     
@@ -175,12 +177,27 @@ class Hummingbird_6DOF(gym.Env):
         # to separate the time steps the integration is performed in a for loop which runs
         # into the step function for nTimes = policy_timeStep / dynamics_timeStep
 
+        # disturbance computation
+        # Random process noise on linear accelerations
+        if self.Process_perturbations:
+          Force_disturbance = self.mass * np_normal(0, 0.005, 3) #[m/s^2]
+          #Torque_disturbance = self.InVec * np.array([np_normal(0, 5*0.00175), np_normal(0, 5*0.00175), np_normal(0, 5*0.00175)]) #[rad/s^2]
+          Torque_disturbance = self.InVec * np_normal(0, 10*0.0175, 3) #[rad/s^2]
+
+        else:
+          Force_disturbance = np.zeros(3) #[m/s^2]
+          Torque_disturbance = np.zeros(3) #[rad/s^2]
+
+        #saving noise components
+        self.Force_dist_mem = np.vstack([self.Force_dist_mem, Force_disturbance])
+        self.Torque_dist_mem = np.vstack([self.Torque_dist_mem, Torque_disturbance])
+
         # Integration of the equation of motion with Runge-Kutta 4 order method
         ## The state derivatives funcion xVec_dot = fvec(x,u) is implemented in a separate function
-        k1vec = h * self.eqnsOfMotion(State_curr_step, Throttles) # Action stays unchanged for this loop
-        k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), Throttles) # K2 from state+K1/2
-        k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k2vec), Throttles) # K3 from state+k2/2
-        k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), Throttles) # K4 from state+K3
+        k1vec = h * self.eqnsOfMotion(State_curr_step, Throttles, Force_disturbance, Torque_disturbance) # Action stays unchanged for this loop
+        k2vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k1vec), Throttles, Force_disturbance, Torque_disturbance) # K2 from state+K1/2
+        k3vec = h * self.eqnsOfMotion(np.add(State_curr_step, 0.5*k2vec), Throttles, Force_disturbance, Torque_disturbance) # K3 from state+k2/2
+        k4vec = h * self.eqnsOfMotion(np.add(State_curr_step, k3vec), Throttles, Force_disturbance, Torque_disturbance) # K4 from state+K3
         # Final step of integration 
         State_curr_step = State_curr_step + (k1vec/6) + (k2vec/3) + (k3vec/3) + (k4vec/6)
 
@@ -196,9 +213,9 @@ class Hummingbird_6DOF(gym.Env):
       # as obs is given only the difference between desired quaternion components and actual
       PHI = self.quat2Att()
 
-      phi_err = self.Phi_ref - PHI[0] - 0.115 * 0.0175
-      theta_err = self.Theta_ref - PHI[1] - 0.218 * 0.0175
-      psi_err = self.Psi_ref - PHI[2] + 0.6 * 0.0175
+      phi_err = self.Phi_ref - PHI[0] - 0.128 * 0.0175
+      theta_err = self.Theta_ref - PHI[1] - 0.230 * 0.0175
+      psi_err = self.Psi_ref - PHI[2] + 0.540 * 0.0175
 
       if psi_err>np.pi:
         psi_err = - (2 * np.pi - psi_err)
@@ -278,6 +295,11 @@ class Hummingbird_6DOF(gym.Env):
         q1_reset = 0.
         q2_reset = 0.
         q3_reset = 0.      
+
+
+
+      self.Force_dist_mem = np.zeros(3)
+      self.Torque_dist_mem = np.zeros(3)
 
       self.state = np.array([u_reset,v_reset,w_reset,p_reset,q_reset,r_reset,q0_reset,q1_reset,q2_reset,q3_reset,X_reset,Y_reset,Z_reset]) # to initialize the state the object is put in x0=20 and v0=0
       
@@ -599,21 +621,12 @@ class Hummingbird_6DOF(gym.Env):
 
       return Thrust, Torque, a1, b1 # return scalar thrust and torque
 
-  def eqnsOfMotion(self, State, Throttles):
+  def eqnsOfMotion(self, State, Throttles, Force_disturbance, Torque_disturbance):
 
       """
       This function evaluates the xVec_dot=fVec(x,u) given the states and controls in current step
       """
       # This function is implemented separately to make the code more easily readable
-
-      # Random process noise on linear accelerations
-      if self.Process_perturbations:
-        Force_disturbance = self.mass * np_normal(0, 0.005, 3) #[m/s^2]
-        Torque_disturbance = self.InVec * np_normal(0, 5*0.00175, 3) #[rad/s^2]
-
-      else:
-        Acc_disturbance = np.zeros(3) #[m/s^2]
-        Omega_dot_dist = np.zeros(3) #[rad/s^2]
 
       Vb = State[0:3] # Subvector CG velocity [m/s]
       Omega = State[3:6] # Subvector angular velocity [rad/s]

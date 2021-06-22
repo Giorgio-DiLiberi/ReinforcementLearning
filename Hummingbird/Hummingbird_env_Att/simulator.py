@@ -100,7 +100,7 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==(int(2/env.timeStep)-1): ## select seconds after simulation start and impose step
-      env.Theta_ref = 5. * 0.0175
+      env.Psi_ref = 5. * 0.0175
 
     # if i==512:
     #   env.Psi_ref = -150. * 0.0175
@@ -247,6 +247,13 @@ np.savetxt("simout.txt", simout_array)
 ref_array = np.stack([Phi_ref, Theta_ref, Psi_ref], axis=1)
 
 np.savetxt("references.txt", ref_array)
+
+## Noise saving 
+noise_array = env.Torque_dist_mem
+print(env.InVec)
+print(noise_array.shape)
+#noise_array = np.stack([env.Force_dist_mem[:, 2], env.Torque_dist_mem[:, 2]], axis=1)
+np.savetxt("noise.txt", noise_array)
 
 
 

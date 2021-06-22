@@ -180,6 +180,8 @@ class Hummingbird_6DOF(gym.Env):
     self.psi_ref_mem = 0. # memory of psi ref to maintain the last value
     self.NewWP = False
 
+    self.Psi_ref_ass = True
+
   def step(self, action):
 
       # State-action variables assignment
@@ -218,23 +220,24 @@ class Hummingbird_6DOF(gym.Env):
       X_error = self.X_ref - self.state[10]
       Y_error = self.Y_ref - self.state[11]
       Z_error = self.Z_ref - self.state[12]
+      D_tot = np.sqrt(X_error**2 + Y_error**2 + Z_error**2)
 
-      Int_X = 0.007 * 0.04 * X_error + self.Int_X
-      Int_Y = 0.007 * 0.04 * Y_error + self.Int_Y
-      Int_Z = 0.007 * 0.04 * Z_error + self.Int_Z
+      Int_X = 0.0007 * 0.04 * X_error/D_tot + self.Int_X
+      Int_Y = 0.0007 * 0.04 * Y_error/D_tot + self.Int_Y
+      Int_Z = 0.0007 * 0.04 * Z_error/D_tot + self.Int_Z
       
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 0.9 * (X_error) + Int_X
+        self.V_NED_ref[0] = 1.5 * (X_error/D_tot) #+ Int_X
         if abs(self.V_NED_ref[0])>2.:
           self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
 
-        self.V_NED_ref[1] = 0.9 * (Y_error) + Int_Y
+        self.V_NED_ref[1] = 1.5 * (Y_error/D_tot) #+ Int_Y
         if abs(self.V_NED_ref[1])>2.:
           self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
 
-        self.V_NED_ref[2] = 0.9 * (Z_error) + Int_Z
+        self.V_NED_ref[2] = 1.5 * (Z_error/D_tot) #+ Int_Z
         if abs(self.V_NED_ref[2])>2.:
           self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
 
@@ -253,7 +256,7 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((X_error**2) + (Y_error**2))
 
-      if Pos_Error >= 3.5:
+      if Pos_Error >= 1. and self.Psi_ref_ass:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         #updated to keep the orientation as it was when far from the target
 
@@ -344,6 +347,10 @@ class Hummingbird_6DOF(gym.Env):
         q1_reset = 0.
         q2_reset = 0.
         q3_reset = 0.      
+
+        self.X_ref = 7.5
+        self.Y_ref = 0.
+        self.Z_ref = -20.
 
         self.V_NED_ref = np.zeros(3) #[m/s] [V_Nord_ref, V_Est_ref, V_Down_ref]
 
