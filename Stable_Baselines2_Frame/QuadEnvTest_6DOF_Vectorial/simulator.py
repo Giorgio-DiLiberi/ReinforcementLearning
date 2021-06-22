@@ -117,7 +117,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
       env.psi_ref = -90. * np.pi/180
 
     if i==1100:
-      env.psi_ref = 0.
+      env.psi_ref = -45. * np.pi/180
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     

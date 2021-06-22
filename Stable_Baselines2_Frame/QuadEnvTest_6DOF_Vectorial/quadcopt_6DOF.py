@@ -339,7 +339,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       V_error_Weight = 0.8
       drift_weight = 0.8
       rate_weight = 0.7
-      q3_W = 0.9
+      q3_W = 1.
 
       # There should be sa fourth constraint to assign values at the dR controls, this constraint is to 
       # maximize the q0 wich is maximum (=1) if the rotation between NED and body is null, since the 

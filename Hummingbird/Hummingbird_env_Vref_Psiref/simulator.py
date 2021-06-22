@@ -159,8 +159,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     # if i==32:
     #   env.Z_ref = -17.
 
-    if i>=256 and i<2560 and i%32==0:
+    if i>=256 and i<3072 and i%32==0:
       angle = 0.05 * (env.elapsed_time_steps-256) * 0.04
+      env.psi_ref_mem = angle + np.pi * 0.5
 
       env.X_ref = 7.5 * np.cos(angle)
       env.Y_ref = 7.5 * np.sin(angle)

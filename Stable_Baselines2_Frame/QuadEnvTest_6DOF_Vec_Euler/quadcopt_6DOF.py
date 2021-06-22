@@ -389,7 +389,7 @@ class QuadcoptEnv_6DOF(gym.Env):
       # where q0 = 0 (being psi and theta = 0); is good to give a visibility to the policy on all the  
       # components of the reward.
       R = (1.) - V_error_Weight * (abs(VNord_error/20.) + abs(VEst_error/20.) + abs(VDown_error/20.))\
-        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(v/10.) + abs(Psi_err/2*np.pi))
+        - rate_weight * (abs(p/50.) + abs(q/50.) + abs(r/50.)) - drift_weight * (abs(Psi_err/2*np.pi))
 
       if R >= 0:
         reward = R
