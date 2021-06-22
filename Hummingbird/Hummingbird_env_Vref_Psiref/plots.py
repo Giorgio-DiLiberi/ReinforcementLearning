@@ -12,11 +12,18 @@ state = np.loadtxt("simout.txt")
 X = state[:, 9]
 Y = state[:, 10]
 Z = state[:, 11]
+VN = state[:, 12]
+VE = state[:, 13]
+VD = state[:, 14]
 
 references = np.loadtxt("references.txt")
 X_ref = references[:, 0]
 Y_ref = references[:, 1]
 Z_ref = references[:, 2]
+VN_ref = references[:, 3]
+VE_ref = references[:, 4]
+VD_ref = references[:, 5]
+
 
 time = np.loadtxt("time.txt")
 
@@ -64,4 +71,47 @@ plt.ylabel('Position [m]')
 plt.title('Z - Z reference')
 plt.legend(["Z", "Z_ref"])
 plt.savefig('SimulationResults/Z_Zref.jpg')
+
+plt.figure(5)
+plt.plot(time, VN)
+plt.plot(time, VN_ref)
+plt.xlabel('time [s]')
+plt.ylabel('Velocity [m/s]')
+plt.title('VN - VN reference')
+plt.legend(["VN", "VN_ref"])
+plt.savefig('SimulationResults/VN_VNref.jpg')
+
+plt.figure(6)
+plt.plot(time, VE)
+plt.plot(time, VE_ref)
+plt.xlabel('time [s]')
+plt.ylabel('Velocity [m/s]')
+plt.title('VE - VE reference')
+plt.legend(["VE", "VE_ref"])
+plt.savefig('SimulationResults/VE_VEref.jpg')
+
+plt.figure(7)
+plt.plot(time, VD)
+plt.plot(time, VD_ref)
+plt.xlabel('time [s]')
+plt.ylabel('Velocity [m/s]')
+plt.title('VD - VD reference')
+plt.legend(["VD", "VD_ref"])
+plt.savefig('SimulationResults/VD_VDref.jpg')
+
+## PLOT of trajectory and waypoints
+fig = plt.figure(8)
+ax = fig.add_subplot(111, projection='3d')
+ax.invert_xaxis()
+ax.invert_zaxis()
+ax.scatter(0., 0., -5., c="red", s=80.)
+ax.scatter(0., 0., -20., c="red", s=80.)
+ax.scatter(15., 0., -20., c="red", s=80.)
+ax.scatter(15., 15., -20., c="red", s=80.)
+ax.scatter(0., 15., -20., c="red", s=80.)
+ax.set_xlabel("North")
+ax.set_ylabel("East")
+ax.set_zlabel("Down")
+plt.savefig("SimulationResults/Waypoints.jpg")
+
 

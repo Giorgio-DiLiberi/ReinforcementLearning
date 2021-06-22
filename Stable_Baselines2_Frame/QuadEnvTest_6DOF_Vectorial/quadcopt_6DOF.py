@@ -665,19 +665,19 @@ class QuadcoptEnv_6DOF(gym.Env):
 
       
       q0 = q0/abs_Q
-      if abs(q0)>=1.:
+      if abs(q0)>1.0001:
         q0 = 1.*np.sign(q0)
 
       q1 = q1/abs_Q
-      if abs(q1)>=1.:
+      if abs(q1)>1.0001:
         q1 = 1.*np.sign(q1)
 
       q2 = q2/abs_Q
-      if abs(q2)>=1.:
+      if abs(q2)>1.0001:
         q2 = 1.*np.sign(q2)
 
       q3 = q3/abs_Q
-      if abs(q3)>=1.:
+      if abs(q3)>1.0001:
         q3 = 1.*np.sign(q3)
 
       # Motors section (vectors are evaluated later in this method)

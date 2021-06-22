@@ -609,7 +609,7 @@ class Hummingbird_6DOF(gym.Env):
 
       V_NED = np.dot(LEB, Vb)
 
-      V_NED_Err = V_NED - self.V_NED_ref
+      V_NED_Err = V_NED - self.V_NED_ref + np.array([-0.5, 0., +0.5])
 
       return V_NED_Err, V_NED
 
