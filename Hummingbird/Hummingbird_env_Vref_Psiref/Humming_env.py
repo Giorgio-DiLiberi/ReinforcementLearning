@@ -256,7 +256,7 @@ class Hummingbird_6DOF(gym.Env):
 
       Pos_Error = np.sqrt((X_error**2) + (Y_error**2))
 
-      if Pos_Error >= 0.5 and self.Psi_ref_ass:
+      if Pos_Error >= 1.5 and self.Psi_ref_ass:
         self.psi_ref_mem = Psi_ref # when the error is less than 2 m in plane the reference mem is no longer
         #updated to keep the orientation as it was when far from the target
 
@@ -353,7 +353,7 @@ class Hummingbird_6DOF(gym.Env):
         q2_reset = 0.
         q3_reset = 0.      
 
-        self.X_ref = 7.5
+        self.X_ref = 0.
         self.Y_ref = 0.
         self.Z_ref = -20.
 

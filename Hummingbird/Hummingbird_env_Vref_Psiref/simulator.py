@@ -98,7 +98,7 @@ time=0.
 info_time=[time] # elapsed time vector
 
 env.Position_reference = True
-env.Psi_ref_ass = False
+env.Psi_ref_ass = True
 env.psi_ref_mem = 0.
 
 # SIMULATION
@@ -106,41 +106,41 @@ env.psi_ref_mem = 0.
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # # Waypoint navigation section (uncomment to realize wp nav)
-    # if i==350:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 0.
-    #   env.Z_ref = -20.
+    if i==350:
+      env.X_ref = 0.
+      env.Y_ref = 0.
+      env.Z_ref = -20.
 
-    # if i==750:
-    #   env.X_ref = 15.
-    #   env.Y_ref = 0.
-    #   env.Z_ref = -20.
+    if i==750:
+      env.X_ref = 15.
+      env.Y_ref = 0.
+      env.Z_ref = -20.
 
-    # if i==1200:
-    #   env.X_ref = 15.
-    #   env.Y_ref = 15.
-    #   env.Z_ref = -20.
-    #   #env.NewWP = True
-    #   #env.psi_ref_mem = 0.  #90.*0.0175
+    if i==1200:
+      env.X_ref = 15.
+      env.Y_ref = 15.
+      env.Z_ref = -20.
+      #env.NewWP = True
+      #env.psi_ref_mem = 0.  #90.*0.0175
 
-    # if i==1600:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 15.
-    #   env.Z_ref = -20.
-    #   #.NewWP = True
-    #   #env.psi_ref_mem = 0.  #175.*0.0175
+    if i==1600:
+      env.X_ref = 0.
+      env.Y_ref = 15.
+      env.Z_ref = -20.
+      #.NewWP = True
+      #env.psi_ref_mem = 0.  #175.*0.0175
 
-    # if i==2000:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 0.
-    #   env.Z_ref = -20.
-    #   #env.NewWP = True
-    #   #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
+    if i==2000:
+      env.X_ref = 0.
+      env.Y_ref = 0.
+      env.Z_ref = -20.
+      #env.NewWP = True
+      #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
 
-    # if i==2512:
-    #   env.X_ref = 0.
-    #   env.Y_ref = 0.
-    #   env.Z_ref = -5.
+    if i==2512:
+      env.X_ref = 0.
+      env.Y_ref = 0.
+      env.Z_ref = -5.
     #   #env.NewWP = True
     #   #env.psi_ref_mem = -90. * 0.0175
 
@@ -159,12 +159,12 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     # if i==32:
     #   env.Z_ref = -17.
 
-    if i>=25 and i<3072 and i%32==0:
-      angle = 0.05 * (env.elapsed_time_steps-25) * 0.04
-      env.psi_ref_mem = angle + np.pi * 0.5
+    # if i>=25 and i<3072 and i%32==0:
+    #   angle = 0.05 * (env.elapsed_time_steps-25) * 0.04
+    #   env.psi_ref_mem = angle + np.pi * 0.5
 
-      env.X_ref = 7.5 * np.cos(angle)
-      env.Y_ref = 7.5 * np.sin(angle)
+    #   env.X_ref = 7.5 * np.cos(angle)
+    #   env.Y_ref = 7.5 * np.sin(angle)
 
     # if i==1750:
     #   env.X_ref = 0.0
