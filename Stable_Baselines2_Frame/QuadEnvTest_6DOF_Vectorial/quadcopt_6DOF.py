@@ -254,8 +254,8 @@ class QuadcoptEnv_6DOF(gym.Env):
         q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
         q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
 
-        self.V_NED_ref[0] = np_normal(0., 1.) #[m/s]
-        self.V_NED_ref[1] = np_normal(0., 1.) #[m/s]
+        self.V_NED_ref[0] = np_normal(0., 1.5) #[m/s]
+        self.V_NED_ref[1] = np_normal(0., 1.5) #[m/s]
         self.V_NED_ref[2] = np_normal(0., 1.5) #[m/s]
 
         self.psi_ref = np_normal(0., 178.*0.0175)
@@ -344,8 +344,8 @@ class QuadcoptEnv_6DOF(gym.Env):
       # if q0_err<=0.:
       #   q3_err = -q3_err
 
-      V_error_Weight = 0.8
-      drift_weight = 0.8
+      V_error_Weight = 1.2
+      #drift_weight = 0.8
       rate_weight = 0.7
       q3_W = 1.
 

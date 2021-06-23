@@ -229,7 +229,7 @@ class Hummingbird_6DOF(gym.Env):
       # evaluation of NED velocity references proportionally to position errors if Position Reference ==True
       if self.Position_reference:
 
-        self.V_NED_ref[0] = 1. * (X_error) + Int_X
+        self.V_NED_ref[0] = 1. * (X_error) #+ Int_X
         if abs(self.V_NED_ref[0])>2.:
           self.V_NED_ref[0]=sign(self.V_NED_ref[0])*2.
 
@@ -237,7 +237,7 @@ class Hummingbird_6DOF(gym.Env):
         if abs(self.V_NED_ref[1])>2.:
           self.V_NED_ref[1]=sign(self.V_NED_ref[1])*2.
 
-        self.V_NED_ref[2] = 1. * (Z_error) + Int_Z
+        self.V_NED_ref[2] = 1. * (Z_error) #+ Int_Z
         if abs(self.V_NED_ref[2])>2.:
           self.V_NED_ref[2]=sign(self.V_NED_ref[2])*2.
 
@@ -620,7 +620,7 @@ class Hummingbird_6DOF(gym.Env):
 
       V_NED = np.dot(LEB, Vb)
 
-      V_NED_Err = V_NED - self.V_NED_ref #+ np.array([0., 1, +0.5])
+      V_NED_Err = V_NED - self.V_NED_ref + np.array([0., 0., 0.])
 
       return V_NED_Err, V_NED
 
