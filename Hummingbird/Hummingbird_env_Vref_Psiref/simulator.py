@@ -370,6 +370,22 @@ for count in range(int(env.elapsed_time_steps/8)):
   plt.savefig(fig2save)
   n_fig = count
 
+fig = plt.figure(10+n_fig)
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_wireframe(np.array([info_X]), np.array([info_Y]), np.array([info_Z]))
+ax.invert_xaxis()
+ax.invert_zaxis()
+ax.scatter(0., 0., -5., c="red", s=80.)
+ax.scatter(0., 0., -20., c="red", s=80.)
+ax.scatter(15., 0., -20., c="red", s=80.)
+ax.scatter(15., 15., -20., c="red", s=80.)
+ax.scatter(0., 15., -20., c="red", s=80.)
+
+ax.set_xlabel("North")
+ax.set_ylabel("East")
+ax.set_zlabel("Down")
+plt.savefig("SimulationResults/Traj_WPTS.jpg")
+
 
 ## Sction to plot orientation with arrows to represent the miniquad figure
 # so for arrow to represent arms and a dot to represent body
