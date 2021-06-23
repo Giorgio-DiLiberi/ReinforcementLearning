@@ -50,7 +50,8 @@ elif Policy_loading_mode == "best":
 
 elif Policy_loading_mode == "lastbest":
 
-  Policy2Load = "EvalClbkLogs/best_model6.zip" # with modified ob array
+  Policy2Load = "EvalClbkLogs/best_model5.zip" # with modified obs array
+  #now the only good policies are best_model5 and best_model6
 
 else:
 
@@ -160,7 +161,7 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     #   env.Z_ref = -17.
 
     if i>=0 and i<3072 and i%2==0:
-      angle = 0.3 * (env.elapsed_time_steps-2) * 0.04
+      angle = 0.27 * (env.elapsed_time_steps-2) * 0.04
       # env.psi_ref_mem = angle + np.pi * 0.5
 
       env.X_ref = 7.5 * np.cos(angle)
