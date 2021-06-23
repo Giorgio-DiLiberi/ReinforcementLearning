@@ -99,7 +99,7 @@ info_time=[time] # elapsed time vector
 
 env.Position_reference = True
 env.Psi_ref_ass = True
-env.psi_ref_mem = 0.
+#env.psi_ref_mem = 0.
 
 # SIMULATION
 
@@ -159,9 +159,9 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     # if i==32:
     #   env.Z_ref = -17.
 
-    if i>=5 and i<3072 and i%2==0:
-      angle = 0.2 * (env.elapsed_time_steps-5) * 0.04
-      env.psi_ref_mem = angle + np.pi * 0.5
+    if i>=0 and i<3072 and i%2==0:
+      angle = 0.35 * (env.elapsed_time_steps-2) * 0.04
+      # env.psi_ref_mem = angle + np.pi * 0.5
 
       env.X_ref = 7.5 * np.cos(angle)
       env.Y_ref = 7.5 * np.sin(angle)

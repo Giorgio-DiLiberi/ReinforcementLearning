@@ -136,4 +136,16 @@ ax.set_ylabel("East")
 ax.set_zlabel("Down")
 plt.savefig("SimulationResults/Waypoints.jpg")
 
+# plot of circle
+fig = plt.figure(9)
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_wireframe(X_ref, Y_ref, np.array([Z_ref]))
+ax.invert_xaxis()
+ax.invert_zaxis()
+
+ax.set_xlabel("North")
+ax.set_ylabel("East")
+ax.set_zlabel("Down")
+plt.savefig("SimulationResults/Circle.jpg")
+
 
