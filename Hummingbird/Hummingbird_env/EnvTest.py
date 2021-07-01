@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import cos as cos
 from numpy import sin as sin
+import matplotlib
+matplotlib.use('pdf') # To avoid plt.show issues in virtualenv
+import matplotlib.pyplot as plt
 
 from Humming_env import Hummingbird_6DOF
 
@@ -17,23 +20,36 @@ print("vH = ", env.vh)
 
 print("Trim_thr= ", env.dTt)
 
-RPS = 4500 / 60
-wm = -10.
-vi = wm/2 + np.sqrt(((0.5*wm)**2) + (env.vh**2))
-
-Delta_Thrust = env.rho * np.pi * (2*np.pi*RPS) * env.prop_mean_chord * ((env.D_prop**2)/4) * (- vi + wm + env.vh)
-      
-print("Delta Thrust = ", Delta_Thrust)
-
-dT1 = 0.38
-Vb = np.array([0., 0., 0.])
-Omega = np.array([0., 0., 1.75])
-Vm1 = Vb + np.cross(Omega, env.rM1)
-M1_Thrust, M1_Torque, M1_a1, M1_b1 = env.Motor(dT1, Vm1) # scalar values for M1
-F1 = np.array([-M1_Thrust * sin(M1_a1), -M1_Thrust * sin(M1_b1), -M1_Thrust])
-
-print("Motor Force = ", F1)
+RPS = np.sqrt(env.dTt)*env.nMax_motor
+print (RPS)
 
 
-obs = env.reset()
-print(obs)
+wm_arr = np.linspace(-2., 10., 120)
+
+vi_arr = []
+Delta_T_arr = []
+
+for i in range(120):
+
+    wm = -wm_arr[i]
+    vi = wm/2 + np.sqrt(((0.5*wm)**2) + (env.vh**2))
+    Delta_Thrust = env.rho * np.pi * (2*np.pi*RPS) * env.prop_mean_chord * ((env.D_prop**2)/4) * (- vi + wm + env.vh)
+    
+    vi_arr.append(vi)
+    Delta_T_arr.append(Delta_Thrust)
+
+plt.figure(1)
+plt.plot(wm_arr, vi_arr)
+plt.xlabel('Vc [m/s]')
+plt.ylabel('induced vel. [m/s]')
+plt.title('Induced velocity')
+plt.savefig('SimulationResults/Induced_vel.jpg')
+
+plt.figure(2)
+plt.plot(wm_arr, Delta_T_arr)
+plt.xlabel('Vc [m/s]')
+plt.ylabel('Delta Thrust N]')
+plt.title('Thrust variation')
+plt.savefig('SimulationResults/Delta_Thrust.jpg')
+
+

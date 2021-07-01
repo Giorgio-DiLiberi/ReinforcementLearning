@@ -45,6 +45,43 @@ plt.ylabel('Distance [m]')
 plt.title('Distance in sim')
 plt.savefig('SimulationResults/Dist1sim.jpg')
 
+#RMSE calculation for single waypoint
+RMSE1 = 0.
+RMSE2 = 0.
+RMSE3 = 0.
+RMSE4 = 0.
+RMSE5 = 0.
+RMSE6 = 0.
+
+for i1 in range(25):
+    RMSE1 += distance[748-24+i1]
+    RMSE2 += distance[1198-24+i1]
+    RMSE3 += distance[1598-24+i1]
+    RMSE4 += distance[1998-24+i1]
+    RMSE5 += distance[2510-24+i1]
+    RMSE6 += distance[3071-24+i1]
+
+RMSE1 = RMSE1/25
+RMSE2 = RMSE2/25
+RMSE3 = RMSE3/25
+RMSE4 = RMSE4/25
+RMSE5 = RMSE5/25
+RMSE6 = RMSE6/25
+print("WP1 RMSE: ", RMSE1)
+print("WP2 RMSE: ", RMSE2)
+print("WP3 RMSE: ", RMSE3)
+print("WP4 RMSE: ", RMSE4)
+print("WP5 RMSE: ", RMSE5)
+print("WP6 RMSE: ", RMSE6)
+
+# Calc of averge distance from the waypoints across all the simulation
+RMSE = 0.
+for i2 in range(3073):
+    RMSE += distance[i1]
+
+RMSE = RMSE/3073
+print("Average distance from targets = ", RMSE)
+
 plt.figure(2)
 plt.plot(time, X)
 plt.plot(time, X_ref)
