@@ -48,8 +48,43 @@ plt.savefig('SimulationResults/Induced_vel.jpg')
 plt.figure(2)
 plt.plot(wm_arr, Delta_T_arr)
 plt.xlabel('Vc [m/s]')
-plt.ylabel('Delta Thrust N]')
+plt.ylabel('Delta Thrust [N]')
 plt.title('Thrust variation')
 plt.savefig('SimulationResults/Delta_Thrust.jpg')
+
+
+## Graphs of flap coefficient
+
+
+RPS_squared = env.dTt * (env.nMax_motor**2) #[RPS**2] square of actual prop speed
+RPS = np.sqrt(RPS_squared) #[RPS]
+Omega_prop = RPS * 2 * np.pi #[rad/s] 
+
+U_tip = Omega_prop * env.D_prop / 2 #[m/s]
+
+lambda_i = (-env.vh) / U_tip # induced velocity coefficient
+
+um_arr = np.linspace(-10, 10, 200)
+
+a1_arr = []
+
+for i1 in range(200):
+
+    um = um_arr[i1]
+
+    mi_x = um / U_tip # advance ratios relative to u and v velocities
+
+    a1 = 2 * mi_x * (((4/3)*env.prop_Theta0) + lambda_i)/(1 - ((mi_x**2)/2))
+
+    a1_deg = a1 * 180 / np.pi
+
+    a1_arr.append(a1_deg)
+
+plt.figure(3)
+plt.plot(um_arr, a1_arr)
+plt.xlabel('u [m/s]')
+plt.ylabel('a1 [deg]')
+plt.title('Thrust variation')
+plt.savefig('SimulationResults/a1_fig.jpg')
 
 
