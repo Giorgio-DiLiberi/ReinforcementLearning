@@ -29,28 +29,28 @@ wm_arr = np.linspace(-2., 10., 120)
 vi_arr = []
 Delta_T_arr = []
 
-for i in range(120):
+# for i in range(120):
 
-    wm = -wm_arr[i]
-    vi = wm/2 + np.sqrt(((0.5*wm)**2) + (env.vh**2))
-    Delta_Thrust = env.rho * np.pi * (2*np.pi*RPS) * env.prop_mean_chord * ((env.D_prop**2)/4) * (- vi + wm + env.vh)
+#     wm = -wm_arr[i]
+#     vi = wm/2 + np.sqrt(((0.5*wm)**2) + (env.vh**2))
+#     Delta_Thrust = env.rho * np.pi * (2*np.pi*RPS) * env.prop_mean_chord * ((env.D_prop**2)/4) * (- vi + wm + env.vh)
     
-    vi_arr.append(vi)
-    Delta_T_arr.append(Delta_Thrust)
+#     vi_arr.append(vi)
+#     Delta_T_arr.append(Delta_Thrust)
 
-plt.figure(1)
-plt.plot(wm_arr, vi_arr)
-plt.xlabel('Vc [m/s]')
-plt.ylabel('induced vel. [m/s]')
-plt.title('Induced velocity')
-plt.savefig('SimulationResults/Induced_vel.jpg')
+# plt.figure(1)
+# plt.plot(wm_arr, vi_arr)
+# plt.xlabel('Vc [m/s]')
+# plt.ylabel('induced vel. [m/s]')
+# plt.title('Induced velocity')
+# plt.savefig('SimulationResults/Induced_vel.jpg')
 
-plt.figure(2)
-plt.plot(wm_arr, Delta_T_arr)
-plt.xlabel('Vc [m/s]')
-plt.ylabel('Delta Thrust [N]')
-plt.title('Thrust variation')
-plt.savefig('SimulationResults/Delta_Thrust.jpg')
+# plt.figure(2)
+# plt.plot(wm_arr, Delta_T_arr)
+# plt.xlabel('Vc [m/s]')
+# plt.ylabel('Delta Thrust [N]')
+# plt.title('Thrust variation')
+# plt.savefig('SimulationResults/Delta_Thrust.jpg')
 
 
 ## Graphs of flap coefficient
@@ -64,11 +64,11 @@ U_tip = Omega_prop * env.D_prop / 2 #[m/s]
 
 lambda_i = (-env.vh) / U_tip # induced velocity coefficient
 
-um_arr = np.linspace(-10, 10, 200)
+um_arr = np.linspace(-10, 10, 21)
 
 a1_arr = []
 
-for i1 in range(200):
+for i1 in range(21):
 
     um = um_arr[i1]
 
@@ -80,11 +80,27 @@ for i1 in range(200):
 
     a1_arr.append(a1_deg)
 
+
+
+a1meas = [0, 0.18, 0.7, 1.12, 1.48, 1.78, 2.10, 2.4, 2.72, 3.0, 3.3]# measured value of a1 from Quad model reference
+
+a1meas1 = np.zeros(10)
+
+for i in range(a1meas.__len__()-1):
+    
+    a1meas1[i] = -a1meas[10-i]
+
+
+
+a1meas = np.concatenate((a1meas1, a1meas))
+
 plt.figure(3)
 plt.plot(um_arr, a1_arr)
+plt.plot(um_arr, a1meas)
 plt.xlabel('u [m/s]')
 plt.ylabel('a1 [deg]')
 plt.title('Thrust variation')
+plt.legend(["a1_calc","a1_meas"])
 plt.savefig('SimulationResults/a1_fig.jpg')
 
-
+print(a1meas)
