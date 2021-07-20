@@ -64,11 +64,11 @@ U_tip = Omega_prop * env.D_prop / 2 #[m/s]
 
 lambda_i = (-env.vh) / U_tip # induced velocity coefficient
 
-um_arr = np.linspace(-10, 10, 21)
+um_arr = np.linspace(0, 5, 11)
 
 a1_arr = []
 
-for i1 in range(21):
+for i1 in range(11):
 
     um = um_arr[i1]
 
@@ -92,11 +92,11 @@ for i in range(a1meas.__len__()-1):
 
 
 
-a1meas = np.concatenate((a1meas1, a1meas))
+a1meas2 = np.concatenate((a1meas1, a1meas))
 
 plt.figure(3)
 plt.plot(um_arr, a1_arr)
-plt.plot(um_arr, a1meas)
+plt.plot(um_arr, np.array(a1meas)/2)
 plt.xlabel('u [m/s]')
 plt.ylabel('a1 [deg]')
 plt.title('Thrust variation')
