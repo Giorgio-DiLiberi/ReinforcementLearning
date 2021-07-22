@@ -17,7 +17,7 @@ from stable_baselines import PPO2
 from Humming_env import Hummingbird_6DOF
 
 
-env = Hummingbird_6DOF(Random_reset=False, Process_perturbations=True)
+env = Hummingbird_6DOF(Random_reset=True, Process_perturbations=True)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
@@ -95,35 +95,7 @@ info_time=[time] # elapsed time vector
 
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
-    if i==256:
-      env.X_Pos_Goal = -0.
-      env.Y_Pos_Goal = -0.
-      env.Goal_Altitude = -17.
-
-    if i==650:
-      env.X_Pos_Goal = 15.
-      env.Y_Pos_Goal = -0.
-      env.Goal_Altitude = -17.
-
-    if i==1024:
-      env.X_Pos_Goal = 15.
-      env.Y_Pos_Goal = 15.
-      env.Goal_Altitude = -17.
-
-    if i==1350:
-      env.X_Pos_Goal = 0.
-      env.Y_Pos_Goal = 15.
-      env.Goal_Altitude = -17.
-
-    if i==1750:
-      env.X_Pos_Goal = 0.
-      env.Y_Pos_Goal = 0.
-      env.Goal_Altitude = -17.
-
-    if i==2256:
-      env.X_Pos_Goal = 0.
-      env.Y_Pos_Goal = 0.
-      env.Goal_Altitude = -2.
+    
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
@@ -283,6 +255,11 @@ for count in range(int(env.elapsed_time_steps/8)):
 
   #plot the waypoint
   ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)
+
+  ax.scatter(0, 0, -1, c="black", s=1.)
+  ax.scatter(15, 0, 0, c="black", s=1.)
+  ax.scatter(0, 15, 0, c="black", s=1.)
+  ax.scatter(0, 0, -16, c="black", s=1.)
 
   fig2save = 'SimulationResults/Orientation/trajectory' + str(count) + '.jpg'
 
