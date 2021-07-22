@@ -228,18 +228,17 @@ class Hummingbird_6DOF(gym.Env):
         angle = np_normal(0., 178. * 0.0175) #[rad] angle
         X_reset = 10. * cos(angle) #[m]
         Y_reset = 10. * sin(angle) #[m]
-        Z_reset = -2. #[m]
+        Z_reset = -30. #[m]
 
         w_reset = 0.8 #[m/s]
-        u_reset = 2.3 #[m/s]
-        v_reset = 4.1#[m/s]
+        u_reset = 1.3 #[m/s]
+        v_reset = 0.5#[m/s]
         
         p_reset = np_normal(0., 0.035)
         q_reset = np_normal(0., 0.035)
         r_reset = np_normal(0., 0.035)
 
         phi = 0.9
-
         theta = -1.2 #[rad]
         psi = 0.
 

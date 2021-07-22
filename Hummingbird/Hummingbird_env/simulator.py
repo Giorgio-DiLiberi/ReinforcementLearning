@@ -99,8 +99,8 @@ for i in range(tieme_steps_to_simulate): #last number is excluded
     
     action, _state = model.predict(obs, deterministic=True) # Add deterministic true for PPO to achieve better performane
     
-    if i <= 5:
-      action = np.array([0., 0., 0., 0.])
+    if i <= 25:
+      action = np.array([-1., 0., 0., 0.])
 
     obs, reward, done, info = env.step(action) 
 
