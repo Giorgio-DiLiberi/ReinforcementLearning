@@ -35,3 +35,9 @@ print(secondo)
 
 LEB = np.array([[1, 2] , [3, 4]])
 print(LEB[1])
+
+WP_list = np.array([[0, 0, -20], [15, 0, -20], [15, 15, -20], [0, 15, -20], [0, 0, -20], [0, 0, -5]])
+
+print(WP_list[1, :])
+
+print(WP_list.size)

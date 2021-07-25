@@ -107,41 +107,41 @@ env.Psi_ref_ass = True
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     # # Waypoint navigation section (uncomment to realize wp nav)
-    if i==350:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -20.
+    # if i==350:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -20.
 
-    if i==750:
-      env.X_ref = 15.
-      env.Y_ref = 0.
-      env.Z_ref = -20.
+    # if i==750:
+    #   env.X_ref = 15.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -20.
 
-    if i==1200:
-      env.X_ref = 15.
-      env.Y_ref = 15.
-      env.Z_ref = -20.
-      #env.NewWP = True
-      #env.psi_ref_mem = 0.  #90.*0.0175
+    # if i==1200:
+    #   env.X_ref = 15.
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -20.
+    #   #env.NewWP = True
+    #   #env.psi_ref_mem = 0.  #90.*0.0175
 
-    if i==1600:
-      env.X_ref = 0.
-      env.Y_ref = 15.
-      env.Z_ref = -20.
-      #.NewWP = True
-      #env.psi_ref_mem = 0.  #175.*0.0175
+    # if i==1600:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 15.
+    #   env.Z_ref = -20.
+    #   #.NewWP = True
+    #   #env.psi_ref_mem = 0.  #175.*0.0175
 
-    if i==2000:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -20.
-      #env.NewWP = True
-      #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
+    # if i==2000:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -20.
+    #   #env.NewWP = True
+    #   #env.psi_ref_mem = -135. * 0.0175   #-90.*0.0175
 
-    if i==2512:
-      env.X_ref = 0.
-      env.Y_ref = 0.
-      env.Z_ref = -5.
+    # if i==2512:
+    #   env.X_ref = 0.
+    #   env.Y_ref = 0.
+    #   env.Z_ref = -5.
     #   #env.NewWP = True
     #   #env.psi_ref_mem = -90. * 0.0175
 
