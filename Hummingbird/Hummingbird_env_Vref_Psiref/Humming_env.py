@@ -293,6 +293,9 @@ class Hummingbird_6DOF(gym.Env):
       if q0_err<=0.:
         q3_err = -q3_err
 
+      if abs(q3_err)>=0.35:
+        q3_err = 0.35 * sign(q3_err)
+
       LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
         [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
           [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
