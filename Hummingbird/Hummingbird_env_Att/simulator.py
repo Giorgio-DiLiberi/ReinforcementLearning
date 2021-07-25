@@ -100,6 +100,8 @@ info_time=[time] # elapsed time vector
 for i in range(tieme_steps_to_simulate): #last number is excluded
 
     if i==(int(2/env.timeStep)-1): ## select seconds after simulation start and impose step
+      # env.Phi_ref = 5. * 0.0175
+      # env.Theta_ref = 5. * 0.0175
       env.Psi_ref = 5. * 0.0175
 
     # if i==512:

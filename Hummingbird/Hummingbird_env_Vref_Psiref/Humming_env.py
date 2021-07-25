@@ -20,7 +20,8 @@ class Hummingbird_6DOF(gym.Env):
   """Quadcopter Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, Random_reset = False, Process_perturbations = False, Position_reference = True):
+  def __init__(self, Random_reset = False, Process_perturbations = False, Position_reference = True,\
+     WP_list = np.array([[0, 0, -5],[0, 0, -20]])):
     super(Hummingbird_6DOF, self).__init__()
 
 
@@ -153,7 +154,7 @@ class Hummingbird_6DOF(gym.Env):
     # The policy time steps is 0.05 (this step is also the one taken outside)
     self.dynamics_timeStep = 0.01 #[s] time step for Runge Kutta 
     self.timeStep = 0.04 #[s] time step for policy
-    self.max_Episode_time_steps = int(8*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
+    self.max_Episode_time_steps = int(12*10.24/self.timeStep) # maximum number of timesteps in an episode (=20s) here counts the policy step
     self.elapsed_time_steps = 0 # time steps elapsed since the beginning of an episode, to be updated each step
     
 
@@ -170,7 +171,7 @@ class Hummingbird_6DOF(gym.Env):
     # when x and Y ref changes so the psi reference is changed
 
     # create a list of waypoints to select the next waypoint
-    self.WP_list = np.array([[0, 0, -20], [15, 0, -20], [15, 15, -20], [0, 15, -20], [0, 0, -20], [0, 0, -5]])
+    self.WP_list = WP_list
     self.WP_counter = 0 # store the number of current waypoint
     self.WP_shape = self.WP_list.shape
     self.Last_row_WP = self.WP_shape[0] - 1 # index of last row in waypoint list
@@ -223,12 +224,14 @@ class Hummingbird_6DOF(gym.Env):
       # obs normalization is performed dividing state_next_step array by normalization vector
       # with elementwise division
 
+      # error evaluated to decide if switch to next WP
       X_error = self.X_ref - self.state[10]
       Y_error = self.Y_ref - self.state[11]
       Z_error = self.Z_ref - self.state[12]
       D_tot = np.sqrt(X_error**2 + Y_error**2 + Z_error**2)
 
-      if D_tot<=1.7:
+      # section to switch waypoint only if distance from actual WP is less than 1.7 m
+      if D_tot<=1.5:
 
         self.WP_counter += 1
 
@@ -236,12 +239,13 @@ class Hummingbird_6DOF(gym.Env):
           
           self.X_ref, self.Y_ref, self.Z_ref = self.WP_list[self.WP_counter, :]
 
+          X_error = self.X_ref - self.state[10]
+          Y_error = self.Y_ref - self.state[11]
+          Z_error = self.Z_ref - self.state[12]
+          D_tot = np.sqrt(X_error**2 + Y_error**2 + Z_error**2)
 
-      X_error = self.X_ref - self.state[10]
-      Y_error = self.Y_ref - self.state[11]
-      Z_error = self.Z_ref - self.state[12]
-      D_tot = np.sqrt(X_error**2 + Y_error**2 + Z_error**2)
 
+      # Integral controller contribution determined
       Int_X = 0.007 * 0.04 * X_error + self.Int_X
       Int_Y = 0.01 * 0.04 * Y_error + self.Int_Y
       Int_Z = 0.007 * 0.04 * Z_error + self.Int_Z
@@ -293,8 +297,8 @@ class Hummingbird_6DOF(gym.Env):
       if q0_err<=0.:
         q3_err = -q3_err
 
-      if abs(q3_err)>=0.15:
-        q3_err = 0.15 * sign(q3_err)
+      if abs(q3_err)>=0.125:
+        q3_err = 0.125 * sign(q3_err)
 
       LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
         [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \

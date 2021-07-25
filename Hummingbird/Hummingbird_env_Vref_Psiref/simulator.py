@@ -16,8 +16,19 @@ from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import PPO2
 from Humming_env import Hummingbird_6DOF
 
+# define the waypoints list
+WP_list = np.array([[0, 0, -20],\
+                      [15, 0, -20],\
+                         [15, 5, -20],\
+                            [2, 5, -20],\
+                               [2, 10, -20],\
+                                  [15, 10, -20],\
+                                    [15, 15, -20],\
+                                      [0, 15, -20],\
+                                        [0, 0, -20],\
+                                          [0, 0, -5]])
 
-env = Hummingbird_6DOF(Random_reset=False, Process_perturbations=True)
+env = Hummingbird_6DOF(Random_reset=False, Process_perturbations=True, WP_list=WP_list)
 
 tieme_steps_to_simulate = env.max_Episode_time_steps + 1 ## define the number of timesteps to simulate
 
