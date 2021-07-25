@@ -229,9 +229,9 @@ class Hummingbird_6DOF(gym.Env):
         angle = 90 * 0.0175 #[rad] angle
         X_reset = 10. * cos(angle) #[m]
         Y_reset = 10. * sin(angle) #[m]
-        Z_reset = -2. #[m]
+        Z_reset = -8. #[m]
 
-        VE_reset = np.array([2.1, 0., -1.5])
+        VE_reset = np.array([4.5, 0., -5.])
         
         p_reset = np_normal(0., 0.035)
         q_reset = np_normal(0., 0.035)
