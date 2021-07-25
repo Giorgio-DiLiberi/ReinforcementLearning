@@ -225,14 +225,13 @@ class Hummingbird_6DOF(gym.Env):
       if self.Random_reset:
         
         # Random position on a circumference with Ray = 10m
-        angle = np_normal(0., 178. * 0.0175) #[rad] angle
+        #angle = np_normal(0., 178. * 0.0175) #[rad] angle
+        angle = 90 * 0.0175 #[rad] angle
         X_reset = 10. * cos(angle) #[m]
         Y_reset = 10. * sin(angle) #[m]
-        Z_reset = -30. #[m]
+        Z_reset = -2. #[m]
 
-        w_reset = 0.8 #[m/s]
-        u_reset = 1.3 #[m/s]
-        v_reset = 0.5#[m/s]
+        VE_reset = np.array([2.1, 0., -1.5])
         
         p_reset = np_normal(0., 0.035)
         q_reset = np_normal(0., 0.035)
@@ -242,10 +241,26 @@ class Hummingbird_6DOF(gym.Env):
         theta = -1.2 #[rad]
         psi = 0.
 
-        q0_reset = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
-        q1_reset = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
-        q2_reset = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
-        q3_reset = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
+        q0 = cos(phi/2)*cos(theta/2)*cos(psi/2) + sin(phi/2)*sin(theta/2)*sin(psi/2)
+        q1 = sin(phi/2)*cos(theta/2)*cos(psi/2) - cos(phi/2)*sin(theta/2)*sin(psi/2)
+        q2 = cos(phi/2)*sin(theta/2)*cos(psi/2) + sin(phi/2)*cos(theta/2)*sin(psi/2)
+        q3 = cos(phi/2)*cos(theta/2)*sin(psi/2) - sin(phi/2)*sin(theta/2)*cos(psi/2)
+
+        LEB = np.array([[(q0**2 + q1**2 - q2**2 - q3**2), 2.*(q1*q2 - q0*q3), 2.*(q0*q2 + q1*q3)], \
+          [2.*(q1*q2 + q0*q3), (q0**2 - q1**2 + q2**2 - q3**2), 2.*(q2*q3 - q0*q1)], \
+            [2.*(q1*q3 - q0*q2), 2.*(q0*q1 + q2*q3), (q0**2 - q1**2 - q2**2 + q3**2)]])
+
+        LBE = np.transpose(LEB) # Evaluate transpose of body to NED---> NED to body
+      
+        Vb_reset = np.dot(LBE, VE_reset)
+
+        u_reset, v_reset, w_reset = Vb_reset
+
+        q0_reset = q0
+        q1_reset = q1
+        q2_reset = q2
+        q3_reset = q3
+
 
         self.X_Pos_Goal = 0. #[m] goal x position
         self.Y_Pos_Goal = 0. #[m] goal y position

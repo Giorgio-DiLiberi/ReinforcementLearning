@@ -259,10 +259,11 @@ for count in range(int(env.elapsed_time_steps/8)):
   #plot the waypoint
   ax.scatter(X_ref[step_n], Y_ref[step_n], Z_ref[step_n], c="red", s=100.)
 
-  ax.scatter(0, 0, -1, c="black", s=1.)
-  ax.scatter(15, 0, 0, c="black", s=1.)
-  ax.scatter(0, 15, 0, c="black", s=1.)
-  ax.scatter(0, 0, -16, c="black", s=1.)
+  ax.scatter(-10, 0, 0, c="black", s=1.)
+  ax.scatter(10, 0, 0, c="black", s=1.)
+  ax.scatter(0, 10, 0, c="black", s=1.)
+  ax.scatter(0, -10, 0, c="black", s=1.)
+  ax.scatter(0, 0, -20, c="black", s=1.)
 
   fig2save = 'SimulationResults/Orientation/trajectory' + str(count) + '.jpg'
 
